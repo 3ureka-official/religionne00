@@ -1,0 +1,14 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+# cursor_rules.mdc（抜粋）
+## コンポーネント設計
+- コンポーネントは function コンポーネントで定義する
+- 可能な限り React Server Components を利用
+- 不要な 'use client' 指定を避ける
+- 適切な ErrorBoundary を導入
+
+## デザイン
+- プロジェクト独自の共通コンポーネントは /src/app/components/ 配下を利用
