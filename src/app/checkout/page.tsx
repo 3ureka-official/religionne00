@@ -67,7 +67,7 @@ export default function CheckoutPage() {
           minHeight: '100vh',
           display: 'flex',
           flexDirection: 'column',
-          bgcolor: '#F8F9FA'
+          bgcolor: '#FFFFFF'
         }}
       >
         <Header />
