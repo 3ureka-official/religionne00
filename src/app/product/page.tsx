@@ -1,11 +1,11 @@
 'use client'
 
 import { Box, Container, ThemeProvider } from '@mui/material'
-import Header from '../components/Header'
-import Footer from '../components/Footer'
-import HomeHero from '../features/home/components/HomeHero'
-import FeatureSection from '../features/home/components/FeatureSection'
-import theme from '../styles/theme'
+import Header from '@/components/Header'
+import Footer from '@/components/Footer'
+import HomeHero from '@/features/home/components/HomeHero'
+import FeatureSection from '@/features/home/components/FeatureSection'
+import theme from '@/styles/theme'
 
 export default function Home() {
   return (
