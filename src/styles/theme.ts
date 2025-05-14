@@ -6,7 +6,7 @@ const theme = createTheme({
       main: '#000000',
     },
     secondary: {
-      main: '#555555',
+      main: '#FFFFFF',
     },
     background: {
       default: '#F8F9FA',
@@ -18,7 +18,16 @@ const theme = createTheme({
     },
   },
   typography: {
-    fontFamily: 'Inter, Roboto, sans-serif',
+    fontFamily: 'var(--font-geist-sans)',
+  },
+  components: {
+    MuiButton: {
+      styleOverrides: {
+        root: {
+          textTransform: 'none',
+        },
+      },
+    },
   },
 })
 

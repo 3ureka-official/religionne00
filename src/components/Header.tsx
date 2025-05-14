@@ -4,12 +4,17 @@ import { Box, Container, Drawer, List, ListItem, Typography, useMediaQuery, useT
 import Link from 'next/link'
 import Image from 'next/image'
 import { useState } from 'react'
+import ShoppingCartIcon from '@mui/icons-material/ShoppingCart'
+import InstagramIcon from '@mui/icons-material/Instagram'
+import { useCart } from '@/features/cart/components/CartContext'
 
 const Header = () => {
   const [menuOpen, setMenuOpen] = useState(false)
   const theme = useTheme()
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'))
   const isTablet = useMediaQuery(theme.breakpoints.between('sm', 'md'))
+  const { getTotalItems } = useCart()
+  const cartItemCount = getTotalItems()
 
   const toggleMenu = () => {
     setMenuOpen(!menuOpen)
@@ -113,11 +118,46 @@ const Header = () => {
               gap: { xs: 1.5, sm: 2 },
               ml: { xs: 'auto', sm: 0 }
             }}>
-              <button style={{ background: 'none', border: 'none', cursor: 'pointer' }}>
-                <svg xmlns="http://www.w3.org/2000/svg" width={isMobile ? "18" : "22"} height={isMobile ? "18" : "22"} fill="#555555" viewBox="0 0 16 16">
-                  <path d="M0 1.5A.5.5 0 0 1 .5 1H2a.5.5 0 0 1 .485.379L2.89 3H14.5a.5.5 0 0 1 .491.592l-1.5 8A.5.5 0 0 1 13 12H4a.5.5 0 0 1-.491-.408L2.01 3.607 1.61 2H.5a.5.5 0 0 1-.5-.5zM3.102 4l1.313 7h8.17l1.313-7H3.102zM5 12a2 2 0 1 0 0 4 2 2 0 0 0 0-4zm7 0a2 2 0 1 0 0 4 2 2 0 0 0 0-4zm-7 1a1 1 0 1 1 0 2 1 1 0 0 1 0-2zm7 0a1 1 0 1 1 0 2 1 1 0 0 1 0-2z" />
-                </svg>
-              </button>
+              {/* カートアイコン */}
+              <Link href="/cart" passHref style={{ textDecoration: 'none', color: 'inherit' }}>
+                <Box sx={{ position: 'relative', cursor: 'pointer' }}>
+                  <svg xmlns="http://www.w3.org/2000/svg" width={isMobile ? "18" : "22"} height={isMobile ? "18" : "22"} fill="#555555" viewBox="0 0 16 16">
+                    <path d="M0 1.5A.5.5 0 0 1 .5 1H2a.5.5 0 0 1 .485.379L2.89 3H14.5a.5.5 0 0 1 .491.592l-1.5 8A.5.5 0 0 1 13 12H4a.5.5 0 0 1-.491-.408L2.01 3.607 1.61 2H.5a.5.5 0 0 1-.5-.5zM3.102 4l1.313 7h8.17l1.313-7H3.102zM5 12a2 2 0 1 0 0 4 2 2 0 0 0 0-4zm7 0a2 2 0 1 0 0 4 2 2 0 0 0 0-4zm-7 1a1 1 0 1 1 0 2 1 1 0 0 1 0-2zm7 0a1 1 0 1 1 0 2 1 1 0 0 1 0-2z"/>
+                  </svg>
+                  {cartItemCount > 0 && (
+                    <Box
+                      sx={{
+                        position: 'absolute',
+                        top: -8,
+                        right: -8,
+                        bgcolor: 'black',
+                        color: 'white',
+                        width: 16,
+                        height: 16,
+                        borderRadius: '50%',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontSize: '10px',
+                      }}
+                    >
+                      {cartItemCount}
+                    </Box>
+                  )}
+                </Box>
+              </Link>
+              
+              {/* インスタグラムボタン */}
+              <a 
+                href="https://www.instagram.com" 
+                target="_blank" 
+                rel="noopener noreferrer" 
+                style={{ color: 'inherit', display: 'flex', alignItems: 'center' }}
+              >
+                <InstagramIcon sx={{ fontSize: isMobile ? 20 : 24, color: '#555555' }} />
+              </a>
+              
+              {/* ユーザーアイコン */}
               <button style={{ background: 'none', border: 'none', cursor: 'pointer' }}>
                 <svg xmlns="http://www.w3.org/2000/svg" width={isMobile ? "18" : "22"} height={isMobile ? "18" : "22"} fill="#555555" viewBox="0 0 16 16">
                   <path d="M8 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm2-3a2 2 0 1 1-4 0 2 2 0 0 1 4 0zm4 8c0 1-1 1-1 1H3s-1 0-1-1 1-4 6-4 6 3 6 4zm-1-.004c-.001-.246-.154-.986-.832-1.664C11.516 10.68 10.289 10 8 10c-2.29 0-3.516.68-4.168 1.332-.678.678-.83 1.418-.832 1.664h10z" />
