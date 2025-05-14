@@ -1,9 +1,10 @@
 'use client'
 
-import { Box, Container, Typography, Grid, ThemeProvider, Paper, Divider } from '@mui/material'
+import { Box, Container, Typography, Grid, ThemeProvider, Divider } from '@mui/material'
 import Header from '@/components/Header'
 import Footer from '@/components/Footer'
 import theme from '@/styles/theme'
+import Image from 'next/image'
 
 export default function About() {
   return (
@@ -13,22 +14,50 @@ export default function About() {
           minHeight: '100vh',
           display: 'flex',
           flexDirection: 'column',
-          bgcolor: '#F8F9FA'
+          bgcolor: '#FFFFFF'
         }}
       >
         <Header />
         <Container maxWidth="lg" component="main" sx={{ flex: 1, py: 4 }}>
-          <Typography variant="h4" component="h1" gutterBottom sx={{ 
-            textAlign: 'center', 
-            mb: 4, 
-            fontWeight: 500 
+          {/* ヘッダーセクション */}
+          <Box sx={{ 
+            display: 'flex', 
+            justifyContent: 'center', 
+            alignItems: 'center',
+            py: 2,
+            borderBottom: '1px solid black',
+            mb: 4
           }}>
-            Religionne00について
-          </Typography>
+            <Typography variant="h4" component="h1" sx={{ 
+              fontSize: { xs: '20px', sm: '24px' },
+              fontWeight: 500 
+            }}>
+              About
+            </Typography>
+          </Box>
           
-          <Paper elevation={2} sx={{ p: 4, maxWidth: 800, mx: 'auto' }}>
-            <Box sx={{ mb: 4 }}>
-              <Typography variant="h5" component="h2" gutterBottom>
+          {/* トップイメージ */}
+          <Box sx={{ 
+            width: '100%', 
+            height: { xs: '200px', sm: '300px', md: '400px' },
+            position: 'relative',
+            bgcolor: '#D9D9D9',
+            mb: 6,
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center'
+          }}>
+            {/* カメラアイコン（プレースホルダー） */}
+            <svg xmlns="http://www.w3.org/2000/svg" width="60" height="60" fill="#757575" viewBox="0 0 16 16">
+              <path d="M15 12a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1h1.172a3 3 0 0 0 2.12-.879l.83-.828A1 1 0 0 1 6.827 3h2.344a1 1 0 0 1 .707.293l.828.828A3 3 0 0 0 12.828 5H14a1 1 0 0 1 1 1v6zM2 4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2h-1.172a2 2 0 0 1-1.414-.586l-.828-.828A2 2 0 0 0 9.172 2H6.828a2 2 0 0 0-1.414.586l-.828.828A2 2 0 0 1 3.172 4H2z" />
+              <path d="M8 11a2.5 2.5 0 1 1 0-5 2.5 2.5 0 0 1 0 5zm0 1a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7zM3 6.5a.5.5 0 1 1-1 0 .5.5 0 0 1 1 0z" />
+            </svg>
+          </Box>
+          
+          {/* コンテンツセクション */}
+          <Box sx={{ maxWidth: 800, mx: 'auto' }}>
+            <Box sx={{ mb: 6 }}>
+              <Typography variant="h5" component="h2" gutterBottom sx={{ fontWeight: 500 }}>
                 私たちのストーリー
               </Typography>
               <Typography variant="body1" paragraph>
@@ -39,10 +68,26 @@ export default function About() {
               </Typography>
             </Box>
             
-            <Divider sx={{ my: 4 }} />
+            {/* 画像セクション */}
+            <Box sx={{ 
+              width: '100%', 
+              height: { xs: '200px', sm: '250px', md: '300px' },
+              position: 'relative',
+              bgcolor: '#D9D9D9',
+              mb: 6,
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'center'
+            }}>
+              {/* カメラアイコン（プレースホルダー） */}
+              <svg xmlns="http://www.w3.org/2000/svg" width="60" height="60" fill="#757575" viewBox="0 0 16 16">
+                <path d="M15 12a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1h1.172a3 3 0 0 0 2.12-.879l.83-.828A1 1 0 0 1 6.827 3h2.344a1 1 0 0 1 .707.293l.828.828A3 3 0 0 0 12.828 5H14a1 1 0 0 1 1 1v6zM2 4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2h-1.172a2 2 0 0 1-1.414-.586l-.828-.828A2 2 0 0 0 9.172 2H6.828a2 2 0 0 0-1.414.586l-.828.828A2 2 0 0 1 3.172 4H2z" />
+                <path d="M8 11a2.5 2.5 0 1 1 0-5 2.5 2.5 0 0 1 0 5zm0 1a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7zM3 6.5a.5.5 0 1 1-1 0 .5.5 0 0 1 1 0z" />
+              </svg>
+            </Box>
             
-            <Box sx={{ mb: 4 }}>
-              <Typography variant="h5" component="h2" gutterBottom>
+            <Box sx={{ mb: 6 }}>
+              <Typography variant="h5" component="h2" gutterBottom sx={{ fontWeight: 500 }}>
                 ミッション
               </Typography>
               <Typography variant="body1" paragraph>
@@ -50,10 +95,26 @@ export default function About() {
               </Typography>
             </Box>
             
-            <Divider sx={{ my: 4 }} />
+            {/* 画像セクション */}
+            <Box sx={{ 
+              width: '100%', 
+              height: { xs: '200px', sm: '250px', md: '300px' },
+              position: 'relative',
+              bgcolor: '#D9D9D9',
+              mb: 6,
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'center'
+            }}>
+              {/* カメラアイコン（プレースホルダー） */}
+              <svg xmlns="http://www.w3.org/2000/svg" width="60" height="60" fill="#757575" viewBox="0 0 16 16">
+                <path d="M15 12a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1h1.172a3 3 0 0 0 2.12-.879l.83-.828A1 1 0 0 1 6.827 3h2.344a1 1 0 0 1 .707.293l.828.828A3 3 0 0 0 12.828 5H14a1 1 0 0 1 1 1v6zM2 4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2h-1.172a2 2 0 0 1-1.414-.586l-.828-.828A2 2 0 0 0 9.172 2H6.828a2 2 0 0 0-1.414.586l-.828.828A2 2 0 0 1 3.172 4H2z" />
+                <path d="M8 11a2.5 2.5 0 1 1 0-5 2.5 2.5 0 0 1 0 5zm0 1a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7zM3 6.5a.5.5 0 1 1-1 0 .5.5 0 0 1 1 0z" />
+              </svg>
+            </Box>
             
             <Box>
-              <Typography variant="h5" component="h2" gutterBottom>
+              <Typography variant="h5" component="h2" gutterBottom sx={{ fontWeight: 500 }}>
                 サステナビリティへの取り組み
               </Typography>
               <Typography variant="body1" paragraph>
@@ -82,7 +143,26 @@ export default function About() {
                 </li>
               </ul>
             </Box>
-          </Paper>
+            
+            {/* ロゴと線（下部に配置） */}
+            <Box sx={{ mt: 8, mb: 4 }}>
+              <Divider sx={{ mb: 4 }} />
+              <Box sx={{ 
+                position: 'relative', 
+                width: '150px', 
+                height: '150px',
+                opacity: 0.3,
+                mx: 'auto'
+              }}>
+                <Image
+                  src="/images/logo.png"
+                  alt="Religionne00 Logo"
+                  fill
+                  style={{ objectFit: 'contain' }}
+                />
+              </Box>
+            </Box>
+          </Box>
         </Container>
         <Footer />
       </Box>
