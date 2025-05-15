@@ -12,7 +12,7 @@ export type MicroCMSSettings = {
   contact: JSX.Element;
   brandImages: MicroCMSImage[],
   carouselImages: MicroCMSImage[]
-  pickUpProduct: MicroCMSProduct | undefined;
+  pickUpProduct: MicroCMSProduct;
 }
 
 export type MicroCMSSize = {

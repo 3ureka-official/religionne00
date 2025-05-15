@@ -24,7 +24,7 @@ export default async function Home() {
         <Header />
         <Container maxWidth="lg" component="main" sx={{ flex: 1, py: 4 }}>
           <HomeHero carouselImages={settings.carouselImages} />
-          <FeatureSection products={products} pickUpProducts={settings.pickUpProduct} />
+          <FeatureSection products={products} pickUpProduct={settings.pickUpProduct} />
         </Container>
         <Footer />
       </Box>

@@ -159,7 +159,7 @@ const Pagination = () => {
   )
 }
 
-const FeatureSection = ({ products }: { products: MicroCMSProduct[] }) => {
+const FeatureSection = ({ products, pickUpProduct }: { products: MicroCMSProduct[], pickUpProduct: MicroCMSProduct }) => {
   const theme = useTheme()
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'))
   const [categoryModalOpen, setCategoryModalOpen] = useState(false)
@@ -179,7 +179,7 @@ const FeatureSection = ({ products }: { products: MicroCMSProduct[] }) => {
 
       {/* ピックアップ商品 */}
       <Box sx={{ mb: { xs: 3, sm: 6 } }}>
-        <ProductCard featured={true} product={products[0]} />
+        <ProductCard featured={true} product={pickUpProduct} />
       </Box>
 
       {/* 商品グリッド */}
