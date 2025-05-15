@@ -1,6 +1,5 @@
 import { createClient, MicroCMSImage } from "microcms-js-sdk";
 import { env } from "process";
-import { JSX } from "react";
 
 export type MicroCMSSettings = {
   createdAt: string;
@@ -9,7 +8,7 @@ export type MicroCMSSettings = {
   revisedAt: string;
   privacyPolicy: string;
   shoppingGuide: string;
-  contact: JSX.Element;
+  contact: string;
   brandImages: MicroCMSImage[],
   carouselImages: MicroCMSImage[]
   pickUpProduct: MicroCMSProduct;
