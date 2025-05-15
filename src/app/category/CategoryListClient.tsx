@@ -7,27 +7,16 @@ import Footer from '@/components/Footer';
 import { ThemeProvider } from '@mui/material/styles';
 import theme from '@/styles/theme';
 
-interface Product {
+interface Category {
   id: string;
-  name: string;
-  stripe_price_id: string;
-  images: { url: string }[];
-  description: string;
-}
-
-interface ClientCategoryPageProps {
   category: string;
-  displayCategory: string;
-  products: Product[];
-  categoryDescription: string;
 }
 
-export default function ClientCategoryPage({
-  category,
-  displayCategory,
-  products,
-  categoryDescription,
-}: ClientCategoryPageProps) {
+interface CategoryListClientProps {
+  categories: Category[];
+}
+
+export default function CategoryListClient({ categories }: CategoryListClientProps) {
   return (
     <ThemeProvider theme={theme}>
       <Box
@@ -56,11 +45,8 @@ export default function ClientCategoryPage({
               <Link href="/" passHref style={{ color: 'inherit', textDecoration: 'none' }}>
                 home
               </Link>
-              <Link href="/category" passHref style={{ color: 'inherit', textDecoration: 'none' }}>
-                store
-              </Link>
               <Typography color="text.primary" sx={{ fontSize: 'inherit' }}>
-                {displayCategory}
+                store
               </Typography>
             </Breadcrumbs>
           </Box>
@@ -75,7 +61,7 @@ export default function ClientCategoryPage({
               textAlign: 'center',
             }}
           >
-            {displayCategory}
+            Categories
           </Typography>
 
           {/* 説明文 */}
@@ -88,21 +74,21 @@ export default function ClientCategoryPage({
               mx: 'auto',
             }}
           >
-            {categoryDescription}
+            商品カテゴリーから探す。お好みのカテゴリーを選択して、商品をご覧ください。
           </Typography>
 
-          {/* 商品グリッド */}
+          {/* カテゴリーグリッド */}
           <Box sx={{ display: 'flex', flexWrap: 'wrap', mx: -2 }}>
-            {products.map((product) => (
+            {categories.map((category) => (
               <Box
-                key={product.id}
+                key={category.id}
                 sx={{
                   width: { xs: '50%', md: '33.333%' },
                   px: 2,
                   mb: { xs: 2, sm: 3 },
                 }}
               >
-                <Link href={`/product/${product.id}`} style={{ textDecoration: 'none', color: 'inherit' }}>
+                <Link href={`/category/${category.id}`} style={{ textDecoration: 'none', color: 'inherit' }}>
                   <Card
                     elevation={0}
                     sx={{
@@ -134,30 +120,25 @@ export default function ClientCategoryPage({
                           justifyContent: 'center',
                         }}
                       >
-                        <img
-                          src={product.images[0]?.url || '/images/product/camera-icon-1.svg'}
-                          alt={product.name}
-                          className='max-w-full max-h-full object-cover aspect-square'
-                        />
+                        <Typography
+                          sx={{
+                            fontSize: { xs: '16px', sm: '20px' },
+                            fontWeight: 'normal',
+                            opacity: 0.8,
+                          }}
+                        >
+                          {category.category}
+                        </Typography>
                       </Box>
                     </Box>
                     <CardContent sx={{ p: { xs: 1.5, sm: 2 } }}>
                       <Typography
                         sx={{
-                          fontSize: { xs: '14px', sm: '16px' },
-                          fontWeight: 'bold',
-                          mb: 1,
-                        }}
-                      >
-                        {product.name}
-                      </Typography>
-                      <Typography
-                        sx={{
-                          fontSize: { xs: '12px', sm: '14px' },
+                          fontSize: { xs: '11px', sm: '14px' },
                           color: 'text.secondary',
                         }}
                       >
-                        {product.description}
+                        {category.category}の商品一覧
                       </Typography>
                     </CardContent>
                   </Card>
