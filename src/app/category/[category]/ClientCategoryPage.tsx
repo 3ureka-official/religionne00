@@ -1,29 +1,21 @@
 'use client';
 
-import { Box, Container, Typography, Breadcrumbs, Card, CardContent } from '@mui/material';
+import { Box, Container, Typography, Breadcrumbs } from '@mui/material';
+import ProductCard from '@/features/home/components/ProductCard';
 import Link from 'next/link';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { ThemeProvider } from '@mui/material/styles';
 import theme from '@/styles/theme';
-
-interface Product {
-  id: string;
-  name: string;
-  stripe_price_id: string;
-  images: { url: string }[];
-  description: string;
-}
+import { MicroCMSProduct } from '@/lib/microcms';
 
 interface ClientCategoryPageProps {
-  category: string;
   displayCategory: string;
-  products: Product[];
+  products: MicroCMSProduct[];
   categoryDescription: string;
 }
 
 export default function ClientCategoryPage({
-  category,
   displayCategory,
   products,
   categoryDescription,
@@ -102,66 +94,7 @@ export default function ClientCategoryPage({
                   mb: { xs: 2, sm: 3 },
                 }}
               >
-                <Link href={`/product/${product.id}`} style={{ textDecoration: 'none', color: 'inherit' }}>
-                  <Card
-                    elevation={0}
-                    sx={{
-                      borderRadius: 0,
-                      border: '1px solid rgba(0, 0, 0, 0.1)',
-                      '&:hover': {
-                        boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
-                      },
-                      height: '100%',
-                    }}
-                  >
-                    <Box
-                      sx={{
-                        width: '100%',
-                        pt: '70%',
-                        position: 'relative',
-                        bgcolor: '#F0F0F0',
-                      }}
-                    >
-                      <Box
-                        sx={{
-                          position: 'absolute',
-                          top: 0,
-                          left: 0,
-                          width: '100%',
-                          height: '100%',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                        }}
-                      >
-                        <img
-                          src={product.images[0]?.url || '/images/product/camera-icon-1.svg'}
-                          alt={product.name}
-                          className='max-w-full max-h-full object-cover aspect-square'
-                        />
-                      </Box>
-                    </Box>
-                    <CardContent sx={{ p: { xs: 1.5, sm: 2 } }}>
-                      <Typography
-                        sx={{
-                          fontSize: { xs: '14px', sm: '16px' },
-                          fontWeight: 'bold',
-                          mb: 1,
-                        }}
-                      >
-                        {product.name}
-                      </Typography>
-                      <Typography
-                        sx={{
-                          fontSize: { xs: '12px', sm: '14px' },
-                          color: 'text.secondary',
-                        }}
-                      >
-                        {product.description}
-                      </Typography>
-                    </CardContent>
-                  </Card>
-                </Link>
+                <ProductCard product={product} />
               </Box>
             ))}
           </Box>
