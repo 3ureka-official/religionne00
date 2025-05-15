@@ -1,99 +1,17 @@
 'use client'
 
-import { Box, Typography, Paper, useMediaQuery, useTheme, Modal } from '@mui/material'
+import { Box, Typography, useMediaQuery, useTheme, Modal } from '@mui/material'
+import ProductCard from './ProductCard'
 import { useState } from 'react'
-import Link from 'next/link'
 import { MicroCMSProduct } from '@/lib/microcms';
-import Image from 'next/image';
-
-// 商品コンポーネント
-interface ProductCardProps {
-  product: MicroCMSProduct;
-  featured?: boolean;
-}
-
-const ProductCard = ({ product, featured = false }: ProductCardProps) => {
-  const theme = useTheme()
-  const isMobile = useMediaQuery(theme.breakpoints.down('sm'))
-
-  return (
-    <Link href={`/product/${product.id}`} style={{ textDecoration: 'none', color: 'inherit', display: 'block', height: '100%' }}>
-      <Paper
-        elevation={0}
-        sx={{
-          overflow: 'hidden',
-          border: featured ? '1px solid rgba(128,128,128,0.35)' : 'none',
-          height: '100%',
-          display: 'flex',
-          flexDirection: 'column',
-          cursor: 'pointer',
-          transition: 'transform 0.2s',
-          '&:hover': {
-            transform: 'translateY(-3px)',
-            boxShadow: '0 4px 8px rgba(0,0,0,0.1)'
-          }
-        }}
-      >
-        {featured && (
-          <Typography
-            sx={{
-              p: 1,
-              fontSize: { xs: '20px', sm: '24px' },
-              fontWeight: featured ? 'normal' : 'medium',
-            }}
-          >
-            pick up!!!
-          </Typography>
-        )}
-        <Box
-          sx={{
-            bgcolor: '#D9D9D9',
-            position: 'relative',
-            flex: featured ? '1 0 auto' : 'none',
-          }}
-        >
-          <Image
-            src={product.images[0].url}
-            alt={product.name}
-            height={product.images[0].height}
-            width={product.images[0].width}
-            className={`w-full h-auto object-cover aspect-square`}
-          />
-        </Box>
-        <Box sx={{ p: isMobile ? 0.5 : 1 }}>
-          <Typography
-            sx={{
-              fontSize: { xs: '11px', sm: featured ? '15px' : '14px' },
-              fontWeight: 'normal',
-              mb: 0.5
-            }}
-          >
-            {product.name}
-          </Typography>
-          <Typography
-            sx={{
-              fontSize: { xs: '11px', sm: featured ? '15px' : '14px' },
-              fontWeight: 'normal'
-            }}
-          >
-            ¥ 2,000
-          </Typography>
-        </Box>
-      </Paper>
-    </Link>
-  )
-}
 
 // カテゴリーモーダル
 interface CategoryModalProps {
   open: boolean;
   onClose: () => void;
-  onSelect: (category: string) => void;
 }
 
-const CategoryModal = ({ open, onClose, onSelect }: CategoryModalProps) => {
-  const theme = useTheme()
-  const isMobile = useMediaQuery(theme.breakpoints.down('sm'))
+const CategoryModal = ({ open, onClose }: CategoryModalProps) => {
   const categories = ['Category', 'Original', 'Tops', 'Bottoms', 'Jackets', 'Coat', 'Others']
 
   return (
@@ -112,7 +30,7 @@ const CategoryModal = ({ open, onClose, onSelect }: CategoryModalProps) => {
         bgcolor: 'white',
         border: '1px solid rgba(0, 0, 0, 0.3)',
         boxShadow: 24,
-        p: isMobile ? 3 : 4,
+        p: 4,
       }}>
         {categories.map((category, index) => (
           <Box
@@ -124,7 +42,6 @@ const CategoryModal = ({ open, onClose, onSelect }: CategoryModalProps) => {
               fontWeight: index === 0 ? 'bold' : 'normal',
               '&:hover': index === 0 ? {} : { opacity: 0.7 }
             }}
-            onClick={index === 0 ? undefined : () => onSelect(category)}
           >
             <Typography
               sx={{
@@ -142,12 +59,10 @@ const CategoryModal = ({ open, onClose, onSelect }: CategoryModalProps) => {
 
 // カテゴリーセレクター
 interface CategorySelectorProps {
-  onCategoryClick: (category: string) => void;
+  onCategoryClick: () => void;
 }
 
 const CategorySelector = ({ onCategoryClick }: CategorySelectorProps) => {
-  const theme = useTheme()
-  const isMobile = useMediaQuery(theme.breakpoints.down('sm'))
   const categories = ['Original', 'Tops', 'Bottoms', 'Jackets', 'Coat', 'Others']
 
   return (
@@ -170,7 +85,7 @@ const CategorySelector = ({ onCategoryClick }: CategorySelectorProps) => {
             cursor: 'pointer',
             '&:hover': { opacity: 0.7 }
           }}
-          onClick={() => onCategoryClick(category)}
+          onClick={onCategoryClick}
         >
           {category}
         </Typography>
@@ -244,19 +159,13 @@ const Pagination = () => {
   )
 }
 
-const FeatureSection = ({ pickUpProducts, products }: { pickUpProducts?: MicroCMSProduct, products: MicroCMSProduct[] }) => {
+const FeatureSection = ({ products }: { products: MicroCMSProduct[] }) => {
   const theme = useTheme()
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'))
   const [categoryModalOpen, setCategoryModalOpen] = useState(false)
-  const [selectedCategory, setSelectedCategory] = useState('Original')
 
-  const handleCategoryClick = (category: string) => {
+  const handleCategoryClick = () => {
     setCategoryModalOpen(true)
-  }
-
-  const handleCategorySelect = (category: string) => {
-    setSelectedCategory(category)
-    setCategoryModalOpen(false)
   }
 
   const handleCloseModal = () => {
@@ -270,7 +179,7 @@ const FeatureSection = ({ pickUpProducts, products }: { pickUpProducts?: MicroCM
 
       {/* ピックアップ商品 */}
       <Box sx={{ mb: { xs: 3, sm: 6 } }}>
-        <ProductCard featured={true} id={100} product={products[0]} />
+        <ProductCard featured={true} product={products[0]} />
       </Box>
 
       {/* 商品グリッド */}
@@ -289,10 +198,9 @@ const FeatureSection = ({ pickUpProducts, products }: { pickUpProducts?: MicroCM
       <CategoryModal
         open={categoryModalOpen}
         onClose={handleCloseModal}
-        onSelect={handleCategorySelect}
       />
     </Box>
   )
 }
 
-export default FeatureSection 
+export default FeatureSection
