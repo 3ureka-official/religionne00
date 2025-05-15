@@ -6,29 +6,15 @@ import TwitterIcon from '@mui/icons-material/Twitter'
 import FacebookIcon from '@mui/icons-material/Facebook'
 import PinterestIcon from '@mui/icons-material/Pinterest'
 
-export default function SNS() {
-  const socialAccounts = [
-    {
-      name: 'Instagram',
-      url: 'https://www.instagram.com',
-      icon: <InstagramIcon sx={{ fontSize: 60 }} />,
-    },
-    {
-      name: 'Twitter',
-      url: 'https://www.twitter.com',
-      icon: <TwitterIcon sx={{ fontSize: 60 }} />,
-    },
-    {
-      name: 'Facebook',
-      url: 'https://www.facebook.com',
-      icon: <FacebookIcon sx={{ fontSize: 60 }} />,
-    },
-    {
-      name: 'Pinterest',
-      url: 'https://www.pinterest.com',
-      icon: <PinterestIcon sx={{ fontSize: 60 }} />,
-    }
-  ]
+import { fetchSettings } from '@/lib/microcms';
+
+export default async function SNS() {
+  const settings = await fetchSettings();
+  const socialAccounts = settings.sns.map((sns) => ({
+    name: sns.service,
+    url: sns.url,
+    icon: <img src={sns.icon.url} alt={sns.service} style={{ width: 60, height: 60 }} />,
+  }));
 
   return (
     <Box
@@ -109,4 +95,4 @@ export default function SNS() {
       <Footer />
     </Box>
   )
-} 
+}

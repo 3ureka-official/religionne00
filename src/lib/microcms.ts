@@ -1,6 +1,13 @@
 import { createClient, MicroCMSImage } from "microcms-js-sdk";
 import { env } from "process";
 
+export type MicroCMSSNS = {
+  service: string;
+  icon: MicroCMSImage;
+  username: string;
+  url: string;
+};
+
 export type MicroCMSSettings = {
   createdAt: string;
   updatedAt: string;
@@ -12,7 +19,8 @@ export type MicroCMSSettings = {
   brandImages: MicroCMSImage[],
   carouselImages: MicroCMSImage[]
   pickUpProduct: MicroCMSProduct;
-}
+  sns: MicroCMSSNS[];
+};
 
 export type MicroCMSSize = {
   fieldId: string;
