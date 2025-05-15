@@ -8,7 +8,7 @@ export type MicroCMSSettings = {
   publishedAt: string;
   revisedAt: string;
   privacyPolicy: string;
-  shoppingGuide: JSX.Element;
+  shoppingGuide: string;
   contact: JSX.Element;
   brandImages: MicroCMSImage[],
   carouselImages: MicroCMSImage[]
