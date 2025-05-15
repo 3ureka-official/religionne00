@@ -23,128 +23,130 @@ export default function CategoryListPage() {
   ]
 
   return (
-    <Box
-      sx={{
-        minHeight: '100vh',
-        display: 'flex',
-        flexDirection: 'column',
-        bgcolor: '#FFFFFF'
-      }}
-    >
-      <Header />
-      <Container maxWidth="lg" component="main" sx={{ flex: 1, py: 4 }}>
-        {/* パンくずリスト */}
-        <Box sx={{ mb: 3 }}>
-          <Breadcrumbs 
-            separator="/" 
-            aria-label="breadcrumb"
+    <ThemeProvider theme={theme}>
+      <Box
+        sx={{
+          minHeight: '100vh',
+          display: 'flex',
+          flexDirection: 'column',
+          bgcolor: '#F8F9FA'
+        }}
+      >
+        <Header />
+        <Container maxWidth="lg" component="main" sx={{ flex: 1, py: 4 }}>
+          {/* パンくずリスト */}
+          <Box sx={{ mb: 3 }}>
+            <Breadcrumbs 
+              separator="/" 
+              aria-label="breadcrumb"
+              sx={{ 
+                fontSize: { xs: '10px', sm: '12px' }, 
+                color: 'text.primary',
+                '& .MuiBreadcrumbs-separator': {
+                  mx: 0.5
+                }
+              }}
+            >
+              <Link href="/" passHref style={{ color: 'inherit', textDecoration: 'none' }}>
+                home
+              </Link>
+              <Typography color="text.primary" sx={{ fontSize: 'inherit' }}>
+                store
+              </Typography>
+            </Breadcrumbs>
+          </Box>
+
+          {/* タイトル */}
+          <Typography 
+            variant="h1" 
             sx={{ 
-              fontSize: { xs: '10px', sm: '12px' }, 
-              color: 'text.primary',
-              '& .MuiBreadcrumbs-separator': {
-                mx: 0.5
-              }
+              fontSize: { xs: '20px', sm: '24px' },
+              fontWeight: 'normal',
+              mb: { xs: 2, sm: 3 },
+              textAlign: 'center'
             }}
           >
-            <Link href="/" passHref style={{ color: 'inherit', textDecoration: 'none' }}>
-              home
-            </Link>
-            <Typography color="text.primary" sx={{ fontSize: 'inherit', fontWeight: 'bold' }}>
-              store
-            </Typography>
-          </Breadcrumbs>
-        </Box>
+            Categories
+          </Typography>
 
-        {/* タイトル */}
-        <Typography 
-          variant="h1" 
-          sx={{ 
-            fontSize: { xs: '20px', sm: '24px' },
-            fontWeight: 'normal',
-            mb: { xs: 2, sm: 3 },
-            textAlign: 'center'
-          }}
-        >
-          Categories
-        </Typography>
+          {/* 説明文 */}
+          <Typography 
+            sx={{ 
+              fontSize: { xs: '12px', sm: '14px' },
+              mb: { xs: 3, sm: 4 },
+              textAlign: 'center',
+              maxWidth: '700px',
+              mx: 'auto'
+            }}
+          >
+            商品カテゴリーから探す。お好みのカテゴリーを選択して、商品をご覧ください。
+          </Typography>
 
-        {/* 説明文 */}
-        <Typography 
-          sx={{ 
-            fontSize: { xs: '12px', sm: '14px' },
-            mb: { xs: 3, sm: 4 },
-            textAlign: 'center',
-            maxWidth: '700px',
-            mx: 'auto'
-          }}
-        >
-          商品カテゴリーから探す。お好みのカテゴリーを選択して、商品をご覧ください。
-        </Typography>
-
-        {/* カテゴリーグリッド */}
-        <Box sx={{ display: 'flex', flexWrap: 'wrap', mx: isMobile ? -1 : -2 }}>
-          {categories.map((category) => (
-            <Box key={category.id} sx={{ width: { xs: '50%', md: '33.333%' }, px: isMobile ? 1 : 2, mb: { xs: 2, sm: 3 } }}>
-              <Link href={`/category/${category.id}`} style={{ textDecoration: 'none', color: 'inherit' }}>
-                <Card 
-                  elevation={0}
-                  sx={{ 
-                    borderRadius: 0, 
-                    border: '1px solid rgba(0, 0, 0, 0.1)',
-                    '&:hover': {
-                      boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)'
-                    },
-                    height: '100%'
-                  }}
-                >
-                  <Box 
+          {/* カテゴリーグリッド */}
+          <Box sx={{ display: 'flex', flexWrap: 'wrap', mx: isMobile ? -1 : -2 }}>
+            {categories.map((category) => (
+              <Box key={category.id} sx={{ width: { xs: '50%', md: '33.333%' }, px: isMobile ? 1 : 2, mb: { xs: 2, sm: 3 } }}>
+                <Link href={`/category/${category.id}`} style={{ textDecoration: 'none', color: 'inherit' }}>
+                  <Card 
+                    elevation={0}
                     sx={{ 
-                      width: '100%',
-                      pt: '70%', 
-                      position: 'relative',
-                      bgcolor: '#F0F0F0'
+                      borderRadius: 0, 
+                      border: '1px solid rgba(0, 0, 0, 0.1)',
+                      '&:hover': {
+                        boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)'
+                      },
+                      height: '100%'
                     }}
                   >
                     <Box 
                       sx={{ 
-                        position: 'absolute',
-                        top: 0,
-                        left: 0,
                         width: '100%',
-                        height: '100%',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center'
+                        pt: '70%', 
+                        position: 'relative',
+                        bgcolor: '#F0F0F0'
                       }}
                     >
-                      <Typography 
+                      <Box 
                         sx={{ 
-                          fontSize: { xs: '16px', sm: '20px' },
-                          fontWeight: 'normal',
-                          opacity: 0.8
+                          position: 'absolute',
+                          top: 0,
+                          left: 0,
+                          width: '100%',
+                          height: '100%',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center'
                         }}
                       >
-                        {category.name}
-                      </Typography>
+                        <Typography 
+                          sx={{ 
+                            fontSize: { xs: '16px', sm: '20px' },
+                            fontWeight: 'normal',
+                            opacity: 0.8
+                          }}
+                        >
+                          {category.name}
+                        </Typography>
+                      </Box>
                     </Box>
-                  </Box>
-                  <CardContent sx={{ p: { xs: 1.5, sm: 2 } }}>
-                    <Typography 
-                      sx={{ 
-                        fontSize: { xs: '11px', sm: '14px' },
-                        color: 'text.secondary'
-                      }}
-                    >
-                      {category.description}
-                    </Typography>
-                  </CardContent>
-                </Card>
-              </Link>
-            </Box>
-          ))}
-        </Box>
-      </Container>
-      <Footer />
-    </Box>
+                    <CardContent sx={{ p: { xs: 1.5, sm: 2 } }}>
+                      <Typography 
+                        sx={{ 
+                          fontSize: { xs: '11px', sm: '14px' },
+                          color: 'text.secondary'
+                        }}
+                      >
+                        {category.description}
+                      </Typography>
+                    </CardContent>
+                  </Card>
+                </Link>
+              </Box>
+            ))}
+          </Box>
+        </Container>
+        <Footer />
+      </Box>
+    </ThemeProvider>
   )
 } 

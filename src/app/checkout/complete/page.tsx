@@ -17,7 +17,7 @@ export default function OrderCompletePage() {
           minHeight: '100vh',
           display: 'flex',
           flexDirection: 'column',
-          bgcolor: '#FFFFFF'
+          bgcolor: '#F8F9FA'
         }}
       >
         <Header />

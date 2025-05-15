@@ -38,7 +38,7 @@ export default function ClientCategoryPage({
         minHeight: '100vh',
         display: 'flex',
         flexDirection: 'column',
-        bgcolor: '#FFFFFF'
+        bgcolor: '#F8F9FA'
       }}
     >
       <Header />
@@ -62,7 +62,7 @@ export default function ClientCategoryPage({
             <Link href="/category" passHref style={{ color: 'inherit', textDecoration: 'none' }}>
               store
             </Link>
-            <Typography color="text.primary" sx={{ fontSize: 'inherit', fontWeight: 'bold' }}>
+            <Typography color="text.primary" sx={{ fontSize: 'inherit' }}>
               {displayCategory}
             </Typography>
           </Breadcrumbs>

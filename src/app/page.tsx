@@ -15,12 +15,12 @@ export default function Home() {
           minHeight: '100vh',
           display: 'flex',
           flexDirection: 'column',
-          bgcolor: '#FFFFFF'
+          bgcolor: '#F8F9FA'
         }}
       >
         <Header />
-        <HomeHero />
-        <Container maxWidth="lg" component="main" sx={{ flex: 1, py: { xs: 2, sm: 4 } }}>
+        <Container maxWidth="lg" component="main" sx={{ flex: 1, py: 4 }}>
+          <HomeHero />
           <FeatureSection />
         </Container>
         <Footer />
