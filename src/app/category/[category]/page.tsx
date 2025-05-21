@@ -1,5 +1,7 @@
-import { fetchProductsByCategory, fetchCategories } from '@/lib/microcms';
+import { fetchCategories } from '@/lib/microcms';
 import ClientCategoryPage from './ClientCategoryPage';
+import { getProductsByCategory } from '@/firebase/productService';
+import { convertToMicroCMSFormat } from '@/lib/adapters';
 
 export default async function CategoryPage({ params }: { params: { category: string } }) {
   const categoryId = params.category;
@@ -9,8 +11,11 @@ export default async function CategoryPage({ params }: { params: { category: str
   const matchedCategory = categories.find((cat) => cat.id === categoryId);
   const displayCategory = matchedCategory ? matchedCategory.category : 'Unknown Category';
 
-  // カテゴリに一致する商品を取得
-  const products = await fetchProductsByCategory(categoryId);
+  // カテゴリに一致する商品をFirebaseから取得
+  const firebaseProducts = await getProductsByCategory(displayCategory);
+  
+  // Firebase ProductをMicroCMSProduct形式に変換
+  const products = firebaseProducts.map(convertToMicroCMSFormat);
 
   const categoryDescription =
     categoryId === 'original'
@@ -19,7 +24,6 @@ export default async function CategoryPage({ params }: { params: { category: str
 
   return (
     <ClientCategoryPage
-      category={categoryId}
       displayCategory={displayCategory}
       products={products}
       categoryDescription={categoryDescription}

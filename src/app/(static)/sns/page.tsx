@@ -1,4 +1,4 @@
-import { Box, Container, Typography, IconButton, Divider } from '@mui/material'
+import { Box, Container, Typography, IconButton, Divider, Paper } from '@mui/material'
 import Header from '@/components/Header'
 import Footer from '@/components/Footer'
 import InstagramIcon from '@mui/icons-material/Instagram'
@@ -13,7 +13,7 @@ export default async function SNS() {
   const socialAccounts = settings.sns.map((sns) => ({
     name: sns.service,
     url: sns.url,
-    icon: <img src={sns.icon.url} alt={sns.service} style={{ width: 60, height: 60 }} />,
+    icon: <img src={sns.icon.url} alt={sns.service} style={{ width: 50, height: 50 }} />,
   }));
 
   return (
@@ -22,75 +22,58 @@ export default async function SNS() {
         minHeight: '100vh',
         display: 'flex',
         flexDirection: 'column',
-        bgcolor: '#F8F9FA'
+        bgcolor: '#FFFFFF'
       }}
     >
       <Header />
-      <Container maxWidth="lg" component="main" sx={{ flex: 1, py: 4 }}>
-        <Typography variant="h4" component="h1" gutterBottom sx={{
-          textAlign: 'center',
-          mb: 4,
-          fontWeight: 500
+      <Container maxWidth="lg" component="main" sx={{ flex: 1, py: 2 }}>
+        <Typography variant="h4" component="h1" sx={{
+          textAlign: {xs: 'left', md: 'center'},
+          fontSize: { xs: '20px', sm: '24px' },
+          fontWeight: 500 
         }}>
           SNS
         </Typography>
 
-        <Typography variant="h6" component="h2" sx={{
-          textAlign: 'center',
-          mb: 5,
-          fontWeight: 500
-        }}>
-          official SNS
-        </Typography>
+        <Paper elevation={0} sx={{ p: {xs: 1, sm: 4}, maxWidth: 800, mx: 'auto' }}>
+          <Divider sx={{ mb: 2 }} />
 
-        <Divider sx={{ mb: 5 }} />
-
-        <Box sx={{
-          display: 'flex',
-          justifyContent: 'center',
-          gap: 6,
-          flexWrap: 'wrap',
-          maxWidth: 600,
-          mx: 'auto',
-          mb: 5
-        }}>
-          {socialAccounts.map((account, index) => (
-            <IconButton
-              key={index}
-              href={account.url}
-              target="_blank"
-              rel="noopener noreferrer"
-              aria-label={account.name}
-              sx={{
-                color: 'black',
-                p: 2,
-                transition: 'transform 0.2s',
-                '&:hover': {
-                  transform: 'scale(1.1)',
-                  bgcolor: 'transparent'
-                }
-              }}
-            >
-              {account.icon}
-            </IconButton>
-          ))}
-        </Box>
-
-        <Divider sx={{ mb: 5 }} />
-
-        <Box sx={{ textAlign: 'center' }}>
-          <Typography variant="body1" sx={{ mb: 2 }}>
-            ハッシュタグでシェア
-          </Typography>
-          <Box sx={{ display: 'flex', justifyContent: 'center', gap: 2, flexWrap: 'wrap' }}>
-            <Typography variant="body1" sx={{ fontWeight: 'bold' }}>
-              #Religionne00
-            </Typography>
-            <Typography variant="body1" sx={{ fontWeight: 'bold' }}>
-              #Religionne00Style
-            </Typography>
+          <Box sx={{
+            display: 'flex',
+            justifyContent: 'center',
+            gap: 6,
+            flexWrap: 'wrap',
+            maxWidth: 600,
+            mx: 'auto',
+            mb: 2
+          }}>
+            {socialAccounts.map((account, index) => (
+              <Box key={index} sx={{ textAlign: 'center' }}>
+                <IconButton
+                  href={account.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label={account.name}
+                  sx={{
+                    color: 'black',
+                    transition: 'transform 0.2s',
+                    '&:hover': {
+                      transform: 'scale(1.1)',
+                      bgcolor: 'transparent'
+                    }
+                  }}
+                >
+                  {account.icon}
+                </IconButton>
+                <Typography variant="body1" sx={{ fontSize: '13px', fontWeight: 500 }}>
+                  {account.name}
+                </Typography>
+              </Box>
+            ))}
           </Box>
-        </Box>
+
+          <Divider sx={{ mb: 2 }} />
+        </Paper>
       </Container>
       <Footer />
     </Box>

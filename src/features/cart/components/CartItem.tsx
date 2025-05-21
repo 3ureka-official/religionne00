@@ -2,6 +2,7 @@
 
 import { Box, Typography, IconButton } from '@mui/material'
 import Image from 'next/image'
+import Link from 'next/link'
 import { CartItem as CartItemType, useCart } from './CartContext'
 import CancelIcon from '@mui/icons-material/Cancel'
 import AddIcon from '@mui/icons-material/Add'
@@ -38,24 +39,52 @@ const CartItem = ({ item }: CartItemProps) => {
 
   return (
     <Box sx={{ display: 'flex', my: 2, position: 'relative', borderBottom: '1px solid rgba(0, 0, 0, 0.1)', pb: 2 }}>
-      {/* 商品画像 */}
-      <Box sx={{ width: { xs: 80, sm: 100 }, height: { xs: 80, sm: 100 }, position: 'relative', bgcolor: '#D9D9D9', border: '1px solid rgba(128, 128, 128, 0.35)' }}>
-        <Box sx={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      {/* 商品画像 (クリッカブル) */}
+      <Link href={`/product/${item.id}`} style={{ textDecoration: 'none' }}>
+        <Box 
+          sx={{ 
+            width: { xs: 80, sm: 100 }, 
+            height: { xs: 80, sm: 100 }, 
+            position: 'relative', 
+            bgcolor: '#FFFFFF', 
+            border: '1px solid rgba(128, 128, 128, 0.35)',
+            cursor: 'pointer',
+            transition: 'opacity 0.2s',
+            '&:hover': {
+              opacity: 0.85
+            }
+          }}
+        >
           <Image
             src={item.image}
             alt={item.name}
-            width={35}
-            height={35}
-            style={{ opacity: 0.7 }}
+            fill
+            sizes="(max-width: 768px) 80px, 100px"
+            style={{ 
+              objectFit: 'cover',
+              objectPosition: 'center',
+            }}
           />
         </Box>
-      </Box>
+      </Link>
 
       {/* 商品情報 */}
       <Box sx={{ flex: 1, ml: 2, pr: 5 }}>
-        <Typography sx={{ fontSize: { xs: '14px', sm: '14px' }, fontWeight: 500 }}>
-          {item.name}
-        </Typography>
+        {/* 商品名 (クリッカブル) */}
+        <Link href={`/product/${item.id}`} style={{ textDecoration: 'none', color: 'inherit' }}>
+          <Typography 
+            sx={{ 
+              fontSize: { xs: '14px', sm: '14px' }, 
+              fontWeight: 500,
+              cursor: 'pointer',
+              '&:hover': {
+                textDecoration: 'underline'
+              }
+            }}
+          >
+            {item.name}
+          </Typography>
+        </Link>
         
         {item.size && (
           <Typography sx={{ fontSize: { xs: '12px', sm: '12px' }, mb: 1 }}>

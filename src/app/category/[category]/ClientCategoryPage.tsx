@@ -27,7 +27,7 @@ export default function ClientCategoryPage({
           minHeight: '100vh',
           display: 'flex',
           flexDirection: 'column',
-          bgcolor: '#F8F9FA',
+          bgcolor: '#FFFFFF',
         }}
       >
         <Header />
@@ -51,7 +51,7 @@ export default function ClientCategoryPage({
               <Link href="/category" passHref style={{ color: 'inherit', textDecoration: 'none' }}>
                 store
               </Link>
-              <Typography color="text.primary" sx={{ fontSize: 'inherit' }}>
+              <Typography color="text.primary" sx={{ fontSize: 'inherit', fontWeight: 'bold' }}>
                 {displayCategory}
               </Typography>
             </Breadcrumbs>
@@ -61,7 +61,7 @@ export default function ClientCategoryPage({
           <Typography
             variant="h1"
             sx={{
-              fontSize: { xs: '20px', sm: '24px' },
+              fontSize: { xs: '18px', sm: '20px' },
               fontWeight: 'normal',
               mb: { xs: 2, sm: 3 },
               textAlign: 'center',
@@ -73,27 +73,29 @@ export default function ClientCategoryPage({
           {/* 説明文 */}
           <Typography
             sx={{
-              fontSize: { xs: '12px', sm: '14px' },
+              fontSize: { xs: '14px', sm: '16px' },
               mb: { xs: 3, sm: 4 },
               textAlign: 'center',
               maxWidth: '700px',
               mx: 'auto',
+              lineHeight: 1.6,
             }}
           >
             {categoryDescription}
           </Typography>
 
-          {/* 商品グリッド */}
-          <Box sx={{ display: 'flex', flexWrap: 'wrap', mx: -2 }}>
+          {/* 商品グリッド - FeatureSectionと同様のスタイリングに修正 */}
+          <Box sx={{ 
+            display: 'grid', 
+            gridTemplateColumns: { xs: 'repeat(3, minmax(0, 1fr))', lg: 'repeat(4, 1fr)' },
+            gap: { xs: '1rem 0.3rem', sm: '2rem 1rem' },
+            mb: { xs: 4, sm: 6 },
+            width: '100%',
+            mx: 'auto',
+            px: { xs: '0.1rem', sm: 0 }
+          }}>
             {products.map((product) => (
-              <Box
-                key={product.id}
-                sx={{
-                  width: { xs: '50%', md: '33.333%' },
-                  px: 2,
-                  mb: { xs: 2, sm: 3 },
-                }}
-              >
+              <Box key={product.id}>
                 <ProductCard product={product} />
               </Box>
             ))}

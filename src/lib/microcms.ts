@@ -1,5 +1,5 @@
 import { createClient, MicroCMSImage } from "microcms-js-sdk";
-import { env } from "process";
+import { JSX } from "react";
 
 export type MicroCMSSNS = {
   service: string;
@@ -17,9 +17,11 @@ export type MicroCMSSettings = {
   shoppingGuide: string;
   contact: string;
   brandImages: MicroCMSImage[],
-  carouselImages: MicroCMSImage[]
-  pickUpProduct: MicroCMSProduct;
-  sns: MicroCMSSNS[];
+  carouselImages: MicroCMSImage[],
+  sns: MicroCMSSNS[],
+  NationwideFee: number,
+  islandFee: number,
+  FreeLowerLimit: number;
 };
 
 export type MicroCMSSize = {
@@ -35,6 +37,7 @@ export type MicroCMSCategory = {
   publishedAt: string;
   revisedAt: string;
   category: string;
+  image: MicroCMSImage;
 };
 
 export type MicroCMSProduct = {
@@ -52,8 +55,8 @@ export type MicroCMSProduct = {
 };
 
 export const microcms = createClient({
-  serviceDomain: env.MICROCMS_SERVICE_DOMAIN ?? '',
-  apiKey: env.MICROCMS_API_KEY ?? '',
+  serviceDomain: process.env.NEXT_PUBLIC_MICROCMS_SERVICE_DOMAIN ?? '',
+  apiKey: process.env.NEXT_PUBLIC_MICROCMS_API_KEY ?? '',
 });
 
 export const fetchSettings = async (): Promise<MicroCMSSettings> => {
@@ -64,10 +67,10 @@ export const fetchSettings = async (): Promise<MicroCMSSettings> => {
 };
 
 export const fetchProducts = async (): Promise<MicroCMSProduct[]> => {
-  const data = await microcms.getList<MicroCMSProduct>({
+  const data = await microcms.getAllContents<MicroCMSProduct>({
     endpoint: 'products',
   });
-  return data.contents;
+  return data;
 };
 
 export const fetchProductById = async (id: string): Promise<MicroCMSProduct> => {
@@ -88,6 +91,17 @@ export const fetchProductsByCategory = async (categoryId: string): Promise<Micro
   const data = await microcms.getList<MicroCMSProduct>({
     endpoint: 'products',
     queries: { filters: `category[equals]${categoryId}` },
+  });
+  return data.contents;
+};
+
+export const searchProducts = async (keyword: string): Promise<MicroCMSProduct[]> => {
+  const data = await microcms.getList<MicroCMSProduct>({
+    endpoint: 'products',
+    queries: { 
+      q: keyword,
+      limit: 20
+    },
   });
   return data.contents;
 };

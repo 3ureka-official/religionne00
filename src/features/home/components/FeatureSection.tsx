@@ -2,16 +2,21 @@
 
 import { Box, Typography, useMediaQuery, useTheme, Modal } from '@mui/material'
 import ProductCard from './ProductCard'
-import { useState } from 'react'
-import { MicroCMSProduct } from '@/lib/microcms';
+import { useState, useEffect } from 'react'
+import { MicroCMSProduct, MicroCMSSettings } from '@/lib/microcms';
+import { useRouter } from 'next/navigation';
+import HomeHero from './HomeHero';
 
 // カテゴリーモーダル
 interface CategoryModalProps {
   open: boolean;
   onClose: () => void;
+  onSelect: (category: string) => void;
 }
 
-const CategoryModal = ({ open, onClose }: CategoryModalProps) => {
+const CategoryModal = ({ open, onClose, onSelect }: CategoryModalProps) => {
+  const theme = useTheme()
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'))
   const categories = ['Category', 'Original', 'Tops', 'Bottoms', 'Jackets', 'Coat', 'Others']
 
   return (
@@ -30,7 +35,7 @@ const CategoryModal = ({ open, onClose }: CategoryModalProps) => {
         bgcolor: 'white',
         border: '1px solid rgba(0, 0, 0, 0.3)',
         boxShadow: 24,
-        p: 4,
+        p: isMobile ? 3 : 4,
       }}>
         {categories.map((category, index) => (
           <Box
@@ -42,6 +47,7 @@ const CategoryModal = ({ open, onClose }: CategoryModalProps) => {
               fontWeight: index === 0 ? 'bold' : 'normal',
               '&:hover': index === 0 ? {} : { opacity: 0.7 }
             }}
+            onClick={index === 0 ? undefined : () => onSelect(category)}
           >
             <Typography
               sx={{
@@ -59,46 +65,122 @@ const CategoryModal = ({ open, onClose }: CategoryModalProps) => {
 
 // カテゴリーセレクター
 interface CategorySelectorProps {
-  onCategoryClick: () => void;
+  onCategoryClick: (category: string) => void;
+  selectedCategory: string;
 }
 
-const CategorySelector = ({ onCategoryClick }: CategorySelectorProps) => {
+const CategorySelector = ({ onCategoryClick, selectedCategory }: CategorySelectorProps) => {
+  const theme = useTheme()
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'))
   const categories = ['Original', 'Tops', 'Bottoms', 'Jackets', 'Coat', 'Others']
 
   return (
     <Box
       sx={{
         display: 'flex',
-        justifyContent: 'space-between',
-        mb: { xs: 2, sm: 4 },
-        flexWrap: 'wrap',
-        gap: { xs: 1, sm: 0 }
+        justifyContent: { xs: 'space-between', sm: 'space-between' },
+        mb: { xs: 4, sm: 6 },
+        flexWrap: { xs: 'nowrap', sm: 'wrap' },
+        gap: { xs: 1, sm: 0 },
+        pb: 2,
+        borderBottom: '1px solid rgba(0, 0, 0, 0.12)',
+        overflowX: { xs: 'auto', sm: 'visible' },
+        '&::-webkit-scrollbar': {
+          display: 'none'
+        },
+        scrollbarWidth: 'none',
+        msOverflowStyle: 'none'
       }}
     >
       {categories.map((category, index) => (
-        <Typography
+        <Box
           key={index}
           sx={{
-            fontSize: { xs: '12px', sm: '14px' },
-            fontWeight: index === 0 ? 'bold' : 'normal',
-            color: 'black',
-            cursor: 'pointer',
-            '&:hover': { opacity: 0.7 }
+            position: 'relative',
+            pb: 1,
+            flexShrink: 0,
+            marginRight: { xs: index === categories.length - 1 ? 1 : 0, sm: 0 },
+            '&::after': {
+              content: '""',
+              position: 'absolute',
+              bottom: 0,
+              left: 0,
+              width: '100%',
+              height: '2px',
+              backgroundColor: 'black',
+              opacity: category === selectedCategory ? 1 : 0,
+              transition: 'opacity 0.3s ease'
+            }
           }}
-          onClick={onCategoryClick}
         >
-          {category}
-        </Typography>
+          <Typography
+            sx={{
+              fontSize: { xs: '12px', sm: '16px' },
+              fontWeight: category === selectedCategory ? 'bold' : 'normal',
+              color: 'black',
+              cursor: 'pointer',
+              whiteSpace: 'nowrap',
+              '&:hover': { opacity: 0.7 }
+            }}
+            onClick={() => onCategoryClick(category)}
+          >
+            {category}
+          </Typography>
+        </Box>
       ))}
     </Box>
   )
 }
 
 // ページネーション
-const Pagination = () => {
+interface PaginationProps {
+  totalItems: number;
+  itemsPerPage: number;
+  onPageChange: (page: number) => void;
+  currentPage: number;
+}
+
+const Pagination = ({ totalItems, itemsPerPage, onPageChange, currentPage }: PaginationProps) => {
   const theme = useTheme()
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'))
-  const pages = [1, 2, 3, 4, 5]
+  const totalPages = Math.ceil(totalItems / itemsPerPage)
+  const router = useRouter()
+  
+  const scrollToTop = () => {
+    window.scrollTo({
+      top: 0,
+      behavior: 'auto'
+    });
+  };
+  
+  const handlePageChange = (page: number) => {
+    if (page >= 1 && page <= totalPages) {
+      // まずページ変更を実行し、その後スクロール
+      onPageChange(page);
+      // スクロールはuseEffectで処理されるため不要
+    }
+  }
+  
+  const handlePrevious = () => {
+    if (currentPage > 1) {
+      const newPage = currentPage - 1;
+      // まずページ変更を実行し、その後スクロール
+      onPageChange(newPage);
+      // スクロールはuseEffectで処理されるため不要
+    }
+  }
+  
+  const handleNext = () => {
+    if (currentPage < totalPages) {
+      const newPage = currentPage + 1;
+      // まずページ変更を実行し、その後スクロール
+      onPageChange(newPage);
+      // スクロールはuseEffectで処理されるため不要
+    }
+  }
+
+  // ページが1ページしかない場合はページネーションを表示しない
+  if (totalPages <= 1) return null;
 
   return (
     <Box
@@ -106,7 +188,7 @@ const Pagination = () => {
         display: 'flex',
         justifyContent: 'center',
         alignItems: 'center',
-        gap: { xs: 1, sm: 2 },
+        gap: { xs: 2, sm: 3 },
         mt: { xs: 3, sm: 4 }
       }}
     >
@@ -115,41 +197,63 @@ const Pagination = () => {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          transform: 'rotate(-90deg)'
+          transform: 'rotate(-90deg)',
+          cursor: 'pointer'
         }}
+        onClick={handlePrevious}
       >
         <svg xmlns="http://www.w3.org/2000/svg" width={isMobile ? "16" : "20"} height={isMobile ? "16" : "20"} fill="#555555" viewBox="0 0 16 16">
           <path fillRule="evenodd" d="M8 15a.5.5 0 0 0 .5-.5V2.707l3.146 3.147a.5.5 0 0 0 .708-.708l-4-4a.5.5 0 0 0-.708 0l-4 4a.5.5 0 1 0 .708.708L7.5 2.707V14.5a.5.5 0 0 0 .5.5z" />
         </svg>
       </Box>
 
-      {pages.map((page, index) => (
-        <Box
-          key={index}
-          sx={{
-            width: isMobile ? 24 : 30,
-            height: isMobile ? 24 : 30,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            borderRadius: '50%',
-            bgcolor: index === 0 ? 'black' : 'transparent',
-            border: index === 0 ? 'none' : '1px solid black',
-            color: index === 0 ? 'white' : 'black',
-            fontSize: isMobile ? '10px' : '12px'
-          }}
-        >
-          {page}
-        </Box>
-      ))}
+      {[...Array(totalPages)].map((_, index) => {
+        const pageNumber = index + 1;
+        const isCurrentPage = pageNumber === currentPage;
+        
+        return (
+          <Box
+            key={index}
+            sx={{
+              position: 'relative',
+              padding: '2px 8px',
+              cursor: 'pointer',
+              '&::after': {
+                content: '""',
+                position: 'absolute',
+                bottom: -4,
+                left: 0,
+                width: '100%',
+                height: '2px',
+                backgroundColor: 'black',
+                opacity: isCurrentPage ? 1 : 0,
+                transition: 'opacity 0.3s ease'
+              }
+            }}
+            onClick={() => handlePageChange(pageNumber)}
+          >
+            <Typography
+              sx={{
+                fontSize: { xs: 12, sm: 14 },
+                fontWeight: isCurrentPage ? 'bold' : 'normal',
+                color: 'black'
+              }}
+            >
+              {pageNumber}
+            </Typography>
+          </Box>
+        );
+      })}
 
       <Box
         sx={{
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          transform: 'rotate(90deg)'
+          transform: 'rotate(90deg)',
+          cursor: 'pointer'
         }}
+        onClick={handleNext}
       >
         <svg xmlns="http://www.w3.org/2000/svg" width={isMobile ? "16" : "20"} height={isMobile ? "16" : "20"} fill="#555555" viewBox="0 0 16 16">
           <path fillRule="evenodd" d="M8 15a.5.5 0 0 0 .5-.5V2.707l3.146 3.147a.5.5 0 0 0 .708-.708l-4-4a.5.5 0 0 0-.708 0l-4 4a.5.5 0 1 0 .708.708L7.5 2.707V14.5a.5.5 0 0 0 .5.5z" />
@@ -159,48 +263,175 @@ const Pagination = () => {
   )
 }
 
-const FeatureSection = ({ products, pickUpProduct }: { products: MicroCMSProduct[], pickUpProduct: MicroCMSProduct }) => {
+interface FeatureSectionProps {
+  products: MicroCMSProduct[];
+  settings: MicroCMSSettings;
+  pickUpProduct: MicroCMSProduct | null;
+  sideProducts?: MicroCMSProduct[];
+  initialPage?: number; // 初期ページ番号（オプション）
+}
+
+const FeatureSection = ({ products, settings, pickUpProduct, sideProducts = [], initialPage = 1 }: FeatureSectionProps) => {
   const theme = useTheme()
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'))
   const [categoryModalOpen, setCategoryModalOpen] = useState(false)
-
-  const handleCategoryClick = () => {
-    setCategoryModalOpen(true)
+  const [selectedCategory, setSelectedCategory] = useState('Original')
+  const [currentPage, setCurrentPage] = useState(initialPage) // 初期ページを設定
+  const router = useRouter()
+  
+  // スクロールトップ関数
+  const scrollToTop = () => {
+    window.scrollTo({
+      top: 0,
+      behavior: 'auto'
+    });
+  };
+  
+  // ページが変わったときにスクロールトップ
+  useEffect(() => {
+      scrollToTop();
+  }, [currentPage]);
+  
+  // ピックアップ商品があるかどうか確認
+  const hasPickUpProduct = !!pickUpProduct?.id
+  
+  // PCでは4x4=16枚、ピックアップがある場合は15枚(ピックアップ+残り14枚)
+  // モバイルでは3列で表示
+  const ITEMS_PER_PAGE = hasPickUpProduct ? 15 : 16
+  
+  const handleCategoryClick = (category: string) => {
+    setSelectedCategory(category)
+    setCurrentPage(1) // カテゴリー変更時にページを1に戻す
+    scrollToTop()
   }
 
   const handleCloseModal = () => {
     setCategoryModalOpen(false)
   }
 
+  const handleCategorySelect = (category: string) => {
+    setSelectedCategory(category)
+    setCategoryModalOpen(false)
+    setCurrentPage(1) // カテゴリー変更時にページを1に戻す
+    scrollToTop()
+  }
+  
+  // カテゴリーでフィルタリングした商品リスト
+  const filteredProducts = selectedCategory === 'Original' 
+    ? products.filter(product => !hasPickUpProduct || product.id !== pickUpProduct?.id) 
+    : products.filter(product => product.category?.category === selectedCategory && 
+        (!hasPickUpProduct || product.id !== pickUpProduct?.id));
+  
+  // 現在のページに表示する商品
+  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+  const endIndex = Math.min(startIndex + ITEMS_PER_PAGE, filteredProducts.length);
+  const currentPageProducts = filteredProducts.slice(startIndex, endIndex);
+  
+  // ピックアップ商品とサイド商品の表示（1ページ目かつピックアップがある場合）
+  const displayPickUpAndSide = currentPage === 1 && hasPickUpProduct;
+  
+  // 通常商品の表示開始インデックス
+  // ピックアップ商品がある場合、最初の2つはサイド商品として表示されるため、
+  // 3番目（インデックス2）から通常グリッドに表示
+  const gridStartIndex = displayPickUpAndSide ? 2 : 0;
+
   return (
     <Box>
-      {/* カテゴリーセレクター */}
-      <CategorySelector onCategoryClick={handleCategoryClick} />
+      {/* ホームヒーロー */}
+      {currentPage === 1 && (
+        <HomeHero carouselImages={settings.carouselImages} />
+      )}
 
-      {/* ピックアップ商品 */}
-      <Box sx={{ mb: { xs: 3, sm: 6 } }}>
-        <ProductCard featured={true} product={pickUpProduct} />
-      </Box>
-
-      {/* 商品グリッド */}
-      <Box sx={{ display: 'flex', flexWrap: 'wrap', mx: isMobile ? -0.5 : -1 }}>
-        {products.map((product, index) => (
-          <Box key={index} sx={{ width: { xs: '33.333%', sm: '33.333%', md: '33.333%' }, p: isMobile ? 0.5 : 1 }}>
-            <ProductCard product={product} />
-          </Box>
-        ))}
+      {/* メインコンテンツエリア */}
+      <Box sx={{ 
+        display: 'grid', 
+        gridTemplateColumns: { xs: 'repeat(3, minmax(0, 1fr))', lg: 'repeat(4, 1fr)' },
+        gap: { xs: '1rem 0.3rem', sm: '2rem 1rem' },
+        mb: { xs: 4, sm: 6 },
+        width: '100%',
+        mx: 'auto',
+        px: { xs: '0.1rem', sm: 0 }
+      }}>
+        {/* 1ページ目かつピックアップ商品がある場合 */}
+        {currentPage === 1 && hasPickUpProduct && pickUpProduct && (
+          <>
+            {/* ピックアップ商品 (2列分) */}
+            <Box sx={{ 
+              gridColumn: 'span 2', 
+              gridRow: '1',
+              pr: { xs: 0.5, sm: 0 }
+            }}>
+              <ProductCard featured={true} product={pickUpProduct} />
+            </Box>
+            
+            {/* サイド商品 (1列に2つ積み重ね) */}
+            <Box sx={{
+              display: 'flex',
+              flexDirection: 'column',
+              gridColumn: 'span 1',
+              gridRow: '1',
+              gap: { xs: '1rem', sm: '2rem' },
+              height: '100%',
+              pl: { xs: 0.5, sm: 0 }
+            }}>
+              {currentPageProducts.slice(0, 2).map((product, index) => (
+                <Box key={index} sx={{ flex: 1 }}>
+                  <ProductCard product={product} />
+                </Box>
+              ))}
+            </Box>
+            
+            {/* 4列目（PCのみ） - 1列に2つ積み重ね */}
+            <Box sx={{
+              display: { xs: 'none', lg: 'flex' },
+              flexDirection: 'column',
+              gridColumn: 'span 1',
+              gridRow: '1',
+              gap: { sm: '2rem' },
+              height: '100%'
+            }}>
+              {currentPageProducts.slice(2, 4).map((product, index) => (
+                <Box key={`col4-${index}`} sx={{ flex: 1 }}>
+                  <ProductCard product={product} />
+                </Box>
+              ))}
+            </Box>
+            
+            {/* 2行目以降の商品 */}
+            {currentPageProducts.slice(4).map((product, index) => (
+              <Box key={`grid-${index}`}>
+                <ProductCard product={product} />
+              </Box>
+            ))}
+          </>
+        )}
+        
+        {/* ピックアップ商品がない場合または2ページ目以降 */}
+        {(currentPage !== 1 || !hasPickUpProduct || !pickUpProduct) && (
+          currentPageProducts.map((product, index) => (
+            <Box key={index}>
+              <ProductCard product={product} />
+            </Box>
+          ))
+        )}
       </Box>
 
       {/* ページネーション */}
-      <Pagination />
+      <Pagination 
+        totalItems={filteredProducts.length} 
+        itemsPerPage={ITEMS_PER_PAGE} 
+        currentPage={currentPage} 
+        onPageChange={setCurrentPage} 
+      />
 
       {/* カテゴリーモーダル */}
       <CategoryModal
         open={categoryModalOpen}
         onClose={handleCloseModal}
+        onSelect={handleCategorySelect}
       />
     </Box>
   )
 }
 
-export default FeatureSection
+export default FeatureSection 

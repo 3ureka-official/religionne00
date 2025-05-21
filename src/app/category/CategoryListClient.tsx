@@ -6,10 +6,12 @@ import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { ThemeProvider } from '@mui/material/styles';
 import theme from '@/styles/theme';
+import { MicroCMSImage } from "microcms-js-sdk";
 
 interface Category {
   id: string;
   category: string;
+  image: MicroCMSImage;
 }
 
 interface CategoryListClientProps {
@@ -24,7 +26,7 @@ export default function CategoryListClient({ categories }: CategoryListClientPro
           minHeight: '100vh',
           display: 'flex',
           flexDirection: 'column',
-          bgcolor: '#F8F9FA',
+          bgcolor: '#FFFFFF',
         }}
       >
         <Header />
@@ -45,7 +47,7 @@ export default function CategoryListClient({ categories }: CategoryListClientPro
               <Link href="/" passHref style={{ color: 'inherit', textDecoration: 'none' }}>
                 home
               </Link>
-              <Typography color="text.primary" sx={{ fontSize: 'inherit' }}>
+              <Typography color="text.primary" sx={{ fontSize: 'inherit', fontWeight: 500 }}>
                 store
               </Typography>
             </Breadcrumbs>
@@ -118,18 +120,32 @@ export default function CategoryListClient({ categories }: CategoryListClientPro
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'center',
+                          backgroundImage: `url(${category.image.url})`,
+                          backgroundSize: 'cover',
+                          backgroundPosition: 'center',
+                          opacity: 0.5
                         }}
-                      >
-                        <Typography
+                      />
+                      <Typography
                           sx={{
-                            fontSize: { xs: '16px', sm: '20px' },
-                            fontWeight: 'normal',
-                            opacity: 0.8,
+                            position: 'absolute',
+                            top: 0,
+                            left: 0,
+                            right: 0,
+                            bottom: 0,
+                            padding: '20px',
+                            backgroundColor: 'rgba(0, 0, 0, 0.7)',
+                            color: 'white',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            textAlign: 'center',
+                            fontSize: { xs: '26px', sm: '34px' },
+                            fontWeight: 'bold',
                           }}
                         >
                           {category.category}
                         </Typography>
-                      </Box>
                     </Box>
                     <CardContent sx={{ p: { xs: 1.5, sm: 2 } }}>
                       <Typography

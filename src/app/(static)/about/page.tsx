@@ -2,24 +2,12 @@ import { Box, Container, Typography } from '@mui/material'
 import Header from '@/components/Header'
 import Footer from '@/components/Footer'
 import { fetchSettings } from '@/lib/microcms';
-import { ImageCarousel } from '@/components/carousel/carousel';
-import { MicroCMSImage } from 'microcms-js-sdk';
-import Image from 'next/image';
+import BrandCarousel from '@/components/BrandCarousel';
 
 export default async function About() {
   const settings = await fetchSettings();
   const brandImages = settings.brandImages;
 
-  const carouselContents = brandImages.map((image: MicroCMSImage, index: number) => (
-    <Image
-      src={image.url}
-      height={image.height}
-      width={image.width}
-      alt={image.alt ?? `${index + 1} 枚目のカルーセル`}
-      key={index}
-      className='h-[50vh] w-full object-cover'
-    />
-  ))
   return (
     <Box
       sx={{
@@ -30,17 +18,17 @@ export default async function About() {
       }}
     >
       <Header />
-      <Container maxWidth="lg" component="main" sx={{ flex: 1, py: 4 }}>
-        <Typography variant="h4" component="h1" gutterBottom sx={{
+      <Container maxWidth="lg" component="main" sx={{ flex: 1, py: 4, px: { xs: 0 } }}>
+        <Typography variant="h4" component="h1" sx={{
+          px: { xs: 2, sm: 0 },
           textAlign: 'center',
           mb: 4,
           fontWeight: 500
         }}>
           {'The "Religionne00" Brand'}
         </Typography>
-
-
-        <ImageCarousel contents={carouselContents} />
+         
+        <BrandCarousel brandImages={brandImages} />
       </Container>
       <Footer />
     </Box>
