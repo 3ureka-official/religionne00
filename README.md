@@ -2,7 +2,23 @@ This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-
 
 ## Getting Started
 
-First, run the development server:
+First, set up your environment variables:
+
+1. Create a `.env.local` file in the root directory
+2. Add the following Firebase configuration variables:
+
+```
+NEXT_PUBLIC_FIREBASE_API_KEY=YOUR_API_KEY
+NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=your-project-id.firebaseapp.com
+NEXT_PUBLIC_FIREBASE_PROJECT_ID=your-project-id
+NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=your-project-id.appspot.com
+NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=YOUR_MESSAGING_SENDER_ID
+NEXT_PUBLIC_FIREBASE_APP_ID=YOUR_APP_ID
+```
+
+3. Replace the placeholder values with your actual Firebase project details
+
+Then, run the development server:
 
 ```bash
 npm run dev
