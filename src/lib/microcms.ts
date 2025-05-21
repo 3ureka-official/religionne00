@@ -1,5 +1,4 @@
 import { createClient, MicroCMSImage } from "microcms-js-sdk";
-import { JSX } from "react";
 
 export type MicroCMSSNS = {
   service: string;
