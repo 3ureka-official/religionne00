@@ -17,6 +17,13 @@ import { ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage
 import { db, storage } from './config';
 import { createStripeProductWithPrice } from '@/services/stripeService';
 
+// FirebaseのTimestamp型を定義（これはインポートする代わりに簡易的に定義）
+interface FirebaseTimestamp {
+  toDate: () => Date;
+  seconds: number;
+  nanoseconds: number;
+}
+
 // 商品の型定義
 export interface Product {
   id?: string;
@@ -25,8 +32,8 @@ export interface Product {
   price: number | string;
   category: string;
   images: string[];
-  createdAt?: any;
-  updatedAt?: any;
+  createdAt?: Date | null | FirebaseTimestamp;
+  updatedAt?: Date | null | FirebaseTimestamp;
   isPublished: boolean;
   isRecommended?: boolean; // おすすめ商品かどうか
   condition?: string;
@@ -55,10 +62,10 @@ export interface SoldProduct {
   customerEmail: string;
   status: SoldProductStatus;
   orderId: string;
-  orderDate: any;
-  shippedDate?: any;
-  createdAt?: any;
-  updatedAt?: any;
+  orderDate: Date | null | FirebaseTimestamp;
+  shippedDate?: Date | null | FirebaseTimestamp;
+  createdAt?: Date | null | FirebaseTimestamp;
+  updatedAt?: Date | null | FirebaseTimestamp;
 }
 
 // サイズごとの在庫情報
@@ -443,7 +450,11 @@ export const updateSoldProductStatus = async (id: string, status: SoldProductSta
   try {
     const docRef = doc(db, SOLD_PRODUCTS_COLLECTION, id);
     
-    const updateData: any = { 
+    const updateData: {
+      status: SoldProductStatus;
+      updatedAt: ReturnType<typeof serverTimestamp>;
+      shippedDate?: ReturnType<typeof serverTimestamp>;
+    } = { 
       status,
       updatedAt: serverTimestamp()
     };

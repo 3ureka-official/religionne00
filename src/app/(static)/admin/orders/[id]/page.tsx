@@ -233,7 +233,7 @@ export default function OrderDetailPage() {
       {/* 注文情報エリア */}
       <Grid container spacing={3}>
         {/* 左側：顧客情報と注文概要 */}
-        <Grid item xs={12} md={4}>
+        <Grid xs={12} md={4}>
           {/* 顧客情報 */}
           <Paper sx={{ p: 3, mb: 3, borderRadius: 0, border: '1px solid #e0e0e0' }}>
             <Typography variant="h6" sx={{ mb: 2, fontWeight: 'medium' }}>

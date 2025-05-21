@@ -31,7 +31,7 @@ interface ProductCategory {
 
 interface ProductDetailClientProps {
   product: {
-    id: string;
+    id: string | undefined;
     name: string;
     stripe_price_id: string;
     images: ProductImage[];
@@ -90,7 +90,7 @@ export default function ProductDetailClient({ product, relatedProducts = [] }: P
     }
 
     addItem({
-      id: product.id,
+      id: product.id ?? '',
       name: product.name,
       price: product.stripe_price_id,
       image: product.images[0].src,
