@@ -3,8 +3,23 @@ import ClientCategoryPage from './ClientCategoryPage';
 import { getProductsByCategory } from '@/firebase/productService';
 import { convertToMicroCMSFormat } from '@/lib/adapters';
 
-export default async function CategoryPage({ params }: { params: { category: string } }) {
-  const categoryId = params.category;
+// 同期的なカテゴリの静的パラメータ生成
+// export async function generateMetadata({ params }: PageProps) {
+//   const categoryId = params.category;
+//   return {
+//     title: `${categoryId} | カテゴリ`,
+//   };
+// }
+
+// export async function generateStaticParams() {
+//   const categories = await fetchCategories();
+//   return categories.map((category) => ({
+//     category: category.id,
+//   }));
+// }
+
+export default async function CategoryPage({ params }: { params: Promise<{ category: string }> }) {
+  const categoryId = (await params).category;
 
   // カテゴリ一覧を取得してカテゴリ名を取得
   const categories = await fetchCategories();

@@ -1,10 +1,17 @@
 import ProductDetailClient from './ProductDetailClient';
 import { getProduct, getProductsByCategory } from '@/firebase/productService';
 import { convertToProductDetailFormat, convertToMicroCMSFormat } from '@/lib/adapters';
+import { notFound } from 'next/navigation';
 
-export default async function Page({ params }: { params: { id: string } }) {
+export default async function Page({ params }: { params: Promise<{ id: string }> }) {
+  const id = (await params).id;
   // Firebaseから商品詳細を取得
-  const firebaseProduct = await getProduct(params.id);
+  const firebaseProduct = await getProduct(id);
+  
+  // 商品が見つからない場合は404ページを表示
+  if (!firebaseProduct) {
+    notFound();
+  }
   
   // 商品詳細用のフォーマットに変換
   const transformedProduct = convertToProductDetailFormat(firebaseProduct);

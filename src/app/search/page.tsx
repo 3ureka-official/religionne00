@@ -4,7 +4,7 @@ import SearchResults from './SearchResults';
 export default async function SearchPage({
   searchParams,
 }: {
-  searchParams: { q: string };
+  searchParams: Promise<{ q: string }>;
 }) {
   // searchParamsをawaitする
   const resolvedParams = await Promise.resolve(searchParams);

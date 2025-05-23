@@ -2,7 +2,6 @@ import { Box, Container } from '@mui/material'
 import ThemeProviderWrapper from '@/components/ThemeProviderWrapper'
 import Header from '@/components/Header'
 import Footer from '@/components/Footer'
-import HomeHero from '@/features/home/components/HomeHero'
 import FeatureSection from '@/features/home/components/FeatureSection'
 import { fetchSettings } from '@/lib/microcms'
 import { getAllProducts } from '@/firebase/productService'
@@ -21,8 +20,6 @@ export default async function Home() {
   const recommendedProduct = firebaseProducts.find(product => product.isRecommended === true)
   const pickUpProduct = recommendedProduct ? convertToMicroCMSFormat(recommendedProduct) : null
   
-  // ピックアップ商品があるかどうかの判定
-  const hasPickUpProduct = !!pickUpProduct
 
   return (
     <ThemeProviderWrapper>

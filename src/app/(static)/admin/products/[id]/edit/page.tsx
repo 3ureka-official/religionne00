@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react'
 import { useRouter, useParams } from 'next/navigation'
-import { Box, Typography, Button, TextField, FormControl, Select, MenuItem, Chip, Divider, IconButton, CircularProgress, Alert } from '@mui/material'
+import { Box, Typography, Button, TextField, FormControl, Select, MenuItem, Divider, IconButton, CircularProgress, Alert } from '@mui/material'
 import ArrowBackIcon from '@mui/icons-material/ArrowBack'
 import AddPhotoAlternateIcon from '@mui/icons-material/AddPhotoAlternate'
 import CloseIcon from '@mui/icons-material/Close'
@@ -13,7 +13,6 @@ import { MicroCMSCategory } from '@/lib/microcms'
 
 // サイズごとの在庫を管理するインターフェース
 interface SizeInventory {
-  id: string;
   size: string;
   stock: string | number;
 }
@@ -30,7 +29,7 @@ export default function EditProductPage() {
   
   // サイズごとの在庫管理
   const [sizeInventories, setSizeInventories] = useState<SizeInventory[]>([
-    { id: '1', size: '', stock: '' }
+    { size: '', stock: '' }
   ])
   
   // フォームの状態
@@ -38,10 +37,9 @@ export default function EditProductPage() {
     id: '',
     name: '',
     description: '',
-    price: '',
+    price: 0,
     category: '',
     images: [],
-    stock: '',
     isPublished: false
   })
   
@@ -53,7 +51,6 @@ export default function EditProductPage() {
   const [uploadingImages, setUploadingImages] = useState<File[]>([])
   const [imagesPreviews, setImagesPreviews] = useState<string[]>([])
   const [imagesToDelete, setImagesToDelete] = useState<string[]>([])
-  const [uploadProgress, setUploadProgress] = useState(0)
   
   // カテゴリーデータの取得
   useEffect(() => {
@@ -81,6 +78,11 @@ export default function EditProductPage() {
         setLoading(true)
         const product = await getProduct(productId)
         
+        if (!product) {
+          setError('商品が見つかりません')
+          return
+        }
+        
         // 商品データをセット
         setFormData(product)
         
@@ -91,8 +93,7 @@ export default function EditProductPage() {
         
         // サイズ在庫情報を設定
         if (product.sizeInventories && product.sizeInventories.length > 0) {
-          const inventories = product.sizeInventories.map((item: any, index: number) => ({
-            id: item.id || String(index + 1),
+          const inventories = product.sizeInventories.map((item) => ({
             size: item.size,
             stock: item.stock
           }));
@@ -119,15 +120,15 @@ export default function EditProductPage() {
   }
   
   // セレクトボックスの変更ハンドラ
-  const handleSelectChange = (e: React.ChangeEvent<HTMLInputElement> | any) => {
+  const handleSelectChange = (e: React.ChangeEvent<Omit<HTMLInputElement, "value"> & { value: string; }> | (Event & { target: { value: string; name: string; }; })) => {
     setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }))
   }
   
   // サイズと在庫の変更ハンドラ
   const handleInventoryChange = (id: string, field: 'size' | 'stock', value: string | number) => {
     setSizeInventories(prev => 
-      prev.map(item => 
-        item.id === id 
+      prev.map((item, index) => 
+        index === Number(id) 
           ? { ...item, [field]: value } 
           : item
       )
@@ -143,7 +144,7 @@ export default function EditProductPage() {
   // サイズと在庫の削除
   const handleRemoveInventory = (id: string) => {
     if (sizeInventories.length > 1) {
-      setSizeInventories(prev => prev.filter(item => item.id !== id))
+      setSizeInventories(prev => prev.filter((item, index) => index !== Number(id)))
     }
   }
   
@@ -198,11 +199,6 @@ export default function EditProductPage() {
       setSaving(true)
       setError(null)
       
-      // 総在庫数の計算
-      const totalStock = sizeInventories
-        .filter(item => item.size !== '')
-        .reduce((sum, item) => sum + (Number(item.stock) || 0), 0)
-      
       // 既存の画像を削除
       for (const imageUrl of imagesToDelete) {
         try {
@@ -216,15 +212,11 @@ export default function EditProductPage() {
       const uploadedImageUrls: string[] = []
       
       if (uploadingImages.length > 0) {
-        let progress = 0
-        const increment = 100 / uploadingImages.length
         
         for (const file of uploadingImages) {
           const imageUrl = await uploadProductImage(file, productId)
           uploadedImageUrls.push(imageUrl)
           
-          progress += increment
-          setUploadProgress(Math.min(progress, 100))
         }
       }
       
@@ -236,7 +228,6 @@ export default function EditProductPage() {
         ...formData,
         price: Number(formData.price),
         images: updatedImages,
-        stock: totalStock,
         sizeInventories: sizeInventories
           .filter(item => item.size !== '')
           .map(item => ({
@@ -257,7 +248,6 @@ export default function EditProductPage() {
       setError('商品の更新に失敗しました')
     } finally {
       setSaving(false)
-      setUploadProgress(0)
     }
   }
   
@@ -584,7 +574,7 @@ export default function EditProductPage() {
           
           {sizeInventories.map((item, index) => (
             <Box 
-              key={item.id} 
+              key={index} 
               sx={{ 
                 display: 'flex', 
                 gap: 2, 
@@ -595,7 +585,7 @@ export default function EditProductPage() {
               <TextField
                 placeholder="サイズ"
                 value={item.size}
-                onChange={(e) => handleInventoryChange(item.id, 'size', e.target.value)}
+                onChange={(e) => handleInventoryChange(String(index), 'size', e.target.value)}
                 sx={{ 
                   flexBasis: '60%',
                   '& .MuiOutlinedInput-root': {
@@ -617,7 +607,7 @@ export default function EditProductPage() {
                 type="number"
                 placeholder="在庫数"
                 value={item.stock}
-                onChange={(e) => handleInventoryChange(item.id, 'stock', e.target.value)}
+                onChange={(e) => handleInventoryChange(String(index), 'stock', e.target.value)}
                 InputProps={{ inputProps: { min: 0 } }}
                 sx={{ 
                   flexBasis: '30%',
@@ -638,7 +628,7 @@ export default function EditProductPage() {
               />
               {sizeInventories.length > 1 && (
                 <IconButton 
-                  onClick={() => handleRemoveInventory(item.id)}
+                  onClick={() => handleRemoveInventory(String(index))}
                   sx={{ color: 'error.main' }}
                 >
                   <CloseIcon />

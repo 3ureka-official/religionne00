@@ -4,7 +4,6 @@ import { Box, Typography, useMediaQuery, useTheme, Modal } from '@mui/material'
 import ProductCard from './ProductCard'
 import { useState, useEffect } from 'react'
 import { MicroCMSProduct, MicroCMSSettings } from '@/lib/microcms';
-import { useRouter } from 'next/navigation';
 import HomeHero from './HomeHero';
 
 // カテゴリーモーダル
@@ -63,74 +62,74 @@ const CategoryModal = ({ open, onClose, onSelect }: CategoryModalProps) => {
   )
 }
 
-// カテゴリーセレクター
-interface CategorySelectorProps {
-  onCategoryClick: (category: string) => void;
-  selectedCategory: string;
-}
+// // カテゴリーセレクター
+// interface CategorySelectorProps {
+//   onCategoryClick: (category: string) => void;
+//   selectedCategory: string;
+// }
 
-const CategorySelector = ({ onCategoryClick, selectedCategory }: CategorySelectorProps) => {
-  const theme = useTheme()
-  const isMobile = useMediaQuery(theme.breakpoints.down('sm'))
-  const categories = ['Original', 'Tops', 'Bottoms', 'Jackets', 'Coat', 'Others']
+// const CategorySelector = ({ onCategoryClick, selectedCategory }: CategorySelectorProps) => {
+//   const theme = useTheme()
+//   const isMobile = useMediaQuery(theme.breakpoints.down('sm'))
+//   const categories = ['Original', 'Tops', 'Bottoms', 'Jackets', 'Coat', 'Others']
 
-  return (
-    <Box
-      sx={{
-        display: 'flex',
-        justifyContent: { xs: 'space-between', sm: 'space-between' },
-        mb: { xs: 4, sm: 6 },
-        flexWrap: { xs: 'nowrap', sm: 'wrap' },
-        gap: { xs: 1, sm: 0 },
-        pb: 2,
-        borderBottom: '1px solid rgba(0, 0, 0, 0.12)',
-        overflowX: { xs: 'auto', sm: 'visible' },
-        '&::-webkit-scrollbar': {
-          display: 'none'
-        },
-        scrollbarWidth: 'none',
-        msOverflowStyle: 'none'
-      }}
-    >
-      {categories.map((category, index) => (
-        <Box
-          key={index}
-          sx={{
-            position: 'relative',
-            pb: 1,
-            flexShrink: 0,
-            marginRight: { xs: index === categories.length - 1 ? 1 : 0, sm: 0 },
-            '&::after': {
-              content: '""',
-              position: 'absolute',
-              bottom: 0,
-              left: 0,
-              width: '100%',
-              height: '2px',
-              backgroundColor: 'black',
-              opacity: category === selectedCategory ? 1 : 0,
-              transition: 'opacity 0.3s ease'
-            }
-          }}
-        >
-          <Typography
-            sx={{
-              fontSize: { xs: '12px', sm: '16px' },
-              fontWeight: category === selectedCategory ? 'bold' : 'normal',
-              color: 'black',
-              cursor: 'pointer',
-              whiteSpace: 'nowrap',
-              '&:hover': { opacity: 0.7 }
-            }}
-            onClick={() => onCategoryClick(category)}
-          >
-            {category}
-          </Typography>
-        </Box>
-      ))}
-    </Box>
-  )
-}
+//   return (
+//     <Box
+//       sx={{
+//         display: 'flex',
+//         justifyContent: { xs: 'space-between', sm: 'space-between' },
+//         mb: { xs: 4, sm: 6 },
+//         flexWrap: { xs: 'nowrap', sm: 'wrap' },
+//         gap: { xs: 1, sm: 0 },
+//         pb: 2,
+//         borderBottom: '1px solid rgba(0, 0, 0, 0.12)',
+//         overflowX: { xs: 'auto', sm: 'visible' },
+//         '&::-webkit-scrollbar': {
+//           display: 'none'
+//         },
+//         scrollbarWidth: 'none',
+//         msOverflowStyle: 'none'
+//       }}
+//     >
+//       {categories.map((category, index) => (
+//         <Box
+//           key={index}
+//           sx={{
+//             position: 'relative',
+//             pb: 1,
+//             flexShrink: 0,
+//             marginRight: { xs: index === categories.length - 1 ? 1 : 0, sm: 0 },
+//             '&::after': {
+//               content: '""',
+//               position: 'absolute',
+//               bottom: 0,
+//               left: 0,
+//               width: '100%',
+//               height: '2px',
+//               backgroundColor: 'black',
+//               opacity: category === selectedCategory ? 1 : 0,
+//               transition: 'opacity 0.3s ease'
+//             }
+//           }}
+//         >
+//           <Typography
+//             sx={{
+//               fontSize: { xs: '12px', sm: '16px' },
+//               fontWeight: category === selectedCategory ? 'bold' : 'normal',
+//               color: 'black',
+//               cursor: 'pointer',
+//               whiteSpace: 'nowrap',
+//               '&:hover': { opacity: 0.7 }
+//             }}
+//             onClick={() => onCategoryClick(category)}
+//           >
+//             {category}
+//           </Typography>
+//         </Box>
+//       ))}
+//     </Box>
+//   )
+// }
 
 // ページネーション
 interface PaginationProps {
@@ -144,14 +143,6 @@ const Pagination = ({ totalItems, itemsPerPage, onPageChange, currentPage }: Pag
   const theme = useTheme()
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'))
   const totalPages = Math.ceil(totalItems / itemsPerPage)
-  const router = useRouter()
-  
-  const scrollToTop = () => {
-    window.scrollTo({
-      top: 0,
-      behavior: 'auto'
-    });
-  };
   
   const handlePageChange = (page: number) => {
     if (page >= 1 && page <= totalPages) {
@@ -267,17 +258,13 @@ interface FeatureSectionProps {
   products: MicroCMSProduct[];
   settings: MicroCMSSettings;
   pickUpProduct: MicroCMSProduct | null;
-  sideProducts?: MicroCMSProduct[];
   initialPage?: number; // 初期ページ番号（オプション）
 }
 
-const FeatureSection = ({ products, settings, pickUpProduct, sideProducts = [], initialPage = 1 }: FeatureSectionProps) => {
-  const theme = useTheme()
-  const isMobile = useMediaQuery(theme.breakpoints.down('sm'))
+const FeatureSection = ({ products, settings, pickUpProduct, initialPage = 1 }: FeatureSectionProps) => {
   const [categoryModalOpen, setCategoryModalOpen] = useState(false)
   const [selectedCategory, setSelectedCategory] = useState('Original')
   const [currentPage, setCurrentPage] = useState(initialPage) // 初期ページを設定
-  const router = useRouter()
   
   // スクロールトップ関数
   const scrollToTop = () => {
@@ -299,11 +286,11 @@ const FeatureSection = ({ products, settings, pickUpProduct, sideProducts = [], 
   // モバイルでは3列で表示
   const ITEMS_PER_PAGE = hasPickUpProduct ? 15 : 16
   
-  const handleCategoryClick = (category: string) => {
-    setSelectedCategory(category)
-    setCurrentPage(1) // カテゴリー変更時にページを1に戻す
-    scrollToTop()
-  }
+  // const handleCategoryClick = (category: string) => {
+  //   setSelectedCategory(category)
+  //   setCurrentPage(1) // カテゴリー変更時にページを1に戻す
+  //   scrollToTop()
+  // }
 
   const handleCloseModal = () => {
     setCategoryModalOpen(false)
@@ -327,13 +314,6 @@ const FeatureSection = ({ products, settings, pickUpProduct, sideProducts = [], 
   const endIndex = Math.min(startIndex + ITEMS_PER_PAGE, filteredProducts.length);
   const currentPageProducts = filteredProducts.slice(startIndex, endIndex);
   
-  // ピックアップ商品とサイド商品の表示（1ページ目かつピックアップがある場合）
-  const displayPickUpAndSide = currentPage === 1 && hasPickUpProduct;
-  
-  // 通常商品の表示開始インデックス
-  // ピックアップ商品がある場合、最初の2つはサイド商品として表示されるため、
-  // 3番目（インデックス2）から通常グリッドに表示
-  const gridStartIndex = displayPickUpAndSide ? 2 : 0;
 
   return (
     <Box>

@@ -1,120 +1,180 @@
 import { NextResponse } from 'next/server';
 import { createCheckoutSession } from '@/services/stripeService';
+import { addOrder, Order, OrderItem } from '@/firebase/orderService';
+import { Timestamp } from 'firebase/firestore';
 
-// メールアドレスのバリデーション関数
-const isValidEmail = (email: string): boolean => {
-  const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
-  return emailRegex.test(email);
+// 商品情報の型
+type Item = {
+  productId: string;
+  name: string;
+  description: string;
+  price: number;
+  quantity: number;
+  image: string;
+  size: string;
 }
 
-// 日本の電話番号バリデーション関数
-const isValidJapanesePhoneNumber = (phone: string): boolean => {
-  // 入力がない場合はfalseを返す
-  if (!phone) return false;
-  
-  // ハイフンなしでの入力が前提
-  // 数字のみであることを確認
-  if (!/^\d+$/.test(phone)) {
-    return false;
+// 顧客情報の型
+interface CustomerInfo {
+  name: string;
+  phone?: string;
+  postalCode: string;
+  address: string; // 分割前の住所
+  prefecture?: string;
+  city?: string;
+  line1?: string; // 分割後の住所1
+  line2?: string; // 分割後の住所2 (建物名など)
+  building?: string;
+}
+
+// 支払い方法の型
+interface PaymentMethodDetails {
+  paymentMethod: string; // 'cod', 'stripe_credit_card', 'stripe_paypay' など
+  total: number;
+}
+
+// リクエストボディの型
+interface CheckoutRequestBody {
+  items: Item[];
+  customerEmail: string;
+  shippingFee: number;
+  paymentMethod: PaymentMethodDetails;
+  customerInfo: CustomerInfo;
+}
+
+// 住所情報を分割・整形する関数
+const formatAddress = (customerInfo: CustomerInfo) => {
+  const addressParts = customerInfo.address.split(/[\\s、,]+/); // 全角・半角スペース、読点、コンマで分割
+  const prefecture = customerInfo.prefecture || addressParts[0] || '';
+  const city = customerInfo.city || addressParts[1] || '';
+  // 分割後の残りをline1とする。buildingがあればline2に。
+  const remainingAddressParts = addressParts.slice(2);
+  const line1 = customerInfo.line1 || remainingAddressParts.join(' ') || '';
+  const line2 = customerInfo.line2 || customerInfo.building || '';
+
+  return {
+    postalCode: customerInfo.postalCode || '',
+    prefecture,
+    city,
+    line1,
+    line2,
+  };
+};
+
+// Stripe用の支払い方法タイプを取得するヘルパー関数
+const getStripePaymentMethodType = (paymentMethodString: string): "credit" | "paypay" | undefined => {
+  if (paymentMethodString === 'stripe_credit_card') {
+    return 'credit';
   }
-  
-  // 先頭が0で、10桁または11桁であることを確認
-  return /^0\d{9,10}$/.test(phone);
-}
+  if (paymentMethodString === 'stripe_paypay') {
+    return 'paypay';
+  }
+  return undefined; // サポート外の場合は undefined
+};
 
 export async function POST(request: Request) {
   try {
-    const body = await request.json();
+    const body: CheckoutRequestBody = await request.json();
     const { items, customerEmail, shippingFee, paymentMethod, customerInfo } = body;
 
-    // バリデーション
-    if (!items || !Array.isArray(items) || items.length === 0) {
+    // paymentMethod と paymentMethod.paymentMethod の存在チェック
+    if (!paymentMethod || typeof paymentMethod.paymentMethod !== 'string') {
+      console.error('Invalid paymentMethod received:', paymentMethod);
       return NextResponse.json(
-        { error: '商品情報が正しくありません。' },
+        { error: '支払い方法情報が正しくありません。' },
         { status: 400 }
       );
     }
 
-    if (!customerEmail) {
-      return NextResponse.json(
-        { error: 'メールアドレスが必要です。' },
-        { status: 400 }
-      );
-    }
+    const formattedAddressInfo = formatAddress(customerInfo);
 
-    // メールアドレスのバリデーション
-    if (!isValidEmail(customerEmail)) {
-      return NextResponse.json(
-        { error: '有効なメールアドレスを入力してください。' },
-        { status: 400 }
-      );
-    }
-
-    if (paymentMethod !== 'credit' && paymentMethod !== 'paypay') {
-      return NextResponse.json(
-        { error: '支払い方法が正しくありません。' },
-        { status: 400 }
-      );
-    }
-
-    // 顧客情報のバリデーション
-    if (!customerInfo || !customerInfo.name || !customerInfo.postalCode || !customerInfo.address) {
-      return NextResponse.json(
-        { error: '顧客情報が不足しています。' },
-        { status: 400 }
-      );
-    }
-
-    // 電話番号のバリデーション（入力されている場合のみ）
-    if (customerInfo.phone && !isValidJapanesePhoneNumber(customerInfo.phone)) {
-      return NextResponse.json(
-        { error: '有効な日本の電話番号を入力してください。' },
-        { status: 400 }
-      );
-    }
-
-    // 配送先情報の構築
-    const addressParts = customerInfo.address.split(/[,、\s]+/);
-    const prefecture = customerInfo.prefecture || addressParts[0] || '';
-    const city = customerInfo.city || addressParts[1] || '';
-    const remainingAddress = addressParts.slice(2).join(' ') || '';
-
-    // 配送先情報を整形
-    const formattedCustomerInfo = {
-      name: customerInfo.name,
-      phone: customerInfo.phone || '',
-      postalCode: customerInfo.postalCode,
-      address: customerInfo.address,
-      prefecture: prefecture,
-      city: city,
-      line1: remainingAddress,
-      line2: customerInfo.building || '',
-    };
-
-    // 商品情報を整形
-    const formattedItems = items.map((item: any) => ({
+    const formattedItems: OrderItem[] = items.map((item: Item) => ({
+      productId: item.productId,
       name: item.name,
-      description: item.description && item.description.trim() !== '' ? item.description : undefined,
       price: Number(item.price),
       quantity: Number(item.quantity),
       image: item.image || '',
       size: item.size || ''
     }));
 
-    // Stripeチェックアウトセッション作成
-    const checkoutUrl = await createCheckoutSession(
-      formattedItems,
-      customerEmail,
-      Number(shippingFee),
-      paymentMethod,
-      formattedCustomerInfo
-    );
+    const baseOrderData: Omit<Order, 'id' | 'status' | 'createdAt' | 'updatedAt'> = {
+      customer: customerInfo.name,
+      email: customerEmail,
+      phone: customerInfo.phone || '',
+      total: Number(paymentMethod.total) || 0,
+      shippingFee: Number(shippingFee) || 0,
+      items: formattedItems,
+      address: formattedAddressInfo,
+      paymentMethod: paymentMethod.paymentMethod,
+      date: Timestamp.now(),
+    };
 
-    return NextResponse.json({ url: checkoutUrl });
+    if (paymentMethod.paymentMethod === 'cod') {
+      console.log('代金引換処理を開始します');
+      const finalOrderDataForCod: Order = {
+        ...baseOrderData,
+        status: 'processing',
+        createdAt: Timestamp.now(),
+        updatedAt: Timestamp.now(),
+      };
+      const orderId = await addOrder(finalOrderDataForCod);
+      console.log('代金引換注文保存成功:', orderId);
+      return NextResponse.json({ success: true, orderId: orderId, paymentType: 'cod' });
+
+    } else if (paymentMethod.paymentMethod.startsWith('stripe_')) {
+      console.log('Stripe決済処理を開始します:', paymentMethod.paymentMethod);
+      const preliminaryOrderData: Order = {
+        ...baseOrderData,
+        status: 'pending',
+        createdAt: Timestamp.now(),
+        updatedAt: Timestamp.now(),
+      };
+      const orderId = await addOrder(preliminaryOrderData);
+      console.log('Stripe仮注文保存成功:', orderId);
+
+      const stripePaymentType = getStripePaymentMethodType(paymentMethod.paymentMethod);
+      if (!stripePaymentType) {
+        console.error('未対応のStripe支払い方法です:', paymentMethod.paymentMethod);
+        return NextResponse.json(
+          { error: '未対応のStripe支払い方法です。' },
+          { status: 400 }
+        );
+      }
+
+      const customerDetailsForStripe = {
+        name: customerInfo.name,
+        phone: customerInfo.phone || '',
+        postalCode: formattedAddressInfo.postalCode,
+        prefecture: formattedAddressInfo.prefecture,
+        city: formattedAddressInfo.city,
+        line1: formattedAddressInfo.line1,
+        line2: formattedAddressInfo.line2,
+        address: customerInfo.address,
+      };
+
+      const checkoutUrl = await createCheckoutSession(
+        formattedItems,
+        customerEmail,
+        Number(shippingFee),
+        stripePaymentType,
+        customerDetailsForStripe,
+        orderId
+      );
+      return NextResponse.json({ url: checkoutUrl, paymentType: 'stripe' });
+
+    } else {
+      console.error('未対応の支払い方法です:', paymentMethod.paymentMethod);
+      return NextResponse.json(
+        { error: '未対応の支払い方法です。' },
+        { status: 400 }
+      );
+    }
+
   } catch (error) {
-    console.error('Checkout error:', error);
+    console.error('Checkout API error:', error);
+    const errorMessage = error instanceof Error ? error.message : '決済処理の準備中にエラーが発生しました。';
     return NextResponse.json(
-      { error: '決済処理の準備中にエラーが発生しました。' },
+      { error: errorMessage },
       { status: 500 }
     );
   }

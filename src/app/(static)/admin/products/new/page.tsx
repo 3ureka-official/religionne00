@@ -2,18 +2,19 @@
 
 import { useState, useRef, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { Box, Typography, Button, TextField, FormControl, Select, MenuItem, Chip, Divider, IconButton, CircularProgress, Alert } from '@mui/material'
+import { Box, Typography, Button, TextField, FormControl, Select, MenuItem, Divider, IconButton, CircularProgress, Alert } from '@mui/material'
 import ArrowBackIcon from '@mui/icons-material/ArrowBack'
 import AddPhotoAlternateIcon from '@mui/icons-material/AddPhotoAlternate'
 import CloseIcon from '@mui/icons-material/Close'
 import AddIcon from '@mui/icons-material/Add'
-import { Product, createProductWithImages, createProductWithStripe } from '@/firebase/productService'
+import { Product } from '@/firebase/productService'
+// import { createProductWithStripe } from '@/firebase/productService'
 import { fetchCategories } from '@/lib/microcms'
 import { MicroCMSCategory } from '@/lib/microcms'
+// import { Timestamp } from 'firebase/firestore'
 
 // サイズごとの在庫を管理するインターフェース
 interface SizeInventory {
-  id: string;
   size: string;
   stock: string | number;
 }
@@ -28,17 +29,16 @@ export default function NewProductPage() {
   
   // サイズごとの在庫管理
   const [sizeInventories, setSizeInventories] = useState<SizeInventory[]>([
-    { id: '1', size: '', stock: '' }
+    { size: '', stock: '' }
   ])
   
   // フォームの状態
   const [formData, setFormData] = useState<Omit<Product, 'id' | 'sizes'>>({
     name: '',
     description: '',
-    price: '',
+    price: 0,
     category: '',
     images: [],
-    stock: '',
     isPublished: false
   })
   
@@ -48,7 +48,6 @@ export default function NewProductPage() {
   const [success, setSuccess] = useState<string | null>(null)
   const [uploadingImages, setUploadingImages] = useState<File[]>([])
   const [imagesPreviews, setImagesPreviews] = useState<string[]>([])
-  const [uploadProgress, setUploadProgress] = useState(0)
   
   // カテゴリーデータの取得
   useEffect(() => {
@@ -76,22 +75,22 @@ export default function NewProductPage() {
     
     // 数値フィールドの処理
     if (name === 'price') {
-      setFormData(prev => ({ ...prev, [name]: value }))
+      setFormData(prev => ({ ...prev, [name]: Number(value) }))
     } else {
       setFormData(prev => ({ ...prev, [name]: value }))
     }
   }
   
   // セレクトボックスの変更ハンドラ
-  const handleSelectChange = (e: React.ChangeEvent<HTMLInputElement> | any) => {
+  const handleSelectChange = (e: React.ChangeEvent<Omit<HTMLInputElement, "value"> & { value: string; }> | (Event & { target: { value: string; name: string; }; })) => {
     setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }))
   }
   
   // サイズと在庫の変更ハンドラ
   const handleInventoryChange = (id: string, field: 'size' | 'stock', value: string | number) => {
     setSizeInventories(prev => 
-      prev.map(item => 
-        item.id === id 
+      prev.map((item, index) => 
+        index === Number(id) 
           ? { ...item, [field]: value } 
           : item
       )
@@ -107,7 +106,7 @@ export default function NewProductPage() {
   // サイズと在庫の削除
   const handleRemoveInventory = (id: string) => {
     if (sizeInventories.length > 1) {
-      setSizeInventories(prev => prev.filter(item => item.id !== id))
+      setSizeInventories(prev => prev.filter((_, index) => index !== Number(id)))
     }
   }
   
@@ -155,37 +154,28 @@ export default function NewProductPage() {
       setLoading(true)
       setError(null)
       
-      // 総在庫数の計算
-      const totalStock = sizeInventories
-        .filter(item => item.size !== '')
-        .reduce((sum, item) => sum + (Number(item.stock) || 0), 0)
-      
       // 商品データの準備
-      const productData: Omit<Product, 'id' | 'images'> = {
-        name: formData.name,
-        description: formData.description,
-        price: Number(formData.price),
-        category: formData.category,
-        stock: totalStock > 0 ? totalStock : Number(formData.stock) || 0,
-        isPublished: true,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        sizeInventories: sizeInventories
-          .filter(item => item.size !== '')
-          .map(item => ({
-            size: item.size,
-            stock: Number(item.stock) || 0
-          }))
-      }
+      // const productData: Omit<Product, 'id' | 'images'> = {
+      //   name: formData.name,
+      //   description: formData.description,
+      //   price: Number(formData.price),
+      //   category: formData.category,
+      //   isPublished: true,
+      //   createdAt: Timestamp.now(),
+      //   updatedAt: Timestamp.now(),
+      //   sizeInventories: sizeInventories
+      //     .filter(item => item.size !== '')
+      //     .map(item => ({
+      //       size: item.size,
+      //       stock: Number(item.stock) || 0
+      //     }))
+      // }
       
       // 画像データの準備
-      const imageFilesToUpload = Array.from(uploadingImages)
-      
-      // 通常の商品作成かStripe連携作成かを決定
-      let newProduct;
+      // const imageFilesToUpload = Array.from(uploadingImages)
       
       // Stripe連携を利用する場合（本番環境での出品）
-      newProduct = await createProductWithStripe(productData, imageFilesToUpload);
+      // let newProduct = await createProductWithStripe(productData, imageFilesToUpload);
       
       setSuccess('商品が正常に追加されました')
       
@@ -517,7 +507,7 @@ export default function NewProductPage() {
           
           {sizeInventories.map((item, index) => (
             <Box 
-              key={item.id} 
+              key={index} 
               sx={{ 
                 display: 'flex', 
                 gap: 2, 
@@ -528,7 +518,7 @@ export default function NewProductPage() {
               <TextField
                 placeholder="サイズ"
                 value={item.size}
-                onChange={(e) => handleInventoryChange(item.id, 'size', e.target.value)}
+                onChange={(e) => handleInventoryChange(String(index), 'size', e.target.value)}
                 sx={{ 
                   flexBasis: '60%',
                   '& .MuiOutlinedInput-root': {
@@ -550,7 +540,7 @@ export default function NewProductPage() {
                 type="number"
                 placeholder="在庫数"
                 value={item.stock}
-                onChange={(e) => handleInventoryChange(item.id, 'stock', e.target.value)}
+                onChange={(e) => handleInventoryChange(String(index), 'stock', e.target.value)}
                 InputProps={{ inputProps: { min: 0 } }}
                 sx={{ 
                   flexBasis: '30%',
@@ -571,7 +561,7 @@ export default function NewProductPage() {
               />
               {sizeInventories.length > 1 && (
                 <IconButton 
-                  onClick={() => handleRemoveInventory(item.id)}
+                  onClick={() => handleRemoveInventory(String(index))}
                   sx={{ color: 'error.main' }}
                 >
                   <CloseIcon />

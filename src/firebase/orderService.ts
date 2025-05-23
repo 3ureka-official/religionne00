@@ -4,17 +4,17 @@ import {
   addDoc, 
   getDoc, 
   getDocs, 
-  updateDoc, 
-  deleteDoc, 
   query, 
-  where, 
   orderBy,
   limit,
   serverTimestamp,
-  writeBatch
+  updateDoc,
+  where,
+  UpdateData
 } from 'firebase/firestore';
 import { db } from './config';
-import { adjustSizeInventory, addSoldProduct, SoldProductStatus } from './productService';
+import { adjustSizeInventory } from './productService';
+import { Timestamp } from 'firebase/firestore';
 
 // 注文の型定義
 export interface Order {
@@ -22,7 +22,7 @@ export interface Order {
   customer: string;
   email: string;
   phone?: string;
-  date: any;
+  date: Timestamp | null;
   total: number;
   status: 'pending' | 'processing' | 'shipped' | 'delivered' | 'cancelled';
   items: OrderItem[];
@@ -34,8 +34,13 @@ export interface Order {
     line2?: string;
   };
   paymentMethod: string;
-  createdAt?: any;
-  updatedAt?: any;
+  createdAt?: Timestamp | null;
+  updatedAt?: Timestamp | null;
+  shippingFee: number;
+  // 配送関連の追加フィールド
+  shippedDate?: Timestamp | null;
+  deliveredDate?: Timestamp | null;
+  trackingNumber?: string;
 }
 
 // 注文アイテムの型定義
@@ -67,7 +72,7 @@ export const getAllOrders = async () => {
     });
     
     return orders;
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Error getting orders: ', error);
     throw error;
   }
@@ -90,7 +95,7 @@ export const getRecentOrders = async (limitCount = 5) => {
     });
     
     return orders;
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Error getting recent orders: ', error);
     throw error;
   }
@@ -107,7 +112,7 @@ export const getOrder = async (id: string) => {
     } else {
       throw new Error('Order not found');
     }
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Error getting order: ', error);
     throw error;
   }
@@ -134,7 +139,7 @@ export const getOrderCountsByStatus = async () => {
     });
     
     return counts;
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Error getting order counts: ', error);
     throw error;
   }
@@ -154,7 +159,7 @@ export const getTotalSales = async () => {
     }, 0);
     
     return total;
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Error calculating total sales: ', error);
     throw error;
   }
@@ -176,40 +181,132 @@ export const addOrder = async (orderData: Omit<Order, 'id' | 'date' | 'status' |
     const docRef = await addDoc(collection(db, ORDERS_COLLECTION), newOrder);
     const orderId = docRef.id;
     
-    // 商品の在庫を減らし、販売済み商品として登録
+    // 商品の在庫を減らす
     for (const item of orderData.items) {
-      if (item.productId) {
-        // サイズごとの在庫も減らす（サイズがある場合）
-        if (item.size) {
-          await adjustSizeInventory(item.productId, item.size, -item.quantity);
-        }
-        
-        // 販売済み商品として登録
-        const soldProductData: any = {
-          productId: item.productId,
-          name: item.name,
-          description: '',
-          price: item.price,
-          category: '',
-          customerName: orderData.customer,
-          customerEmail: orderData.email,
-          status: SoldProductStatus.PREPARING,
-          orderId,
-          orderDate: serverTimestamp()
-        };
-        if (item.size !== undefined) {
-          soldProductData.size = item.size;
-        }
-        if (item.image !== undefined) {
-          soldProductData.image = item.image;
-        }
-        await addSoldProduct(soldProductData);
+      if (item.productId && item.size) {
+        // サイズごとの在庫を減らす（サイズがある場合）
+        await adjustSizeInventory(item.productId, item.size, -item.quantity);
       }
     }
     
-    return { id: orderId, ...newOrder };
-  } catch (error) {
+    return orderId;
+  } catch (error: unknown) {
     console.error('Error adding order: ', error);
     throw error;
   }
-}; 
+};
+
+// 注文IDで注文情報を取得する関数
+export const getOrderById = async (orderId: string): Promise<Order | null> => {
+  try {
+    const orderRef = doc(db, 'orders', orderId); // 'orders' は実際のコレクション名
+    const orderSnap = await getDoc(orderRef);
+    if (orderSnap.exists()) {
+      // 取得したデータとIDをOrder型として返す
+      // 必要に応じて orderSnap.data() の内容を Order 型に適合させる処理を追加
+      return { id: orderSnap.id, ...orderSnap.data() } as Order;
+    } else {
+      console.log(`No order found with ID: ${orderId}`);
+      return null;
+    }
+  } catch (error) {
+    console.error(`Error fetching order by ID (${orderId}):`, error);
+    throw error; // エラーを呼び出し元に伝える
+  }
+};
+
+// 注文ステータスを更新する関数
+export const updateOrderStatus = async (orderId: string, newStatus: string): Promise<void> => {
+  try {
+    const orderRef = doc(db, 'orders', orderId);
+    const updateData: UpdateData<Order> = {
+      status: newStatus as Order['status'],
+      updatedAt: serverTimestamp(),
+    };
+    
+    // 配送済みの場合は配送日を追加
+    if (newStatus === 'shipped') {
+      updateData.shippedDate = serverTimestamp();
+    }
+    
+    // 配達完了の場合は配達日を追加
+    if (newStatus === 'delivered') {
+      updateData.deliveredDate = serverTimestamp();
+    }
+    
+    await updateDoc(orderRef, updateData);
+    console.log(`Order status updated for ID: ${orderId} to ${newStatus}`);
+  } catch (error) {
+    console.error(`Error updating order status for ID (${orderId}):`, error);
+    throw error;
+  }
+};
+
+// ステータス別の注文を取得
+export const getOrdersByStatus = async (status: string): Promise<Order[]> => {
+  try {
+    const q = query(
+      collection(db, ORDERS_COLLECTION),
+      where('status', '==', status),
+      orderBy('createdAt', 'desc')
+    );
+    
+    const querySnapshot = await getDocs(q);
+    const orders: Order[] = [];
+    
+    querySnapshot.forEach((doc) => {
+      orders.push({ id: doc.id, ...doc.data() } as Order);
+    });
+    
+    return orders;
+  } catch (error: unknown) {
+    console.error('Error getting orders by status: ', error);
+    throw error;
+  }
+};
+
+// 売上データを取得（配送済み注文のみ）
+export const getSalesData = async (): Promise<Order[]> => {
+  try {
+    const orders = await getAllOrders();
+    return orders.filter(order => 
+      order.status === 'shipped' || 
+      order.status === 'delivered'
+    );
+  } catch (error: unknown) {
+    console.error('Error getting sales data: ', error);
+    throw error;
+  }
+};
+
+// 商品別売上分析
+export const getProductSalesAnalytics = async () => {
+  try {
+    const salesOrders = await getSalesData();
+    const analytics = new Map();
+    
+    salesOrders.forEach(order => {
+      order.items.forEach(item => {
+        const key = `${item.productId}-${item.size || 'default'}`;
+        const existing = analytics.get(key) || {
+          productId: item.productId,
+          name: item.name,
+          size: item.size,
+          totalQuantity: 0,
+          totalRevenue: 0,
+          orderCount: 0
+        };
+        
+        existing.totalQuantity += item.quantity;
+        existing.totalRevenue += item.price * item.quantity;
+        existing.orderCount += 1;
+        analytics.set(key, existing);
+      });
+    });
+    
+    return Array.from(analytics.values());
+  } catch (error: unknown) {
+    console.error('Error getting product sales analytics: ', error);
+    throw error;
+  }
+};

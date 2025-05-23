@@ -5,7 +5,6 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { ThemeProvider } from '@mui/material/styles'
 import theme from '@/styles/theme'
-import Image from 'next/image'
 
 export default function AdminLoginPage() {
   const router = useRouter()
@@ -19,7 +18,7 @@ export default function AdminLoginPage() {
   useEffect(() => {
     const adminAuth = sessionStorage.getItem('adminAuth')
     if (adminAuth && adminAuth === 'true') {
-      router.push('/admin')
+      router.push('/admin/products')
     }
   }, [router])
 

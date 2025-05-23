@@ -1,6 +1,6 @@
 'use client'
 
-import { Box, Container, Typography, Button, Divider } from '@mui/material'
+import { Box, Container, Typography, Button } from '@mui/material'
 import { useCart } from '@/features/cart/components/CartContext'
 import CartItem from '@/features/cart/components/CartItem'
 import Header from '@/components/Header'
