@@ -18,9 +18,10 @@ export type MicroCMSSettings = {
   brandImages: MicroCMSImage[],
   carouselImages: MicroCMSImage[],
   sns: MicroCMSSNS[],
-  NationwideFee: number,
+  nationwideFee: number,
   islandFee: number,
-  FreeLowerLimit: number;
+  freeLowerLimit: number,
+  completeMessage: string;
 };
 
 export type MicroCMSSize = {

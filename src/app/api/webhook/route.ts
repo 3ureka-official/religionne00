@@ -3,8 +3,8 @@ export const dynamic = 'force-dynamic';
 
 import { NextResponse } from 'next/server'
 import Stripe from 'stripe'
-import { headers } from 'next/headers'
-import { addOrder } from '@/firebase/orderService'
+import { updateOrderStatus, getOrderById } from '@/firebase/orderService'
+// import { sendOrderConfirmationEmail } from '@/services/emailService'
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
   apiVersion: '2025-04-30.basil',
@@ -22,6 +22,7 @@ export const config = {
 export async function POST(request: Request) {
   try {
     if (!request.body) {
+      console.warn('Webhook received empty request body.');
       return NextResponse.json(
         { error: 'No request body' },
         { status: 400 }
@@ -35,123 +36,73 @@ export async function POST(request: Request) {
 
     let event;
     try {
-      if (!sig) throw new Error("No signature provided")
+      if (!sig) {
+        console.error('Webhook Error: No signature provided.');
+        throw new Error("No signature provided")
+      }
       event = stripe.webhooks.constructEvent(buf, sig, webhookSecret);
     } catch (e) {
       const err = e instanceof Error ? e : new Error("Bad Request")
-      console.log(err)
+      console.error(`Webhook signature verification failed: ${err.message}`);
       return NextResponse.json(
         { error: `Webhook Error: ${err.message}` },
         { status: 400 }
       )
     }
 
-    // 各イベントタイプのデバッグ出力
-    console.log('イベントタイプ:', event.type)
+    console.log('Webhook Event Received:', event.type, event.id);
 
     // checkout.session.completedイベントの処理
     if (event.type === 'checkout.session.completed') {
-      console.log('決済完了イベントを処理します!')
       const session = event.data.object as Stripe.Checkout.Session
-      
-      // セッションから顧客情報と注文内容を取得
-      const customerEmail = session.customer_email || ''
-      
-      // 顧客情報をメタデータから取得（Stripeチェックアウト作成時に保存しておく）
-      const metadata = session.metadata || {}
-      const customerName = metadata.customerName || ''
-      const customerPhone = metadata.customerPhone || ''
-      const shippingInfo = metadata.shippingInfo ? JSON.parse(metadata.shippingInfo) : {}
-      
-      // メタデータから商品詳細情報を取得
-      const itemsDetails = metadata.itemsDetails ? JSON.parse(metadata.itemsDetails) : []
-      
-      console.log('metadata', metadata)
-      console.log('itemsDetails', itemsDetails)
-      
-      if (!customerEmail) {
-        console.error('Missing customer information in checkout session.')
-        return NextResponse.json(
-          { error: 'Missing customer information.' },
-          { status: 400 }
-        )
+      console.log('Processing checkout.session.completed for session ID:', session.id)
+
+      const orderId = session.metadata?.orderId || session.metadata?.id;
+
+      if (!orderId) {
+        console.error('Webhook Error: Missing orderId in session metadata for session ID:', session.id);
+        return NextResponse.json({ error: 'Missing orderId in metadata' }, { status: 400 });
       }
-      
-      // Stripeから商品情報を取得
-      const lineItems = await stripe.checkout.sessions.listLineItems(session.id)
-      
-      // 注文アイテムの作成（メタデータの詳細情報と連携）
-      const orderItems = lineItems.data.map((item, index) => {
-        // 商品情報のベース
-        const orderItem = {
-          productId: typeof item.price?.product === 'string' ? item.price.product : '',
-          name: item.description || '',
-          price: item.amount_total ? item.amount_total : 0, // 単位は円
-          quantity: item.quantity || 0,
-        };
-        
-        // 対応する詳細情報を探す
-        const itemDetail = itemsDetails.find((detail: any) => 
-          detail.name === orderItem.name && 
-          detail.quantity === orderItem.quantity
-        );
-        
-        // 詳細情報があれば追加
-        if (itemDetail) {
-          return {
-            ...orderItem,
-            image: itemDetail.image || undefined,
-            size: itemDetail.size || undefined
-          };
-        }
-        
-        return orderItem;
-      });
-      
-      console.log('注文データを作成します:', customerName, customerEmail)
-      
-      // 注文データを作成
-      const orderData = {
-        customer: customerName,
-        email: customerEmail,
-        phone: customerPhone,
-        total: session.amount_total ? session.amount_total: 0, // 単位は円
-        items: orderItems,
-        address: {
-          postalCode: shippingInfo.postalCode || '',
-          prefecture: shippingInfo.prefecture || '',
-          city: shippingInfo.city || '',
-          line1: shippingInfo.line1 || '',
-          line2: shippingInfo.line2 || '',
-        },
-        paymentMethod: metadata.paymentMethod || 'クレジットカード',
-      }
-      
+      console.log('Order ID from metadata:', orderId);
+
       try {
-        // 注文データをFirestoreに保存
-        console.log('Firestoreに注文を保存します')
-        const result = await addOrder(orderData)
-        console.log('注文保存成功:', result)
-      } catch (saveError) {
-        console.error('注文保存エラー:', saveError)
+        const order = await getOrderById(orderId);
+        if (!order) {
+          console.error(`Webhook Error: Order not found in Firestore for orderId: ${orderId}, session ID: ${session.id}`);
+          return NextResponse.json({ error: 'Order not found' }, { status: 404 });
+        }
+
+        if (order.status === 'processing' || order.status === 'shipped') {
+          console.log(`Order ${orderId} is already processed. Status: ${order.status}. Skipping update.`);
+          return NextResponse.json({ received: true, message: 'Order already processed' });
+        }
+
+        await updateOrderStatus(orderId, 'processing');
+        console.log(`Order ${orderId} status updated to 'processing'.`);
+
+        return NextResponse.json({ received: true, message: 'Order status updated to processing' });
+
+      } catch (dbError) {
+        console.error(`Webhook DB Error for orderId ${orderId}, session ID ${session.id}:`, dbError);
+        return NextResponse.json({ error: 'Database operation failed' }, { status: 500 });
       }
-      
-      return NextResponse.json({ received: true })
     }
     
     // payment_intent.succeededイベントも処理するなら追加
     if (event.type === 'payment_intent.succeeded') {
-      console.log('payment_intent.succeededイベントを受信しました')
-      // 必要に応じて処理を追加
+      const paymentIntent = event.data.object as Stripe.PaymentIntent;
+      console.log('PaymentIntent Succeeded:', paymentIntent.id);
     }
     
     // その他のイベントは単に受信確認を返す
+    console.log('Webhook event type not explicitly handled, returning received: true');
     return NextResponse.json({ received: true })
     
   } catch (error) {
-    console.error('Webhook error:', error)
+    console.error('Unhandled Webhook error:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Webhook handler failed.';
     return NextResponse.json(
-      { error: 'Webhook handler failed.' },
+      { error: errorMessage },
       { status: 500 }
     )
   }

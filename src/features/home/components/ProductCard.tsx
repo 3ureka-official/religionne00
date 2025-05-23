@@ -1,6 +1,6 @@
 'use client'
 
-import { Box, Typography, Paper, useMediaQuery, useTheme, Modal, Chip } from '@mui/material'
+import { Box, Typography, Paper, useMediaQuery, useTheme } from '@mui/material'
 import { useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'

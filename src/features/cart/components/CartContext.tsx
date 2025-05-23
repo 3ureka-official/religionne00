@@ -9,6 +9,7 @@ export interface CartItem {
   price: string
   image: string
   quantity: number
+  description?: string
   size?: string
 }
 
@@ -16,7 +17,7 @@ export interface CartItem {
 interface CartContextType {
   items: CartItem[]
   addItem: (item: CartItem) => void
-  removeItem: (id: string) => void
+  removeItem: (id: string, size: string) => void
   updateQuantity: (id: string, quantity: number) => void
   clearCart: () => void
   getTotalPrice: () => number
@@ -130,14 +131,15 @@ export function CartProvider({ children }: CartProviderProps) {
         return updatedItems
       } else {
         // 新しいアイテムを追加
+        console.log(item);
         return [...prevItems, item]
       }
     })
   }
 
   // カートから商品を削除する関数
-  const removeItem = (id: string) => {
-    setItems(prevItems => prevItems.filter(item => item.id !== id))
+  const removeItem = (id: string, size: string) => {
+    setItems(prevItems => prevItems.filter(item => item.id !== id && item.size !== size))
     
     // カートが空になった場合はローカルストレージからも削除
     if (items.length === 1) {

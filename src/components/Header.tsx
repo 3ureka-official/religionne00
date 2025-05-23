@@ -3,29 +3,152 @@
 import { Box, Container, Drawer, List, ListItem, Typography, useMediaQuery, useTheme } from '@mui/material'
 import Link from 'next/link'
 import Image from 'next/image'
-import { useState, useEffect, useRef, FormEvent } from 'react'
-import ShoppingCartIcon from '@mui/icons-material/ShoppingCart'
+import { useState, useEffect, useRef, FormEvent, Suspense } from 'react'
 import InstagramIcon from '@mui/icons-material/Instagram'
 import { useCart } from '@/features/cart/components/CartContext'
 import { useRouter, useSearchParams } from 'next/navigation'
 
+// 検索バーコンポーネント
+function SearchBar({ isMobile }: { isMobile: boolean }) {
+  const searchParams = useSearchParams()
+  const [searchQuery, setSearchQuery] = useState('')
+  const router = useRouter()
+
+  // 検索パラメータが変更されたときに検索クエリを更新
+  useEffect(() => {
+    const query = searchParams.get('q') || '';
+    setSearchQuery(query);
+  }, [searchParams]);
+
+  const handleSearch = (e: FormEvent) => {
+    e.preventDefault()
+    if (searchQuery.trim()) {
+      router.push(`/search?q=${encodeURIComponent(searchQuery.trim())}`)
+    }
+  }
+
+  return (
+    <Box sx={{ 
+      display: 'flex', 
+      justifyContent: 'center',
+      flex: 1
+    }}>
+      <form onSubmit={handleSearch} style={{ width: '100%', display: 'flex', justifyContent: 'center' }}>
+        <Box sx={{
+          position: 'relative',
+          display: 'flex',
+          alignItems: 'center',
+          border: '1px solid #444444',
+          borderRadius: '4px',
+          padding: { xs: '6px 8px', sm: '8px 10px' },
+          width: '100%',
+          maxWidth: { xs: '300px', sm: '350px', md: '550px' },
+        }}>
+          {isMobile && (
+            <button 
+              type="submit"
+              style={{
+                background: 'none',
+                border: 'none',
+                padding: 0,
+                marginRight: '8px',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center'
+              }}
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="#AAAAAA" viewBox="0 0 16 16">
+                <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z" />
+              </svg>
+            </button>
+          )}
+          <input
+            type="text"
+            placeholder="検索"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            style={{
+              width: '100%',
+              border: 'none',
+              outline: 'none',
+              fontSize: isMobile ? '12px' : '13px'
+            }}
+          />
+          <Box sx={{ display: 'flex', alignItems: 'center' }}>
+            {/* ×印の位置を常に確保するためのプレースホルダー */}
+            <Box sx={{ 
+              width: isMobile ? '14px' : '18px', 
+              height: isMobile ? '14px' : '18px',
+              visibility: searchQuery ? 'visible' : 'hidden',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
+            }}>
+              {searchQuery && (
+                <button
+                  type="button"
+                  onClick={() => setSearchQuery('')}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    padding: 0,
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    width: '100%',
+                    height: '100%',
+                  }}
+                >
+                  <Box sx={{ 
+                    width: '100%',
+                    height: '100%',
+                    borderRadius: '50%', 
+                    bgcolor: '#E0E0E0',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center'
+                  }}>
+                    <svg xmlns="http://www.w3.org/2000/svg" width={isMobile ? "10" : "12"} height={isMobile ? "10" : "12"} fill="#666666" viewBox="0 0 16 16">
+                      <path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708z"/>
+                    </svg>
+                  </Box>
+                </button>
+              )}
+            </Box>
+            {!isMobile && (
+              <button 
+                type="submit"
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  padding: 0,
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                }}
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="#AAAAAA" viewBox="0 0 16 16">
+                  <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z" />
+                </svg>
+              </button>
+            )}
+          </Box>
+        </Box>
+      </form>
+    </Box>
+  )
+}
+
 const Header = () => {
   const [menuOpen, setMenuOpen] = useState(false)
-  const [scrolled, setScrolled] = useState(false)
   const headerRef = useRef<HTMLDivElement>(null)
   const logoHeaderHeight = useRef<number>(0)
   const theme = useTheme()
   const [isMounted, setIsMounted] = useState(false)
-  const searchParams = useSearchParams()
-  const [searchQuery, setSearchQuery] = useState('')
-  const router = useRouter()
   
   // デフォルトでモバイルとして初期化（SSR時やマウント前）
   const isSmallScreen = useMediaQuery(theme.breakpoints.down('sm'), {
     defaultMatches: true // SSRとマウント前はモバイル表示をデフォルトにする
-  })
-  const isTablet = useMediaQuery(theme.breakpoints.between('sm', 'md'), {
-    defaultMatches: false
   })
   
   // コンポーネントがマウントされたらフラグを設定
@@ -46,24 +169,11 @@ const Header = () => {
     }
   }, [])
 
-  // 検索パラメータが変更されたときに検索クエリを更新
-  useEffect(() => {
-    const query = searchParams.get('q') || '';
-    setSearchQuery(query);
-  }, [searchParams]);
-
   const toggleMenu = () => {
     setMenuOpen(!menuOpen)
   }
 
   const menuItems = ['Home', 'About', 'Category', 'Contact', 'SNS']
-
-  const handleSearch = (e: FormEvent) => {
-    e.preventDefault()
-    if (searchQuery.trim()) {
-      router.push(`/search?q=${encodeURIComponent(searchQuery.trim())}`)
-    }
-  }
 
   return (
     <>
@@ -74,13 +184,13 @@ const Header = () => {
         sx={{ 
           bgcolor: 'white', 
           boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
-          height: scrolled ? 0 : 'auto',
+          height: 'auto',
           overflow: 'hidden',
           transition: 'height 0.3s ease',
-          position: 'relative'
+          position: 'relative',
         }}
       >
-        <Container maxWidth="lg" sx={{ px: { xs: 0, sm: 2 } }}>
+        <Container maxWidth="lg" sx={{ px: { xs: 1, sm: 2 }, overflow: 'hidden' }}>
           <Box sx={{
             display: 'flex',
             flexDirection: 'column',
@@ -121,20 +231,20 @@ const Header = () => {
         component="header"
         sx={{
           bgcolor: 'white',
-          boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+          boxShadow: '0 1px 0 rgba(0,0,0,0.1)',
           position: 'sticky',
           top: 0,
           zIndex: 1000,
-          py: { xs: 1, sm: 1.5 }
         }}
       >
-        <Container maxWidth="lg" sx={{ px: { xs: 0, sm: 2 } }}>
+        <Container maxWidth="lg" sx={{ px: { xs: 1, sm: 2 }, py: { xs: 1, sm: 1.5 },overflow: 'hidden' }}>
           {/* Bottom Row: Menu Button, Search Bar, and Icons */}
           <Box sx={{
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
-            flexWrap: 'nowrap'
+            flexWrap: 'nowrap', gap: 1,
+
           }}>
             {/* Menu Button */}
             <Box>
@@ -154,12 +264,12 @@ const Header = () => {
             </Box>
 
             {/* Search Bar */}
-            <Box sx={{ 
-              display: 'flex', 
-              justifyContent: 'center', 
-              flex: 1 
-            }}>
-              <form onSubmit={handleSearch} style={{ width: '100%', display: 'flex', justifyContent: 'center' }}>
+            <Suspense fallback={
+              <Box sx={{ 
+                display: 'flex', 
+                justifyContent: 'center',
+                flex: 1
+              }}>
                 <Box sx={{
                   position: 'relative',
                   display: 'flex',
@@ -168,117 +278,40 @@ const Header = () => {
                   borderRadius: '4px',
                   padding: { xs: '6px 8px', sm: '8px 10px' },
                   width: '100%',
-                  maxWidth: { xs: 'calc(100% - 20px)', sm: '350px', md: '550px' },
+                  maxWidth: { xs: '300px', sm: '350px', md: '550px' },
                 }}>
-                  {isMobile && (
-                    <button 
-                      type="submit"
-                      style={{
-                        background: 'none',
-                        border: 'none',
-                        padding: 0,
-                        marginRight: '8px',
-                        cursor: 'pointer',
-                        display: 'flex',
-                        alignItems: 'center'
-                      }}
-                    >
-                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="#AAAAAA" viewBox="0 0 16 16">
-                        <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z" />
-                      </svg>
-                    </button>
-                  )}
                   <input
                     type="text"
                     placeholder="検索"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
+                    disabled
                     style={{
-                      flex: 1,
+                      width: '100%',
                       border: 'none',
                       outline: 'none',
                       fontSize: isMobile ? '12px' : '13px'
                     }}
                   />
-                  <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                    {/* ×印の位置を常に確保するためのプレースホルダー */}
-                    <Box sx={{ 
-                      width: isMobile ? '14px' : '18px', 
-                      height: isMobile ? '14px' : '18px',
-                      marginRight: isMobile ? '16px' : '12px',
-                      visibility: searchQuery ? 'visible' : 'hidden',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center'
-                    }}>
-                      {searchQuery && (
-                        <button
-                          type="button"
-                          onClick={() => setSearchQuery('')}
-                          style={{
-                            background: 'none',
-                            border: 'none',
-                            padding: 0,
-                            cursor: 'pointer',
-                            display: 'flex',
-                            alignItems: 'center',
-                            width: '100%',
-                            height: '100%'
-                          }}
-                        >
-                          <Box sx={{ 
-                            width: '100%',
-                            height: '100%',
-                            borderRadius: '50%', 
-                            bgcolor: '#E0E0E0',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center'
-                          }}>
-                            <svg xmlns="http://www.w3.org/2000/svg" width={isMobile ? "10" : "12"} height={isMobile ? "10" : "12"} fill="#666666" viewBox="0 0 16 16">
-                              <path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708z"/>
-                            </svg>
-                          </Box>
-                        </button>
-                      )}
-                    </Box>
-                    {!isMobile && (
-                      <button 
-                        type="submit"
-                        style={{
-                          background: 'none',
-                          border: 'none',
-                          padding: 0,
-                          cursor: 'pointer',
-                          display: 'flex',
-                          alignItems: 'center',
-                        }}
-                      >
-                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="#AAAAAA" viewBox="0 0 16 16">
-                          <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z" />
-                        </svg>
-                      </button>
-                    )}
-                  </Box>
                 </Box>
-              </form>
-            </Box>
+              </Box>
+            }>
+              <SearchBar isMobile={isMobile} />
+            </Suspense>
 
             {/* Icons */}
             <Box sx={{
               display: 'flex',
               gap: { xs: 1.5, sm: 2 },
-              mr: { xs: 1.5, sm: 0 }
+              pr: { xs: 1, sm: 0 },
             }}>
-              {/* インスタグラムボタン */}
               <a
                 href="https://www.instagram.com"
                 target="_blank"
-                rel="noopener noreferrer"
-                style={{ color: 'inherit', display: 'flex', alignItems: 'center' }}
+              rel="noopener noreferrer"
+              style={{ color: 'inherit', display: 'flex', alignItems: 'center' }}
               >
                 <InstagramIcon sx={{ fontSize: isMobile ? 20 : 24, color: '#555555' }} />
               </a>
+
 
               {/* カートアイコン */}
               <Link href="/cart" passHref style={{ textDecoration: 'none', color: 'inherit' }}>

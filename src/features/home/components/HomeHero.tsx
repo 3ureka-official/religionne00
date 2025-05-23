@@ -1,6 +1,5 @@
 'use client'
 
-import { ImageCarousel } from '@/components/carousel/carousel'
 import { Box } from '@mui/material'
 import { useState, useEffect } from 'react'
 import { MicroCMSImage } from 'microcms-js-sdk'

@@ -15,11 +15,6 @@ interface CartItemProps {
 const CartItem = ({ item }: CartItemProps) => {
   const { updateQuantity, removeItem } = useCart()
 
-  // 価格文字列を数値に変換（"2,000" → 2000）
-  const priceNumber = parseInt(item.price.replace(/,/g, ''))
-  // アイテム合計（価格 × 数量）
-  const itemTotal = priceNumber * item.quantity
-
   // 数量を増やす
   const handleIncreaseQuantity = () => {
     updateQuantity(item.id, item.quantity + 1)
@@ -34,7 +29,7 @@ const CartItem = ({ item }: CartItemProps) => {
 
   // アイテムを削除
   const handleRemoveItem = () => {
-    removeItem(item.id)
+    removeItem(item.id, item.size || '')
   }
 
   return (

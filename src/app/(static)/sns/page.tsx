@@ -1,19 +1,15 @@
 import { Box, Container, Typography, IconButton, Divider, Paper } from '@mui/material'
 import Header from '@/components/Header'
 import Footer from '@/components/Footer'
-import InstagramIcon from '@mui/icons-material/Instagram'
-import TwitterIcon from '@mui/icons-material/Twitter'
-import FacebookIcon from '@mui/icons-material/Facebook'
-import PinterestIcon from '@mui/icons-material/Pinterest'
-
 import { fetchSettings } from '@/lib/microcms';
+import Image from 'next/image';
 
 export default async function SNS() {
   const settings = await fetchSettings();
   const socialAccounts = settings.sns.map((sns) => ({
     name: sns.service,
     url: sns.url,
-    icon: <img src={sns.icon.url} alt={sns.service} style={{ width: 50, height: 50 }} />,
+    icon: <Image src={sns.icon.url} alt={sns.service} style={{ width: 50, height: 50 }} />,
   }));
 
   return (

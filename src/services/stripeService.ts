@@ -261,17 +261,10 @@ export const createCheckoutSession = async (
     city: string;
     line1: string;
     line2?: string;
-  }
+  },
+  id: string
 ): Promise<string> => {
   try {
-    // 商品詳細情報を保存（サイズ、画像URLなど）
-    const itemsDetails = items.map(item => ({
-      name: item.name,
-      price: item.price,
-      quantity: item.quantity,
-      image: item.image || '',
-      size: item.size || ''
-    }));
 
     // 各アイテムを一時的な商品として登録
     const lineItems = await Promise.all(
@@ -332,14 +325,9 @@ export const createCheckoutSession = async (
       paymentMethodTypes.push('card');
     }
 
-    // 顧客情報をメタデータとして保存
-    const shippingInfo = {
-      postalCode: customerInfo.postalCode,
-      prefecture: customerInfo.prefecture,
-      city: customerInfo.city,
-      line1: customerInfo.line1,
-      line2: customerInfo.line2 || '',
-    };
+    const metadata = {
+      id: id
+    }
 
     // チェックアウトセッションを作成
     const session = await stripe.checkout.sessions.create({
@@ -349,13 +337,7 @@ export const createCheckoutSession = async (
       success_url: `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/checkout/complete?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/checkout`,
       customer_email: customerEmail,
-      metadata: {
-        customerName: customerInfo.name,
-        customerPhone: customerInfo.phone,
-        shippingInfo: JSON.stringify(shippingInfo),
-        paymentMethod: paymentMethod === 'credit' ? 'クレジットカード' : 'PayPay',
-        itemsDetails: JSON.stringify(itemsDetails)
-      }
+      metadata: metadata
     });
 
     // セッションURLを返す
