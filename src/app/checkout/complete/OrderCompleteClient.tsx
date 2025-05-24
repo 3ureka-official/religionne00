@@ -12,32 +12,33 @@ import { useRouter } from 'next/navigation'
 import { useCart } from '@/features/cart/components/CartContext'
 import { MicroCMSSettings } from '@/lib/microcms'
 import styles from '@/styles/prose'
-import { OrderInfo } from '@/types/Storage'
+import { OrderInfo, PaymentInfo } from '@/types/Storage'
 import Image from 'next/image'
 
 export default function OrderCompleteClient({settings}: {settings: MicroCMSSettings}) {
   const router = useRouter()
   const { clearCart } = useCart()
   const [orderInfo, setOrderInfo] = useState<OrderInfo | null>(null)
+  const [paymentInfo, setPaymentInfo] = useState<PaymentInfo | null>(null)
   
   useEffect(() => {
     // セッションストレージから注文情報を取得
     const storedOrderInfo = sessionStorage.getItem('orderInfo')
-
+    const storedPaymentInfo = sessionStorage.getItem('paymentInfo')
     console.log(storedOrderInfo);
     
-    if (storedOrderInfo) {
+    if (storedOrderInfo && storedPaymentInfo) {
       setOrderInfo(JSON.parse(storedOrderInfo))
-      
+      setPaymentInfo(JSON.parse(storedPaymentInfo))
       // 注文完了後なのでセッションストレージとローカルストレージをクリア
-      // clearCart(); // カートをクリア
-      // sessionStorage.removeItem('orderInfo');
-      // sessionStorage.removeItem('paymentInfo');
-      // sessionStorage.removeItem('cartInfo');
+      clearCart(); // カートをクリア
+      sessionStorage.removeItem('orderInfo');
+      sessionStorage.removeItem('paymentInfo');
+      sessionStorage.removeItem('cartInfo');
       
-      // // 入力情報も削除
-      // localStorage.removeItem('shipping_form_data');
-      // localStorage.removeItem('payment_method_data');
+      // 入力情報も削除
+      localStorage.removeItem('shipping_form_data');
+      localStorage.removeItem('payment_method_data');
 
     }
   }, [clearCart, router]);
@@ -100,7 +101,7 @@ export default function OrderCompleteClient({settings}: {settings: MicroCMSSetti
           >
             <CheckCircleIcon sx={{ fontSize: 64, color: 'black', mb: 3 }} />
             
-            <Typography variant="h2" sx={{ fontSize: '20px', fontWeight: 500, mb: 3 }}>
+            <Typography variant="h2" sx={{ fontSize: '18px', fontWeight: 500, mb: 3 }}>
               ご注文ありがとうございます
             </Typography>
             
@@ -111,6 +112,8 @@ export default function OrderCompleteClient({settings}: {settings: MicroCMSSetti
                 </Typography>
                 <Box sx={{ textAlign: 'left', fontSize: '14px' }}>
                   <Typography sx={{ mb: 1 }}>お名前: {orderInfo.customerInfo.lastName} {orderInfo.customerInfo.firstName}</Typography>
+                  <Typography sx={{ mb: 1 }}>お電話番号: {paymentInfo?.customerInfo.customerInfo.phone}</Typography>
+                  <Typography sx={{ mb: 1 }}>メールアドレス: {paymentInfo?.customerInfo.customerInfo.email}</Typography>
                   <Typography sx={{ mb: 1 }}>お届け先: 〒{orderInfo.customerInfo.postalCode}<br/>{orderInfo.customerInfo.prefecture}{orderInfo.customerInfo.city}{orderInfo.customerInfo.address}{orderInfo.customerInfo.building ? ` ${orderInfo.customerInfo.building}` : ''}</Typography>
                   <Typography sx={{ mb: 1 }}>お支払い方法: {orderInfo.paymentMethod === 'cod' ? '代引き' : orderInfo.paymentMethod === 'credit' ? 'クレジットカード' : '銀行振込'}</Typography>
                 </Box>
