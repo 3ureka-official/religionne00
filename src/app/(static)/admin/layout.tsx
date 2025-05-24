@@ -35,8 +35,7 @@ export default function AdminLayout({
 
   // サイドメニュー項目
   const menuItems = [
-    { text: '商品管理', icon: <InventoryIcon />, path: '/admin/products' },
-    { text: '設定', icon: <SettingsIcon />, path: '/admin/settings' },
+    { text: '商品管理', icon: <InventoryIcon />, path: '/admin' }
   ]
 
   // ログアウト処理

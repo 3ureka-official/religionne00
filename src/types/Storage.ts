@@ -1,3 +1,4 @@
+import { OrderItem } from "@/firebase/orderService";
 
 type PaymentInfo = {
   customerInfo: {
@@ -56,4 +57,22 @@ type Item = {
   size: string;
 }
 
-export type { PaymentInfo, OrderInfo, CustomerInfo, Item };
+type OrderData = {
+  customer: string;
+  email: string;
+  phone: string;
+  total: number;
+  shippingFee: number;
+  items: OrderItem[];
+  address: {
+    postalCode: string;
+    prefecture: string;
+    city: string;
+    line1: string;
+    line2: string;
+  };
+  paymentMethod: string;
+}
+
+export type { PaymentInfo, OrderInfo, CustomerInfo, Item, OrderData };
+

@@ -11,7 +11,7 @@ import Link from 'next/link'
 import { addOrder } from '@/firebase/orderService'
 import { OrderItem } from '@/firebase/orderService'
 import { MicroCMSSettings } from '@/lib/microcms'
-
+import { OrderData } from '@/types/Storage'
 
 export default function CheckoutConfirmClient({settings}: {settings: MicroCMSSettings}) {
   const { items, getTotalPrice } = useCart()
@@ -108,7 +108,7 @@ export default function CheckoutConfirmClient({settings}: {settings: MicroCMSSet
       const line1 = addressParts.slice(2).join(' ') || '';
       
       // 注文データの作成
-      const orderData = {
+      const orderData: OrderData = {
         customer: orderInfo.name,
         email: orderInfo.email,
         phone: orderInfo.phone,
@@ -145,7 +145,41 @@ export default function CheckoutConfirmClient({settings}: {settings: MicroCMSSet
     try {
       setIsProcessing(true);
 
-      console.log(paymentInfo);
+      // 注文アイテムの作成
+      const orderItems: OrderItem[] = items.map(item => ({
+        productId: item.id || '',
+        name: item.name,
+        price: Number(item.price.replace(/,/g, '') || 0),
+        quantity: item.quantity,
+        image: item.image,
+        size: item.size
+      }));
+      
+      // 住所情報の構築
+      const addressParts = orderInfo.address.split(/[,、\s]+/);
+      const prefecture = addressParts[0] || '';
+      const city = addressParts[1] || '';
+      const line1 = addressParts.slice(2).join(' ') || '';
+
+      console.log(shippingFee);
+
+      // 注文データの作成
+      const orderData: OrderData = {
+        customer: orderInfo.name,
+        email: orderInfo.email,
+        phone: orderInfo.phone,
+        total: total,
+        shippingFee: shippingFee,
+        items: orderItems,
+        address: {
+          postalCode: orderInfo.postalCode,
+          prefecture,
+          city,
+          line1,
+          line2: ''
+        },
+        paymentMethod: orderInfo.paymentMethod === 'credit' ? 'stripe_credit_card' : 'stripe_paypay'
+      };
       
       // Stripeチェックアウトセッション作成APIを呼び出し
       const response = await fetch('/api/checkout', {
@@ -153,7 +187,7 @@ export default function CheckoutConfirmClient({settings}: {settings: MicroCMSSet
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify(paymentInfo)
+        body: JSON.stringify(orderData)
       });
       
       if (!response.ok) {
