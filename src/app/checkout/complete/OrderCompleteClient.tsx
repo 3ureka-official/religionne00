@@ -30,14 +30,14 @@ export default function OrderCompleteClient({settings}: {settings: MicroCMSSetti
       setOrderInfo(JSON.parse(storedOrderInfo))
       
       // 注文完了後なのでセッションストレージとローカルストレージをクリア
-      // clearCart(); // カートをクリア
-      // sessionStorage.removeItem('orderInfo');
-      // sessionStorage.removeItem('paymentInfo');
-      // sessionStorage.removeItem('cartInfo');
+      clearCart(); // カートをクリア
+      sessionStorage.removeItem('orderInfo');
+      sessionStorage.removeItem('paymentInfo');
+      sessionStorage.removeItem('cartInfo');
       
-      // // 入力情報も削除
-      // localStorage.removeItem('shipping_form_data');
-      // localStorage.removeItem('payment_method_data');
+      // 入力情報も削除
+      localStorage.removeItem('shipping_form_data');
+      localStorage.removeItem('payment_method_data');
 
     }
   }, [clearCart, router]);
@@ -100,7 +100,7 @@ export default function OrderCompleteClient({settings}: {settings: MicroCMSSetti
           >
             <CheckCircleIcon sx={{ fontSize: 64, color: 'black', mb: 3 }} />
             
-            <Typography variant="h2" sx={{ fontSize: '20px', fontWeight: 500, mb: 3 }}>
+            <Typography variant="h2" sx={{ fontSize: '18px', fontWeight: 500, mb: 3 }}>
               ご注文ありがとうございます
             </Typography>
             
