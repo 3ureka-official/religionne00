@@ -166,13 +166,13 @@ export const getTotalSales = async () => {
 };
 
 // 注文を追加
-export const addOrder = async (orderData: Omit<Order, 'id' | 'date' | 'status' | 'createdAt' | 'updatedAt'>) => {
+export const addOrder = async (orderData: Omit<Order, 'id' | 'date' | 'status' | 'createdAt' | 'updatedAt'>, status: string = 'processing') => {
   try {
     // 注文データを準備
     const newOrder = {
       ...orderData,
       date: serverTimestamp(),
-      status: 'processing' as const,
+      status: status,
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp()
     };
