@@ -4,6 +4,8 @@ export const dynamic = 'force-dynamic';
 import { NextResponse } from 'next/server'
 import Stripe from 'stripe'
 import { updateOrderStatus, getOrderById } from '@/firebase/orderService'
+import { buffer } from 'micro';
+import { NextApiRequest } from 'next';
 // import { sendOrderConfirmationEmail } from '@/services/emailService'
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
@@ -19,7 +21,7 @@ export const config = {
 }
 
 // 2. Webhook ハンドラ
-export async function POST(request: Request) {
+export async function POST(request: NextApiRequest) {
   try {
     if (!request.body) {
       console.warn('Webhook received empty request body.');
@@ -30,9 +32,8 @@ export async function POST(request: Request) {
     }
     
     // リクエストボディを取得
-    const sig = request.headers.get('stripe-signature');
-    const rawBody = await request.text();
-    const buf = Buffer.from(rawBody);
+    const buf = await buffer(request)
+    const sig = request.headers['stripe-signature']
 
     let event;
     try {

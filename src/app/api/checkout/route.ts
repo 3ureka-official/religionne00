@@ -131,7 +131,7 @@ export async function POST(request: Request) {
         createdAt: Timestamp.now(),
         updatedAt: Timestamp.now(),
       };
-      const orderId = await addOrder(preliminaryOrderData);
+      const orderId = await addOrder(preliminaryOrderData, 'pending');
       console.log('Stripe仮注文保存成功:', orderId);
 
       const stripePaymentType = getStripePaymentMethodType(paymentMethod);
