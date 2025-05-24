@@ -30,14 +30,14 @@ export default function OrderCompleteClient({settings}: {settings: MicroCMSSetti
       setOrderInfo(JSON.parse(storedOrderInfo))
       
       // 注文完了後なのでセッションストレージとローカルストレージをクリア
-      clearCart(); // カートをクリア
-      sessionStorage.removeItem('orderInfo');
-      sessionStorage.removeItem('paymentInfo');
-      sessionStorage.removeItem('cartInfo');
+      // clearCart(); // カートをクリア
+      // sessionStorage.removeItem('orderInfo');
+      // sessionStorage.removeItem('paymentInfo');
+      // sessionStorage.removeItem('cartInfo');
       
-      // 入力情報も削除
-      localStorage.removeItem('shipping_form_data');
-      localStorage.removeItem('payment_method_data');
+      // // 入力情報も削除
+      // localStorage.removeItem('shipping_form_data');
+      // localStorage.removeItem('payment_method_data');
 
     }
   }, [clearCart, router]);

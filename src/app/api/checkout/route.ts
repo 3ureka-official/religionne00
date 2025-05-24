@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { createCheckoutSession } from '@/services/stripeService';
 import { addOrder, Order, OrderItem } from '@/firebase/orderService';
 import { Timestamp } from 'firebase/firestore';
-
+import { OrderData } from '@/types/Storage';
 // 商品情報の型
 type Item = {
   productId: string;
@@ -74,11 +74,13 @@ const getStripePaymentMethodType = (paymentMethodString: string): "credit" | "pa
 
 export async function POST(request: Request) {
   try {
-    const body: CheckoutRequestBody = await request.json();
-    const { items, customerEmail, shippingFee, paymentMethod, customerInfo } = body;
+    const body: OrderData = await request.json();
+    const { items, customer, email, phone, total, shippingFee, address, paymentMethod } = body;
 
+    console.log(body)
+    
     // paymentMethod と paymentMethod.paymentMethod の存在チェック
-    if (!paymentMethod || typeof paymentMethod.paymentMethod !== 'string') {
+    if (!paymentMethod || typeof paymentMethod !== 'string') {
       console.error('Invalid paymentMethod received:', paymentMethod);
       return NextResponse.json(
         { error: '支払い方法情報が正しくありません。' },
@@ -86,9 +88,9 @@ export async function POST(request: Request) {
       );
     }
 
-    const formattedAddressInfo = formatAddress(customerInfo);
+    // const formattedAddressInfo = formatAddress(address);
 
-    const formattedItems: OrderItem[] = items.map((item: Item) => ({
+    const formattedItems: OrderItem[] = items.map((item: OrderItem) => ({
       productId: item.productId,
       name: item.name,
       price: Number(item.price),
@@ -98,18 +100,18 @@ export async function POST(request: Request) {
     }));
 
     const baseOrderData: Omit<Order, 'id' | 'status' | 'createdAt' | 'updatedAt'> = {
-      customer: customerInfo.name,
-      email: customerEmail,
-      phone: customerInfo.phone || '',
-      total: Number(paymentMethod.total) || 0,
+      customer: customer,
+      email: email,
+      phone: phone || '',
+      total: Number(total) || 0,
       shippingFee: Number(shippingFee) || 0,
       items: formattedItems,
-      address: formattedAddressInfo,
-      paymentMethod: paymentMethod.paymentMethod,
+      address: address,
+      paymentMethod: paymentMethod,
       date: Timestamp.now(),
     };
 
-    if (paymentMethod.paymentMethod === 'cod') {
+    if (paymentMethod === 'cod') {
       console.log('代金引換処理を開始します');
       const finalOrderDataForCod: Order = {
         ...baseOrderData,
@@ -121,8 +123,8 @@ export async function POST(request: Request) {
       console.log('代金引換注文保存成功:', orderId);
       return NextResponse.json({ success: true, orderId: orderId, paymentType: 'cod' });
 
-    } else if (paymentMethod.paymentMethod.startsWith('stripe_')) {
-      console.log('Stripe決済処理を開始します:', paymentMethod.paymentMethod);
+    } else if (paymentMethod.startsWith('stripe_')) {
+      console.log('Stripe決済処理を開始します:', paymentMethod);
       const preliminaryOrderData: Order = {
         ...baseOrderData,
         status: 'pending',
@@ -132,9 +134,9 @@ export async function POST(request: Request) {
       const orderId = await addOrder(preliminaryOrderData);
       console.log('Stripe仮注文保存成功:', orderId);
 
-      const stripePaymentType = getStripePaymentMethodType(paymentMethod.paymentMethod);
+      const stripePaymentType = getStripePaymentMethodType(paymentMethod);
       if (!stripePaymentType) {
-        console.error('未対応のStripe支払い方法です:', paymentMethod.paymentMethod);
+        console.error('未対応のStripe支払い方法です:', paymentMethod);
         return NextResponse.json(
           { error: '未対応のStripe支払い方法です。' },
           { status: 400 }
@@ -142,19 +144,19 @@ export async function POST(request: Request) {
       }
 
       const customerDetailsForStripe = {
-        name: customerInfo.name,
-        phone: customerInfo.phone || '',
-        postalCode: formattedAddressInfo.postalCode,
-        prefecture: formattedAddressInfo.prefecture,
-        city: formattedAddressInfo.city,
-        line1: formattedAddressInfo.line1,
-        line2: formattedAddressInfo.line2,
-        address: customerInfo.address,
+        name: customer,
+        phone: phone || '',
+        postalCode: address.postalCode,
+        prefecture: address.prefecture,
+        city: address.city,
+        line1: address.line1,
+        line2: address.line2,
+        address: address.line1,
       };
 
       const checkoutUrl = await createCheckoutSession(
         formattedItems,
-        customerEmail,
+        email,
         Number(shippingFee),
         stripePaymentType,
         customerDetailsForStripe,
@@ -163,7 +165,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ url: checkoutUrl, paymentType: 'stripe' });
 
     } else {
-      console.error('未対応の支払い方法です:', paymentMethod.paymentMethod);
+      console.error('未対応の支払い方法です:', paymentMethod);
       return NextResponse.json(
         { error: '未対応の支払い方法です。' },
         { status: 400 }
