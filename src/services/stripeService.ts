@@ -240,6 +240,7 @@ export const updateStripePrice = async (
  * @param customerInfo 顧客情報
  * @returns チェックアウトセッションURL
  */
+
 export const createCheckoutSession = async (
   items: Array<{
     name: string;
