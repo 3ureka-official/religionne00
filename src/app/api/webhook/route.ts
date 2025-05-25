@@ -2,10 +2,9 @@
 export const dynamic = 'force-dynamic';
 
 import { NextResponse } from 'next/server'
+import { NextRequest } from 'next/server'
 import Stripe from 'stripe'
 import { updateOrderStatus, getOrderById } from '@/firebase/orderService'
-import { buffer } from 'micro';
-import { NextApiRequest } from 'next';
 // import { sendOrderConfirmationEmail } from '@/services/emailService'
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
@@ -20,20 +19,13 @@ export const config = {
   }
 }
 
-// 2. Webhook ハンドラ
-export async function POST(request: NextApiRequest) {
+// Webhook ハンドラ
+export async function POST(request: NextRequest) {
   try {
-    if (!request.body) {
-      console.warn('Webhook received empty request body.');
-      return NextResponse.json(
-        { error: 'No request body' },
-        { status: 400 }
-      )
-    }
-    
     // リクエストボディを取得
-    const buf = await buffer(request)
-    const sig = request.headers['stripe-signature']
+    const body = await request.text();
+    const rawBody = Buffer.from(body);
+    const sig = request.headers.get('stripe-signature');
 
     let event;
     try {
@@ -41,7 +33,7 @@ export async function POST(request: NextApiRequest) {
         console.error('Webhook Error: No signature provided.');
         throw new Error("No signature provided")
       }
-      event = stripe.webhooks.constructEvent(buf, sig, webhookSecret);
+      event = stripe.webhooks.constructEvent(rawBody, sig, webhookSecret);
     } catch (e) {
       const err = e instanceof Error ? e : new Error("Bad Request")
       console.error(`Webhook signature verification failed: ${err.message}`);

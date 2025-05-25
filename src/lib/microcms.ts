@@ -63,6 +63,7 @@ export const fetchSettings = async (): Promise<MicroCMSSettings> => {
   const data = await microcms.getObject<MicroCMSSettings>({
     endpoint: 'settings',
   });
+
   return data;
 };
 
@@ -87,7 +88,7 @@ export const fetchCategories = async (): Promise<MicroCMSCategory[]> => {
   return data.contents;
 };
 
-export const fetchProductsByCategory = async (categoryId: string): Promise<MicroCMSProduct[]> => {
+export const fetchProductsByCategory = async (categoryId: string) => {
   const data = await microcms.getList<MicroCMSProduct>({
     endpoint: 'products',
     queries: { filters: `category[equals]${categoryId}` },
