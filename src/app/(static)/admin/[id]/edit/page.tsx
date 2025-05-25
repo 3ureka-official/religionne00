@@ -240,7 +240,7 @@ export default function EditProductPage() {
       
       // 一覧ページに戻る
       setTimeout(() => {
-        router.push('/admin/products')
+        router.push('/admin/')
       }, 1500)
       
     } catch (err) {
