@@ -4,6 +4,8 @@ import Footer from '@/components/Footer'
 import { fetchSettings } from '@/lib/microcms';
 import BrandCarousel from '@/components/BrandCarousel';
 
+export const revalidate = 3600;
+
 export default async function About() {
   const settings = await fetchSettings();
   const brandImages = settings.brandImages;

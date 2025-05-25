@@ -4,6 +4,8 @@ import Footer from '@/components/Footer'
 import { fetchSettings } from '@/lib/microcms'
 import styles from '@/styles/prose'
 
+export const revalidate = 3600;
+
 export default async function PrivacyPolicy() {
   // Fetch the privacy policy content from MicroCMS
   const settings = await fetchSettings();

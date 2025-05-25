@@ -8,7 +8,7 @@ import { ThemeProvider } from '@mui/material/styles'
 import theme from '@/styles/theme'
 import CheckCircleIcon from '@mui/icons-material/CheckCircle'
 import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { useCart } from '@/features/cart/components/CartContext'
 import { MicroCMSSettings } from '@/lib/microcms'
 import styles from '@/styles/prose'
@@ -17,31 +17,89 @@ import Image from 'next/image'
 
 export default function OrderCompleteClient({settings}: {settings: MicroCMSSettings}) {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const { clearCart } = useCart()
   const [orderInfo, setOrderInfo] = useState<OrderInfo | null>(null)
   const [paymentInfo, setPaymentInfo] = useState<PaymentInfo | null>(null)
+  const [isPayPayPayment, setIsPayPayPayment] = useState(false)
   
   useEffect(() => {
-    // セッションストレージから注文情報を取得
-    const storedOrderInfo = sessionStorage.getItem('orderInfo')
-    const storedPaymentInfo = sessionStorage.getItem('paymentInfo')
-    console.log(storedOrderInfo);
-    
-    if (storedOrderInfo && storedPaymentInfo) {
-      setOrderInfo(JSON.parse(storedOrderInfo))
-      setPaymentInfo(JSON.parse(storedPaymentInfo))
-      // 注文完了後なのでセッションストレージとローカルストレージをクリア
-      clearCart(); // カートをクリア
-      sessionStorage.removeItem('orderInfo');
-      sessionStorage.removeItem('paymentInfo');
-      sessionStorage.removeItem('cartInfo');
-      
-      // 入力情報も削除
-      localStorage.removeItem('shipping_form_data');
-      localStorage.removeItem('payment_method_data');
+    // URLパラメータからPayPay決済情報を確認
+    const payPayPaymentId = searchParams.get('paypay_payment_id')
+    const orderId = searchParams.get('order_id')
+    const stripeSessionId = searchParams.get('session_id')
 
+    if (payPayPaymentId && orderId) {
+      // PayPay決済の場合
+      setIsPayPayPayment(true)
+      
+      // PayPay決済完了の確認API呼び出し
+      fetch(`/api/paypay/callback?paypay_payment_id=${payPayPaymentId}&order_id=${orderId}`)
+        .then(response => response.json())
+        .then(data => {
+          if (data.success) {
+            console.log('PayPay決済完了確認成功:', data)
+            // セッションストレージから注文情報を取得
+            const storedOrderInfo = sessionStorage.getItem('orderInfo')
+            const storedPaymentInfo = sessionStorage.getItem('paymentInfo')
+            
+            if (storedOrderInfo && storedPaymentInfo) {
+              setOrderInfo(JSON.parse(storedOrderInfo))
+              setPaymentInfo(JSON.parse(storedPaymentInfo))
+            }
+            
+            // 注文完了後なのでセッションストレージとローカルストレージをクリア
+            clearCart()
+            sessionStorage.removeItem('orderInfo')
+            sessionStorage.removeItem('paymentInfo')
+            sessionStorage.removeItem('cartInfo')
+            localStorage.removeItem('shipping_form_data')
+            localStorage.removeItem('payment_method_data')
+          } else {
+            console.error('PayPay決済確認エラー:', data.error)
+            alert('PayPay決済の確認中にエラーが発生しました。')
+          }
+        })
+        .catch(error => {
+          console.error('PayPay決済確認API呼び出しエラー:', error)
+          alert('PayPay決済の確認中にエラーが発生しました。')
+        })
+    } else if (stripeSessionId) {
+      // Stripe決済の場合（既存の処理）
+      const storedOrderInfo = sessionStorage.getItem('orderInfo')
+      const storedPaymentInfo = sessionStorage.getItem('paymentInfo')
+      
+      if (storedOrderInfo && storedPaymentInfo) {
+        setOrderInfo(JSON.parse(storedOrderInfo))
+        setPaymentInfo(JSON.parse(storedPaymentInfo))
+        
+        // 注文完了後なのでセッションストレージとローカルストレージをクリア
+        clearCart()
+        sessionStorage.removeItem('orderInfo')
+        sessionStorage.removeItem('paymentInfo')
+        sessionStorage.removeItem('cartInfo')
+        localStorage.removeItem('shipping_form_data')
+        localStorage.removeItem('payment_method_data')
+      }
+    } else {
+      // セッションストレージから注文情報を取得（代引きなど）
+      const storedOrderInfo = sessionStorage.getItem('orderInfo')
+      const storedPaymentInfo = sessionStorage.getItem('paymentInfo')
+      
+      if (storedOrderInfo && storedPaymentInfo) {
+        setOrderInfo(JSON.parse(storedOrderInfo))
+        setPaymentInfo(JSON.parse(storedPaymentInfo))
+        
+        // 注文完了後なのでセッションストレージとローカルストレージをクリア
+        clearCart()
+        sessionStorage.removeItem('orderInfo')
+        sessionStorage.removeItem('paymentInfo')
+        sessionStorage.removeItem('cartInfo')
+        localStorage.removeItem('shipping_form_data')
+        localStorage.removeItem('payment_method_data')
+      }
     }
-  }, [clearCart, router]);
+  }, [clearCart, router, searchParams])
 
   return (
     <ThemeProvider theme={theme}>
@@ -115,7 +173,12 @@ export default function OrderCompleteClient({settings}: {settings: MicroCMSSetti
                   <Typography sx={{ mb: 1 }}>お電話番号: {paymentInfo?.customerInfo.customerInfo.phone}</Typography>
                   <Typography sx={{ mb: 1 }}>メールアドレス: {paymentInfo?.customerInfo.customerInfo.email}</Typography>
                   <Typography sx={{ mb: 1 }}>お届け先: 〒{orderInfo.customerInfo.postalCode}<br/>{orderInfo.customerInfo.prefecture}{orderInfo.customerInfo.city}{orderInfo.customerInfo.address}{orderInfo.customerInfo.building ? ` ${orderInfo.customerInfo.building}` : ''}</Typography>
-                  <Typography sx={{ mb: 1 }}>お支払い方法: {orderInfo.paymentMethod === 'cod' ? '代引き' : orderInfo.paymentMethod === 'credit' ? 'クレジットカード' : '銀行振込'}</Typography>
+                  <Typography sx={{ mb: 1 }}>お支払い方法: {
+                    orderInfo.paymentMethod === 'cod' ? '代引き' : 
+                    orderInfo.paymentMethod === 'credit' ? 'クレジットカード' : 
+                    orderInfo.paymentMethod === 'paypay' ? 'PayPay' :
+                    isPayPayPayment ? 'PayPay' : '銀行振込'
+                  }</Typography>
                 </Box>
               </Box>
             )}

@@ -7,7 +7,6 @@ import { useState, useEffect } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 import Link from 'next/link'
 import InventoryIcon from '@mui/icons-material/Inventory'
-import SettingsIcon from '@mui/icons-material/Settings'
 import LogoutIcon from '@mui/icons-material/Logout'
 
 // 管理者ページのレイアウト

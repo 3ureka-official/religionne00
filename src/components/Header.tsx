@@ -7,7 +7,7 @@ import { useState, useEffect, useRef, FormEvent, Suspense } from 'react'
 import InstagramIcon from '@mui/icons-material/Instagram'
 import { useCart } from '@/features/cart/components/CartContext'
 import { useRouter, useSearchParams } from 'next/navigation'
-
+import { MicroCMSSettings, fetchSettings } from '@/lib/microcms'
 // 検索バーコンポーネント
 function SearchBar({ isMobile }: { isMobile: boolean }) {
   const searchParams = useSearchParams()
@@ -145,6 +145,8 @@ const Header = () => {
   const logoHeaderHeight = useRef<number>(0)
   const theme = useTheme()
   const [isMounted, setIsMounted] = useState(false)
+
+    const [settings, setSettings] = useState<MicroCMSSettings | null>(null)
   
   // デフォルトでモバイルとして初期化（SSR時やマウント前）
   const isSmallScreen = useMediaQuery(theme.breakpoints.down('sm'), {
@@ -154,6 +156,11 @@ const Header = () => {
   // コンポーネントがマウントされたらフラグを設定
   useEffect(() => {
     setIsMounted(true);
+    const getSettings = async () => {
+      const settings = await fetchSettings()
+      setSettings(settings)
+    }
+    getSettings()
   }, []);
   
   // 実際に使用するサイズ変数
@@ -304,7 +311,7 @@ const Header = () => {
               pr: { xs: 1, sm: 0 },
             }}>
               <a
-                href="https://www.instagram.com"
+                href={settings?.sns[0].url}
                 target="_blank"
               rel="noopener noreferrer"
               style={{ color: 'inherit', display: 'flex', alignItems: 'center' }}

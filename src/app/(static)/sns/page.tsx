@@ -4,6 +4,8 @@ import Footer from '@/components/Footer'
 import { fetchSettings } from '@/lib/microcms';
 import Image from 'next/image';
 
+export const revalidate = 3600;
+
 export default async function SNS() {
   const settings = await fetchSettings();
   const socialAccounts = settings.sns.map((sns) => ({
