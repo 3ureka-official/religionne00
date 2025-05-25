@@ -7,6 +7,8 @@ import { fetchSettings } from '@/lib/microcms'
 import { getAllProducts } from '@/firebase/productService'
 import { convertToMicroCMSFormat } from '@/lib/adapters'
 
+export const revalidate = 600;
+
 export default async function Home() {
   const settings = await fetchSettings()
 
