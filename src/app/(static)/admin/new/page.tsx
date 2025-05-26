@@ -8,9 +8,10 @@ import AddPhotoAlternateIcon from '@mui/icons-material/AddPhotoAlternate'
 import CloseIcon from '@mui/icons-material/Close'
 import AddIcon from '@mui/icons-material/Add'
 import { Product } from '@/firebase/productService'
-// import { createProductWithStripe } from '@/firebase/productService'
+import { createProductWithStripe } from '@/firebase/productService'
 import { fetchCategories } from '@/lib/microcms'
 import { MicroCMSCategory } from '@/lib/microcms'
+import { Timestamp } from 'firebase/firestore'
 // import { Timestamp } from 'firebase/firestore'
 
 // サイズごとの在庫を管理するインターフェース
@@ -155,33 +156,33 @@ export default function NewProductPage() {
       setError(null)
       
       // 商品データの準備
-      // const productData: Omit<Product, 'id' | 'images'> = {
-      //   name: formData.name,
-      //   description: formData.description,
-      //   price: Number(formData.price),
-      //   category: formData.category,
-      //   isPublished: true,
-      //   createdAt: Timestamp.now(),
-      //   updatedAt: Timestamp.now(),
-      //   sizeInventories: sizeInventories
-      //     .filter(item => item.size !== '')
-      //     .map(item => ({
-      //       size: item.size,
-      //       stock: Number(item.stock) || 0
-      //     }))
-      // }
+      const productData: Omit<Product, 'id' | 'images'> = {
+        name: formData.name,
+        description: formData.description,
+        price: Number(formData.price),
+        category: formData.category,
+        isPublished: true,
+        createdAt: Timestamp.now(),
+        updatedAt: Timestamp.now(),
+        sizeInventories: sizeInventories
+          .filter(item => item.size !== '')
+          .map(item => ({
+            size: item.size,
+            stock: Number(item.stock) || 0
+          }))
+      }
       
       // 画像データの準備
-      // const imageFilesToUpload = Array.from(uploadingImages)
+      const imageFilesToUpload = Array.from(uploadingImages)
       
       // Stripe連携を利用する場合（本番環境での出品）
-      // let newProduct = await createProductWithStripe(productData, imageFilesToUpload);
+      await createProductWithStripe(productData, imageFilesToUpload);
       
       setSuccess('商品が正常に追加されました')
       
       // 一覧ページに戻る
       setTimeout(() => {
-        router.push('/admin/products')
+        router.push('/admin/')
       }, 1500)
       
     } catch (err) {

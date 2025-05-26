@@ -12,7 +12,7 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { useCart } from '@/features/cart/components/CartContext'
 import { MicroCMSSettings } from '@/lib/microcms'
 import styles from '@/styles/prose'
-import { OrderInfo, PaymentInfo } from '@/types/Storage'
+import { OrderInfo } from '@/types/Storage'
 import Image from 'next/image'
 
 export default function OrderCompleteClient({settings}: {settings: MicroCMSSettings}) {
@@ -20,7 +20,6 @@ export default function OrderCompleteClient({settings}: {settings: MicroCMSSetti
   const searchParams = useSearchParams()
   const { clearCart } = useCart()
   const [orderInfo, setOrderInfo] = useState<OrderInfo | null>(null)
-  const [paymentInfo, setPaymentInfo] = useState<PaymentInfo | null>(null)
   const [isPayPayPayment, setIsPayPayPayment] = useState(false)
   
   useEffect(() => {
@@ -41,11 +40,9 @@ export default function OrderCompleteClient({settings}: {settings: MicroCMSSetti
             console.log('PayPay決済完了確認成功:', data)
             // セッションストレージから注文情報を取得
             const storedOrderInfo = sessionStorage.getItem('orderInfo')
-            const storedPaymentInfo = sessionStorage.getItem('paymentInfo')
             
-            if (storedOrderInfo && storedPaymentInfo) {
+            if (storedOrderInfo) {
               setOrderInfo(JSON.parse(storedOrderInfo))
-              setPaymentInfo(JSON.parse(storedPaymentInfo))
             }
             
             // 注文完了後なのでセッションストレージとローカルストレージをクリア
@@ -71,7 +68,6 @@ export default function OrderCompleteClient({settings}: {settings: MicroCMSSetti
       
       if (storedOrderInfo && storedPaymentInfo) {
         setOrderInfo(JSON.parse(storedOrderInfo))
-        setPaymentInfo(JSON.parse(storedPaymentInfo))
         
         // 注文完了後なのでセッションストレージとローカルストレージをクリア
         clearCart()
@@ -84,11 +80,9 @@ export default function OrderCompleteClient({settings}: {settings: MicroCMSSetti
     } else {
       // セッションストレージから注文情報を取得（代引きなど）
       const storedOrderInfo = sessionStorage.getItem('orderInfo')
-      const storedPaymentInfo = sessionStorage.getItem('paymentInfo')
       
-      if (storedOrderInfo && storedPaymentInfo) {
+      if (storedOrderInfo) {
         setOrderInfo(JSON.parse(storedOrderInfo))
-        setPaymentInfo(JSON.parse(storedPaymentInfo))
         
         // 注文完了後なのでセッションストレージとローカルストレージをクリア
         clearCart()
@@ -164,16 +158,14 @@ export default function OrderCompleteClient({settings}: {settings: MicroCMSSetti
             </Typography>
             
             {orderInfo && (
-              <Box sx={{ mb: 4, p: 3, border: '1px solid #eee', width: '100%', maxWidth: 500 }}>
-                <Typography sx={{ mb: 2, fontWeight: 500, textAlign: 'left' }}>
+              <Box sx={{ mb: 4, p: { xs: 1, sm: 3 }, border: '1px solid #eee', width: '100%', maxWidth: 500 }}>
+                <Typography sx={{ mb: 2, fontWeight: 500, textAlign: 'left', fontSize: { xs: '13px', sm: '14px' } }}>
                   ご注文情報
                 </Typography>
-                <Box sx={{ textAlign: 'left', fontSize: '14px' }}>
-                  <Typography sx={{ mb: 1 }}>お名前: {orderInfo.customerInfo.lastName} {orderInfo.customerInfo.firstName}</Typography>
-                  <Typography sx={{ mb: 1 }}>お電話番号: {paymentInfo?.customerInfo.customerInfo.phone}</Typography>
-                  <Typography sx={{ mb: 1 }}>メールアドレス: {paymentInfo?.customerInfo.customerInfo.email}</Typography>
-                  <Typography sx={{ mb: 1 }}>お届け先: 〒{orderInfo.customerInfo.postalCode}<br/>{orderInfo.customerInfo.prefecture}{orderInfo.customerInfo.city}{orderInfo.customerInfo.address}{orderInfo.customerInfo.building ? ` ${orderInfo.customerInfo.building}` : ''}</Typography>
-                  <Typography sx={{ mb: 1 }}>お支払い方法: {
+                <Box sx={{ textAlign: 'left', fontSize: { xs: '13px', sm: '14px' } }}>
+                  <Typography sx={{ mb: 1, fontSize: { xs: '13px', sm: '14px' } }}>お名前: {orderInfo.customerInfo.lastName} {orderInfo.customerInfo.firstName}</Typography>
+                  <Typography sx={{ mb: 1, fontSize: { xs: '13px', sm: '14px' } }}>お届け先: 〒{orderInfo.customerInfo.postalCode}<br/>{orderInfo.customerInfo.prefecture}{orderInfo.customerInfo.city}{orderInfo.customerInfo.address}{orderInfo.customerInfo.building ? ` ${orderInfo.customerInfo.building}` : ''}</Typography>
+                  <Typography sx={{ mb: 1, fontSize: { xs: '13px', sm: '14px' } }}>お支払い方法: {
                     orderInfo.paymentMethod === 'cod' ? '代引き' : 
                     orderInfo.paymentMethod === 'credit' ? 'クレジットカード' : 
                     orderInfo.paymentMethod === 'paypay' ? 'PayPay' :
@@ -184,18 +176,18 @@ export default function OrderCompleteClient({settings}: {settings: MicroCMSSetti
             )}
 
             {orderInfo && (
-              <Box sx={{ mb: 4, p: 3, border: '1px solid #eee', width: '100%', maxWidth: 500 }}>
-                <Typography sx={{ mb: 2, fontWeight: 500, textAlign: 'left' }}>
+              <Box sx={{ mb: 4, p: { xs: 1, sm: 3 }, border: '1px solid #eee', width: '100%', maxWidth: 500 }}>
+                <Typography sx={{ mb: 2, fontWeight: 500, textAlign: 'left', fontSize: { xs: '13px', sm: '14px' } }}>
                   ご注文商品
                 </Typography>
-                <Box sx={{ textAlign: 'left', fontSize: '14px' }}>
+                <Box sx={{ textAlign: 'left' }}>
                   {orderInfo.items.map((item) => (
                     <Box key={item.id} sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
-                      <Image style={{ width: 60, height: 60 }} src={item.image} alt={item.name} width={100} height={100} />
-                      <Typography sx={{ mb: 1 }}>{item.name}</Typography>
-                      <Typography sx={{ mb: 1 }}>{item.size}</Typography>
-                      <Typography sx={{ mb: 1 }}>{item.quantity}個</Typography> 
-                      <Typography sx={{ mb: 1 }}>{item.price * item.quantity}円</Typography>
+                      <Image style={{ width: 50, height: 50 }} src={item.image} alt={item.name} width={100} height={100} />
+                      <Typography sx={{ mb: 1, fontSize: { xs: '13px', sm: '14px' } }}>{item.name}</Typography>
+                      <Typography sx={{ mb: 1, fontSize: { xs: '13px', sm: '14px' } }}>{item.size}</Typography>
+                      <Typography sx={{ mb: 1, fontSize: { xs: '13px', sm: '14px' } }}>{item.quantity}個</Typography> 
+                      <Typography sx={{ mb: 1, fontSize: { xs: '13px', sm: '14px' } }}>{item.price * item.quantity}円</Typography>
                     </Box>
                   ))}
                 </Box>

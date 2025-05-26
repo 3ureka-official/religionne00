@@ -202,12 +202,12 @@ export default function AdminProductsPage() {
   }
 
   const handleAddProduct = () => {
-    router.push('/admin/products/new')
+    router.push('/admin/new')
   }
 
   const handleEditProduct = (productId: string) => {
     if (!productId) return;
-    router.push(`/admin/products/${productId}/edit`);
+    router.push(`/admin/${productId}/edit`);
   }
 
   const toggleRecommended = async (product: Product) => {

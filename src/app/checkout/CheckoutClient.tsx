@@ -15,19 +15,6 @@ const isValidEmail = (email: string): boolean => {
   return emailRegex.test(email);
 }
 
-const isValidPhone = (phone: string): boolean => {
-  // ハイフンありの入力を許可
-  // 数字とハイフンのみであることを確認
-  if (!/^[\d-]+$/.test(phone)) {
-    return false;
-  }
-  
-  // ハイフンを除去した数字が10桁または11桁であることを確認
-  const digitsOnly = phone.replace(/-/g, '');
-  // 先頭が0で、10桁または11桁であることを確認
-  return /^0\d{9,10}$/.test(digitsOnly);
-}
-
 const isValidPostalCode = (postalCode: string): boolean => {
   // ハイフンありの入力を許可
   // 数字とハイフンのみであることを確認
@@ -141,11 +128,6 @@ export default function CheckoutClientPage({ settings }: { settings: MicroCMSSet
 
     if (!shippingForm.email || !isValidEmail(shippingForm.email)) {
       alert('有効なメールアドレスを入力してください。');
-      return;
-    }
-
-    if (!shippingForm.phone || !isValidPhone(shippingForm.phone)) {
-      alert('有効な電話番号を入力してください。');
       return;
     }
 
@@ -495,12 +477,12 @@ export default function CheckoutClientPage({ settings }: { settings: MicroCMSSet
                   label="クレジットカード" 
                   sx={{ '& .MuiTypography-root': { fontSize: '14px', fontWeight: 500 } }}
                 />
-                <FormControlLabel 
+                {/* <FormControlLabel 
                   value="paypay" 
                   control={<Radio />} 
                   label="PayPay" 
                   sx={{ '& .MuiTypography-root': { fontSize: '14px', fontWeight: 500 } }}
-                />
+                /> */}
                 <FormControlLabel 
                   value="cod" 
                   control={<Radio />} 
