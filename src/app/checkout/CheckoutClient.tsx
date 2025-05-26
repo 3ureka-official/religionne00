@@ -477,12 +477,12 @@ export default function CheckoutClientPage({ settings }: { settings: MicroCMSSet
                   label="クレジットカード" 
                   sx={{ '& .MuiTypography-root': { fontSize: '14px', fontWeight: 500 } }}
                 />
-                <FormControlLabel 
+                {/* <FormControlLabel 
                   value="paypay" 
                   control={<Radio />} 
                   label="PayPay" 
                   sx={{ '& .MuiTypography-root': { fontSize: '14px', fontWeight: 500 } }}
-                />
+                /> */}
                 <FormControlLabel 
                   value="cod" 
                   control={<Radio />} 
