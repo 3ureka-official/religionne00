@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server';
 import { createCheckoutSession } from '@/services/stripeService';
-import { createPayPayOrder } from '@/services/paypayService';
 import { addOrder, Order, OrderItem } from '@/firebase/orderService';
 import { Timestamp } from 'firebase/firestore';
 import { OrderData } from '@/types/Storage';
@@ -53,28 +52,6 @@ export async function POST(request: Request) {
       const orderId = await addOrder(finalOrderDataForCod);
       console.log('代金引換注文保存成功:', orderId);
       return NextResponse.json({ success: true, orderId: orderId, paymentType: 'cod' });
-
-    } else if (paymentMethod === 'stripe_paypay') {
-      console.log('PayPay決済処理を開始します');
-      const preliminaryOrderData: Order = {
-        ...baseOrderData,
-        status: 'pending',
-        createdAt: Timestamp.now(),
-        updatedAt: Timestamp.now(),
-      };
-      const orderId = await addOrder(preliminaryOrderData, 'pending');
-      console.log('PayPay仮注文保存成功:', orderId);
-
-      // PayPay決済URLを作成
-      const payPayItems = formattedItems.map(item => ({
-        name: item.name,
-        price: item.price,
-        quantity: item.quantity,
-        productId: item.productId
-      }));
-
-      const paymentUrl = await createPayPayOrder(payPayItems, Number(total), orderId);
-      return NextResponse.json({ url: paymentUrl, paymentType: 'paypay' });
 
     } else if (paymentMethod === 'stripe_credit_card') {
       console.log('Stripe決済処理を開始します:', paymentMethod);

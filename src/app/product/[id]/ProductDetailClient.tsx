@@ -101,6 +101,7 @@ export default function ProductDetailClient({ product, relatedProducts = [] }: P
     setAlertMessage('カートに商品を追加しました');
     setAlertSeverity('success');
     setShowAlert(true);
+    setSelectedSize(null);
   };
 
   // アラートを閉じる処理
