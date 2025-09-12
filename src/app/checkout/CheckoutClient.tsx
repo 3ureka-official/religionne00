@@ -1,7 +1,7 @@
 'use client'
 
 import { Box, Container, Typography, Button, TextField, FormControl, RadioGroup, FormControlLabel, Radio, Divider } from '@mui/material'
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useCart } from '@/features/cart/components/CartContext'
 import { useRouter } from 'next/navigation'
 import Header from '@/components/Header'
@@ -45,6 +45,7 @@ export default function CheckoutClientPage({ settings }: { settings: MicroCMSSet
   })
   
   const watchedValues = watch()
+  const [isRestored, setIsRestored] = useState(false)
 
   // 合計金額の計算
   const calculateTotal = (isIslandAddress: boolean) => {
@@ -86,13 +87,18 @@ export default function CheckoutClientPage({ settings }: { settings: MicroCMSSet
       setValue('paymentMethod', savedPaymentMethod as 'credit' | 'cod');
     }
     
+    // 復元完了フラグを設定
+    setIsRestored(true);
+    
   }, [setValue]);
 
-  // フォーム値の変更を監視してローカルストレージに保存
+  // フォーム値の変更を監視してローカルストレージに保存（復元完了後のみ）
   useEffect(() => {
-    localStorage.setItem(SHIPPING_FORM_STORAGE_KEY, JSON.stringify(watchedValues));
-    localStorage.setItem(PAYMENT_METHOD_STORAGE_KEY, watchedValues.paymentMethod);
-  }, [watchedValues]);
+    if (isRestored) {
+      localStorage.setItem(SHIPPING_FORM_STORAGE_KEY, JSON.stringify(watchedValues));
+      localStorage.setItem(PAYMENT_METHOD_STORAGE_KEY, watchedValues.paymentMethod);
+    }
+  }, [watchedValues, isRestored]);
 
   // フォーム送信処理
   const onSubmit = async (data: CheckoutFormData) => {
