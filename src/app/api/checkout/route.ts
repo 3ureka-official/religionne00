@@ -53,7 +53,7 @@ export async function POST(request: Request) {
       console.log('代金引換注文保存成功:', orderId);
       return NextResponse.json({ success: true, orderId: orderId, paymentType: 'cod' });
 
-    } else if (paymentMethod === 'stripe_credit_card') {
+    } else if (paymentMethod === 'credit') {
       console.log('Stripe決済処理を開始します:', paymentMethod);
       const preliminaryOrderData: Order = {
         ...baseOrderData,
