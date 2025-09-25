@@ -12,6 +12,7 @@ import { MicroCMSSettings } from '@/lib/microcms'
 import { useForm, Controller } from 'react-hook-form'
 import { yupResolver } from '@hookform/resolvers/yup'
 import { checkoutSchema, CheckoutFormData } from '@/schemas/checkoutSchema'
+import { OrderInfo } from '@/types/Storage'
 
 // ローカルストレージのキー
 const SHIPPING_FORM_STORAGE_KEY = 'shipping_form_data';
@@ -154,23 +155,30 @@ export default function CheckoutClientPage({ settings }: { settings: MicroCMSSet
         return;
     }
 
-    const paymentInfoForAPI = {
-      items: cartItems,
-      customerEmail: data.email,
-      shippingFee: totalCost.shippingCost,
-      paymentMethod: {
-        paymentMethod: apiPaymentMethodType,
-        total: totalCost.total
-      },
-      customerInfo: {
-        name: `${data.lastName} ${data.firstName}`,
-        phone: data.phone,
+    const paymentInfoForAPI: OrderInfo = {
+      customerInfo: {            // ← CustomerInfo型に合わせる
+        lastName: data.lastName,
+        firstName: data.firstName,
         postalCode: data.postalCode,
         prefecture: data.prefecture,
         city: data.city,
-        address: `${data.prefecture}${data.city}${data.address}`,
-        building: data.building || ''
-      }
+        address: data.address,
+        building: data.building,
+        email: data.email,
+        phone: data.phone
+      },
+      items: items.map(item => ({  // ← Item型に合わせる
+        id: item.id,
+        name: item.name,
+        description: item.description,
+        price: item.price,
+        quantity: item.quantity,
+        image: item.image,
+        size: item.size
+      })),
+      paymentMethod: data.paymentMethod,
+      shippingFee: totalCost.shippingCost,
+      total: totalCost.total
     };
     
     sessionStorage.setItem('paymentInfo', JSON.stringify(paymentInfoForAPI));

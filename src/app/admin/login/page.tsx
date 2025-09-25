@@ -1,10 +1,12 @@
 'use client'
 
-import { Box, Container, Typography, TextField, Button, Paper } from '@mui/material'
+import { Box, Container, Typography, TextField, Button, Paper, IconButton, InputAdornment } from '@mui/material'
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { ThemeProvider } from '@mui/material/styles'
 import theme from '@/styles/theme'
+import VisibilityIcon from '@mui/icons-material/Visibility'
+import VisibilityOffIcon from '@mui/icons-material/VisibilityOff'
 
 export default function AdminLoginPage() {
   const router = useRouter()
@@ -13,6 +15,8 @@ export default function AdminLoginPage() {
     password: ''
   })
   const [error, setError] = useState('')
+  const [isLoading, setIsLoading] = useState(false)
+  const [showPassword, setShowPassword] = useState(false)
 
   // すでにログインしている場合はダッシュボードにリダイレクト
   useEffect(() => {
@@ -30,15 +34,37 @@ export default function AdminLoginPage() {
     }))
   }
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    setIsLoading(true)
+    setError('')
     
-    // このデモでは簡易的な認証（実際の実装では安全な認証が必要）
-    if (formData.username === 'admin' && formData.password === 'password') {
-      sessionStorage.setItem('adminAuth', 'true')
-      router.push('/admin')
-    } else {
-      setError('ユーザー名またはパスワードが正しくありません')
+    try {
+      // APIエンドポイントで認証を行う
+      const response = await fetch('/api/admin/auth', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          username: formData.username,
+          password: formData.password
+        })
+      })
+
+      const result = await response.json()
+
+      if (response.ok && result.success) {
+        sessionStorage.setItem('adminAuth', 'true')
+        router.push('/admin')
+      } else {
+        setError(result.message || 'ユーザー名またはパスワードが正しくありません')
+      }
+    } catch (error) {
+      console.error('ログインエラー:', error)
+      setError('ログイン処理中にエラーが発生しました')
+    } finally {
+      setIsLoading(false)
     }
   }
 
@@ -94,24 +120,42 @@ export default function AdminLoginPage() {
                 value={formData.username}
                 onChange={handleChange}
                 required
+                disabled={isLoading}
                 sx={{ mb: 2 }}
               />
               <TextField
                 label="パスワード"
                 name="password"
-                type="password"
+                type={showPassword ? 'text' : 'password'}
                 fullWidth
                 margin="normal"
                 variant="outlined"
                 value={formData.password}
                 onChange={handleChange}
                 required
+                disabled={isLoading}
+                InputProps={{
+                  endAdornment: (
+                    <InputAdornment position="end">
+                      <IconButton
+                        aria-label="パスワードの表示を切り替え"
+                        onClick={() => setShowPassword(!showPassword)}
+                        onMouseDown={(e) => e.preventDefault()}
+                        edge="end"
+                        disabled={isLoading}
+                      >
+                        {showPassword ? <VisibilityOffIcon /> : <VisibilityIcon />}
+                      </IconButton>
+                    </InputAdornment>
+                  ),
+                }}
                 sx={{ mb: 3 }}
               />
               <Button
                 type="submit"
                 fullWidth
                 variant="contained"
+                disabled={isLoading}
                 sx={{
                   bgcolor: 'black',
                   color: 'white',
@@ -119,18 +163,17 @@ export default function AdminLoginPage() {
                   py: 1.5,
                   '&:hover': {
                     bgcolor: 'rgba(0, 0, 0, 0.8)'
+                  },
+                  '&:disabled': {
+                    bgcolor: 'rgba(0, 0, 0, 0.3)'
                   }
                 }}
               >
-                ログイン
+                {isLoading ? 'ログイン中...' : 'ログイン'}
               </Button>
             </form>
             
-            <Box sx={{ mt: 3, textAlign: 'center' }}>
-              <Typography variant="caption" color="text.secondary">
-                デモ用アカウント: admin / password
-              </Typography>
-            </Box>
+
           </Paper>
         </Container>
       </Box>

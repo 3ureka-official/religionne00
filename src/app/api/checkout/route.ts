@@ -1,104 +1,44 @@
-import { NextResponse } from 'next/server';
-import { createCheckoutSession } from '@/services/stripeService';
-import { addOrder, Order, OrderItem } from '@/firebase/orderService';
-import { Timestamp } from 'firebase/firestore';
-import { OrderData } from '@/types/Storage';
+import { NextResponse } from 'next/server'
+import Stripe from 'stripe'
+
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
+  apiVersion: '2025-04-30.basil',
+})
 
 export async function POST(request: Request) {
   try {
-    const body: OrderData = await request.json();
-    const { items, customer, email, phone, total, shippingFee, address, paymentMethod } = body;
-
-    console.log(body)
+    const { items, email, shippingFee, orderId } = await request.json()
     
-    // paymentMethod と paymentMethod.paymentMethod の存在チェック
-    if (!paymentMethod || typeof paymentMethod !== 'string') {
-      console.error('Invalid paymentMethod received:', paymentMethod);
-      return NextResponse.json(
-        { error: '支払い方法情報が正しくありません。' },
-        { status: 400 }
-      );
-    }
+    const session = await stripe.checkout.sessions.create({
+      payment_method_types: ['card'],
+      line_items: items.map((item: any) => ({
+        price_data: {
+          currency: 'jpy',
+          product_data: { name: item.name },
+          unit_amount: item.price,
+        },
+        quantity: item.quantity,
+      })),
+      shipping_options: [{
+        shipping_rate_data: {
+          type: 'fixed_amount',
+          fixed_amount: { amount: shippingFee, currency: 'jpy' },
+          display_name: '配送料',
+        },
+      }],
+      mode: 'payment',
+      customer_email: email,
+      success_url: `${process.env.NEXT_PUBLIC_APP_URL}/checkout/complete`,
+      cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/checkout/confirm`,
+      metadata: { orderId },
+    })
 
-    const formattedItems: OrderItem[] = items.map((item: OrderItem) => ({
-      productId: item.productId,
-      name: item.name,
-      price: Number(item.price),
-      quantity: Number(item.quantity),
-      image: item.image || '',
-      size: item.size || ''
-    }));
-
-    const baseOrderData: Omit<Order, 'id' | 'status' | 'createdAt' | 'updatedAt'> = {
-      customer: customer,
-      email: email,
-      phone: phone || '',
-      total: Number(total) || 0,
-      shippingFee: Number(shippingFee) || 0,
-      items: formattedItems,
-      address: address,
-      paymentMethod: paymentMethod,
-      date: Timestamp.now(),
-    };
-
-    if (paymentMethod === 'cod') {
-      console.log('代金引換処理を開始します');
-      const finalOrderDataForCod: Order = {
-        ...baseOrderData,
-        status: 'processing',
-        createdAt: Timestamp.now(),
-        updatedAt: Timestamp.now(),
-      };
-      const orderId = await addOrder(finalOrderDataForCod);
-      console.log('代金引換注文保存成功:', orderId);
-      return NextResponse.json({ success: true, orderId: orderId, paymentType: 'cod' });
-
-    } else if (paymentMethod === 'credit') {
-      console.log('Stripe決済処理を開始します:', paymentMethod);
-      const preliminaryOrderData: Order = {
-        ...baseOrderData,
-        status: 'pending',
-        createdAt: Timestamp.now(),
-        updatedAt: Timestamp.now(),
-      };
-      const orderId = await addOrder(preliminaryOrderData, 'pending');
-      console.log('Stripe仮注文保存成功:', orderId);
-
-      const customerDetailsForStripe = {
-        name: customer,
-        phone: phone || '',
-        postalCode: address.postalCode,
-        prefecture: address.prefecture,
-        city: address.city,
-        line1: address.line1,
-        line2: address.line2,
-        address: address.line1,
-      };
-
-      const checkoutUrl = await createCheckoutSession(
-        formattedItems,
-        email,
-        Number(shippingFee),
-        'credit',
-        customerDetailsForStripe,
-        orderId
-      );
-      return NextResponse.json({ url: checkoutUrl, paymentType: 'stripe' });
-
-    } else {
-      console.error('未対応の支払い方法です:', paymentMethod);
-      return NextResponse.json(
-        { error: '未対応の支払い方法です。' },
-        { status: 400 }
-      );
-    }
-
+    return NextResponse.json({ sessionId: session.id })
   } catch (error) {
-    console.error('Checkout API error:', error);
-    const errorMessage = error instanceof Error ? error.message : '決済処理の準備中にエラーが発生しました。';
+    console.error('Stripe session creation error:', error)
     return NextResponse.json(
-      { error: errorMessage },
+      { error: 'セッション作成に失敗しました' },
       { status: 500 }
-    );
+    )
   }
 } 

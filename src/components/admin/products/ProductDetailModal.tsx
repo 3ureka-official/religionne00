@@ -10,26 +10,6 @@ interface FirebaseTimestamp {
   toDate: () => Date;
 }
 
-// 日付をフォーマットする関数 (page.tsxからコピー)
-const formatTimestamp = (timestamp: Date | FirebaseTimestamp | Timestamp | FieldValue | null | undefined): string => {
-  if (!timestamp) return '未設定';
-  
-  // FieldValueの場合は未設定として扱う
-  if (timestamp && typeof timestamp === 'object' && 'isEqual' in timestamp) {
-    return '未設定';
-  }
-  
-  if (timestamp instanceof Timestamp) {
-    return timestamp.toDate().toLocaleDateString();
-  } else if (typeof timestamp === 'object' && timestamp !== null && 'seconds' in timestamp && 'nanoseconds' in timestamp && typeof (timestamp as FirebaseTimestamp).toDate === 'function') {
-    return (timestamp as FirebaseTimestamp).toDate().toLocaleDateString();
-  } else if (timestamp instanceof Date) {
-    return timestamp.toLocaleDateString();
-  }
-  
-  return '未設定';
-};
-
 export interface ProductDetailModalProps {
   open: boolean;
   onClose: () => void;
@@ -170,13 +150,10 @@ export const ProductDetailModal = ({
                   ¥{Number(product.price).toLocaleString()}
                 </Typography>
               </Box>
-              <Grid container spacing={2} sx={{ mb: 2 }}>
-                <Box sx={{ p: 1.5, backgroundColor: '#fafafa', borderRadius: 1, border: '1px solid #f0f0f0', flex: 1 }}>
-                  <Typography variant="body2" sx={{ fontWeight: 'bold', color: 'text.secondary' }}>カテゴリ</Typography>
-                  <Typography variant="body1">{product.category}</Typography>
-                </Box>
-              </Grid>
-              <Divider sx={{ my: 3 }} />
+              <Box>
+                <Typography variant="body1">{product.category}</Typography>
+              </Box>
+              <Divider sx={{ my: 2 }} />
               {/* サイズ・在庫情報 */}
               <Typography variant="subtitle1" sx={{ fontWeight: 'bold', mb: 2 }}>サイズ・在庫</Typography>
               {product.sizeInventories && product.sizeInventories.length > 0 ? (
@@ -211,18 +188,18 @@ export const ProductDetailModal = ({
                 </Typography>
               )}
               
-              <Divider sx={{ my: 3 }} />
+              <Divider sx={{ my: 2 }} />
               {/* 商品説明 */}
               <Typography variant="subtitle1" sx={{ fontWeight: 'bold', mb: 2 }}>商品説明</Typography>
               <Typography variant="body1" sx={{ whiteSpace: 'pre-wrap' }}>
                 {product.description || 'なし'}
               </Typography>
               
-              <Divider sx={{ my: 3 }} />
+              <Divider sx={{ my: 2 }} />
               {/* 出品日 */}
               <Typography variant="subtitle1" sx={{ fontWeight: 'bold', mb: 2 }}>出品日</Typography>
               <Typography variant="body1">
-                {formatTimestamp(product.createdAt)}
+                {product.createdAt?.toLocaleDateString('ja-JP', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
               </Typography>
             </Box>
           </Box>

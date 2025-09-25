@@ -19,7 +19,7 @@ export const checkoutSchema = yup.object().shape({
   firstName: yup
     .string()
     .required("名を入力してください"),
-  
+
   postalCode: yup
     .string()
     .required("郵便番号を入力してください")
@@ -48,7 +48,7 @@ export const checkoutSchema = yup.object().shape({
     .string()
     .optional()
     .default(''),
-  
+
   email: yup
     .string()
     .required("メールアドレスを入力してください")

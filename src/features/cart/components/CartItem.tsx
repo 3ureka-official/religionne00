@@ -5,27 +5,13 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { CartItem as CartItemType, useCart } from './CartContext'
 import CancelIcon from '@mui/icons-material/Cancel'
-import AddIcon from '@mui/icons-material/Add'
-import RemoveIcon from '@mui/icons-material/Remove'
 
 interface CartItemProps {
   item: CartItemType
 }
 
 const CartItem = ({ item }: CartItemProps) => {
-  const { updateQuantity, removeItem } = useCart()
-
-  // 数量を増やす
-  const handleIncreaseQuantity = () => {
-    updateQuantity(item.id, item.quantity + 1)
-  }
-
-  // 数量を減らす
-  const handleDecreaseQuantity = () => {
-    if (item.quantity > 1) {
-      updateQuantity(item.id, item.quantity - 1)
-    }
-  }
+  const { removeItem } = useCart()
 
   // アイテムを削除
   const handleRemoveItem = () => {
@@ -64,7 +50,7 @@ const CartItem = ({ item }: CartItemProps) => {
       </Link>
 
       {/* 商品情報 */}
-      <Box sx={{ flex: 1, ml: 2, pr: 5 }}>
+      <Box sx={{ flex: 1, ml: 2, pr: 5, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }} >
         {/* 商品名 (クリッカブル) */}
         <Link href={`/product/${item.id}`} style={{ textDecoration: 'none', color: 'inherit' }}>
           <Typography 
@@ -81,26 +67,18 @@ const CartItem = ({ item }: CartItemProps) => {
           </Typography>
         </Link>
         
-        {item.size && (
-          <Typography sx={{ fontSize: { xs: '12px', sm: '12px' }, mb: 1 }}>
-            サイズ: {item.size}
-          </Typography>
-        )}
-        
-        <Typography sx={{ fontSize: { xs: '14px', sm: '14px' }, fontWeight: 400, mt: 1 }}>
+        <Typography sx={{ fontSize: { xs: '14px', sm: '15px' }, fontWeight: 400, mt: 1 }}>
           ¥ {item.price} (tax in)
         </Typography>
         
-        {/* 数量コントロール */}
-        <Box sx={{ display: 'flex', alignItems: 'center', mt: 1 }}>
-          <Typography sx={{ fontSize: '12px', mr: 1 }}>数量:</Typography>
-          <IconButton size="small" onClick={handleDecreaseQuantity}>
-            <RemoveIcon fontSize="small" />
-          </IconButton>
-          <Typography sx={{ mx: 1 }}>{item.quantity}</Typography>
-          <IconButton size="small" onClick={handleIncreaseQuantity}>
-            <AddIcon fontSize="small" />
-          </IconButton>
+        <Box sx={{ display: 'flex', alignItems: 'center', mt: 1, gap: 2 }}>
+          {item.size && (
+            <Typography sx={{ fontSize: { xs: '12px', sm: '13px' }, mt: 1 }}>
+              サイズ: {item.size}
+            </Typography>
+          )}
+
+          <Typography sx={{ fontSize: { xs: '12px', sm: '13px' }, mt: 1 }}>数量: {item.quantity}</Typography>
         </Box>
       </Box>
 

@@ -1,72 +1,52 @@
-import { Box, Typography, Paper, Divider } from '@mui/material'
-import { CheckoutPricing } from '@/types/checkout'
-import { getPaymentMethodLabel } from '@/utils/checkout'
+import React from 'react';
+import { Box, Typography, Divider, Paper } from '@mui/material';
+import { CheckoutPricing } from '@/types/checkout';
 
-interface PricingBreakdownProps extends CheckoutPricing {}
+interface PricingBreakdownProps {
+  pricing: CheckoutPricing;
+}
 
-export default function PricingBreakdown({ subtotal, shippingFee, total, paymentMethod }: PricingBreakdownProps) {
+export default function PricingBreakdown({ pricing }: PricingBreakdownProps) {
   return (
-    <>
-      {/* お支払い方法 */}
-      <Typography 
-        sx={{ 
-          fontSize: '16px', 
-          fontWeight: 500, 
-          mb: 2
-        }}
-      >
-        お支払い方法
+    <Box>
+      <Typography variant="h6" gutterBottom sx={{ fontSize: '16px', fontWeight: 500 }}>
+        お支払い内容
       </Typography>
-
       <Paper variant="outlined" sx={{ mb: 4, p: 2 }}>
-        <Typography sx={{ fontSize: '14px' }}>
-          {getPaymentMethodLabel(paymentMethod)}
-        </Typography>
-      </Paper>
-
-      {/* 金額明細 */}
-      <Typography 
-        sx={{ 
-          fontSize: '16px', 
-          fontWeight: 500, 
-          mb: 2
-        }}
-      >
-        お支払い金額
-      </Typography>
-
-      <Paper variant="outlined" sx={{ mb: 4, p: 2 }}>
-        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
-          <Box>
-            <Typography sx={{ fontSize: '13px', color: 'text.secondary', mb: 0.5 }}>
-              商品合計
-            </Typography>
-            <Typography sx={{ fontSize: '14px' }}>
-              ¥{subtotal.toLocaleString()}
-            </Typography>
-          </Box>
-
-          <Box>
-            <Typography sx={{ fontSize: '13px', color: 'text.secondary', mb: 0.5 }}>
-              送料
-            </Typography>
-            <Typography sx={{ fontSize: '14px' }}>
-              ¥{shippingFee.toLocaleString()}
-            </Typography>
-          </Box>
-
-          <Divider sx={{ my: 1 }} />
-
-          <Box>
-            <Typography sx={{ fontSize: '14px', fontWeight: 'bold', mb: 0.5 }}>
-              合計（税込）
-            </Typography>
-            <Typography sx={{ fontSize: '16px', fontWeight: 'bold' }}>
-              ¥{total.toLocaleString()}
-            </Typography>
-          </Box>
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+          <Typography variant="body2">
+            小計
+          </Typography>
+          <Typography variant="body2">
+            ¥{pricing.subtotal.toLocaleString()}
+          </Typography>
+        </Box>
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+          <Typography variant="body2">
+            送料
+          </Typography>
+          <Typography variant="body2">
+            ¥{pricing.shippingFee.toLocaleString()}
+          </Typography>
+        </Box>
+        <Divider sx={{ my: 1 }} />
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
+          <Typography variant="body2" fontWeight="bold">
+            合計
+          </Typography>
+          <Typography variant="body2" fontWeight="bold">
+            ¥{pricing.total.toLocaleString()}
+          </Typography>
+        </Box>
+        <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+          <Typography variant="body2" color="text.secondary">
+            お支払い方法
+          </Typography>
+          <Typography variant="body2">
+            {pricing.paymentMethod === 'credit' ? 'クレジットカード' : '代引き'}
+          </Typography>
         </Box>
       </Paper>
-    </>
-  )
+    </Box>
+  );
 } 

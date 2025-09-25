@@ -26,6 +26,13 @@ export default function CheckoutConfirmClient({settings}: {settings: MicroCMSSet
   )
   const total = subtotal + shippingFee
 
+  const pricing = {
+    subtotal,
+    shippingFee,
+    total,
+    paymentMethod: orderInfo.paymentMethod
+  }
+
   return (
     <Box
       sx={{
@@ -60,21 +67,10 @@ export default function CheckoutConfirmClient({settings}: {settings: MicroCMSSet
         </Box>
 
         {/* メインコンテンツ */}
-        <Box sx={{ mb: 4 }}>
+        <Box sx={{ mb: 4, display: 'flex', flexDirection: 'column', gap: 2 }}>
           <OrderSummary items={items} />
-          <CustomerInfo 
-            name={orderInfo.name}
-            postalCode={orderInfo.postalCode}
-            address={orderInfo.address}
-            email={orderInfo.email}
-            phone={orderInfo.phone}
-          />
-          <PricingBreakdown 
-            subtotal={subtotal}
-            shippingFee={shippingFee}
-            total={total}
-            paymentMethod={orderInfo.paymentMethod}
-          />
+          <CustomerInfo customer={orderInfo} />
+          <PricingBreakdown pricing={pricing} />
         </Box>
 
         {/* 戻るボタンと注文確定ボタン */}

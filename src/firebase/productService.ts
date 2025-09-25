@@ -29,8 +29,8 @@ export interface Product {
   price: number; // 文字列許容をやめ、数値に統一
   category: string;
   images: string[];
-  createdAt?: Timestamp | FieldValue | null;
-  updatedAt?: Timestamp | FieldValue | null;
+  createdAt?: Date | null;
+  updatedAt?: Date | null;
   isPublished: boolean;
   isRecommended?: boolean; // おすすめ商品かどうか
   condition?: string;
@@ -62,7 +62,20 @@ export const addProduct = async (product: Omit<Product, 'id'>): Promise<Product 
     };
     
     const docRef = await addDoc(collection(db, PRODUCTS_COLLECTION), productData);
-    return { id: docRef.id, ...productData } as Product & {id: string};
+    
+    // 作成されたドキュメントを取得してTimestampを変換
+    const createdDoc = await getDoc(docRef);
+    if (createdDoc.exists()) {
+      const data = createdDoc.data();
+      return {
+        ...data,
+        id: docRef.id,
+        createdAt: data.createdAt?.toDate?.() || null,
+        updatedAt: data.updatedAt?.toDate?.() || null,
+      } as Product & {id: string};
+    } else {
+      throw new Error('Failed to retrieve created product');
+    }
   } catch (error: unknown) {
     console.error('Error adding product: ', error);
     throw error;
@@ -76,7 +89,13 @@ export const getProduct = async (id: string): Promise<Product | null> => {
     const docSnap = await getDoc(docRef);
     
     if (docSnap.exists()) {
-      return { id: docSnap.id, ...docSnap.data() } as Product;
+      const data = docSnap.data();
+      return {
+        ...data,
+        id: docSnap.id,
+        createdAt: data.createdAt?.toDate?.() || null,
+        updatedAt: data.updatedAt?.toDate?.() || null,
+      } as Product;
     } else {
       console.log('Product not found:', id);
       return null;
@@ -106,7 +125,14 @@ export const getAllProducts = async (onlyPublished = false): Promise<Product[]> 
     const querySnapshot = await getDocs(q);
     const products: Product[] = [];
     querySnapshot.forEach((doc) => {
-      products.push({ id: doc.id, ...doc.data() } as Product);
+      const data = doc.data();
+      const product = {
+        ...data,
+        id: doc.id,
+        createdAt: data.createdAt?.toDate?.() || null,
+        updatedAt: data.updatedAt?.toDate?.() || null,
+      } as Product;
+      products.push(product);
     });
     return products;
   } catch (error: unknown) {
@@ -127,11 +153,53 @@ export const getProductsByCategory = async (category: string): Promise<Product[]
     const querySnapshot = await getDocs(q);
     const products: Product[] = [];
     querySnapshot.forEach((doc) => {
-      products.push({ id: doc.id, ...doc.data() } as Product);
+      const data = doc.data();
+      const product = {
+        ...data,
+        id: doc.id,
+        createdAt: data.createdAt?.toDate?.() || null,
+        updatedAt: data.updatedAt?.toDate?.() || null,
+      } as Product;
+      products.push(product);
     });
     return products;
   } catch (error: unknown) {
     console.error('Error getting products by category: ', error);
+    throw error;
+  }
+};
+
+// 商品を検索（名前と説明で部分一致検索）
+export const searchProducts = async (keyword: string): Promise<Product[]> => {
+  try {
+    if (!keyword.trim()) {
+      return [];
+    }
+
+    // Firestoreでは部分一致検索が制限されているため、全商品を取得してフィルタリング
+    const products = await getAllProducts(true); // 公開済み商品のみ
+    
+    const searchKeyword = keyword.toLowerCase().trim();
+    
+    const filteredProducts = products.filter(product => {
+      const nameMatch = product.name.toLowerCase().includes(searchKeyword);
+      const descriptionMatch = product.description.toLowerCase().includes(searchKeyword);
+      const categoryMatch = product.category.toLowerCase().includes(searchKeyword);
+      
+      return nameMatch || descriptionMatch || categoryMatch;
+    });
+
+    // 関連度でソート（名前に含まれるものを優先）
+    return filteredProducts.sort((a, b) => {
+      const aNameMatch = a.name.toLowerCase().includes(searchKeyword);
+      const bNameMatch = b.name.toLowerCase().includes(searchKeyword);
+      
+      if (aNameMatch && !bNameMatch) return -1;
+      if (!aNameMatch && bNameMatch) return 1;
+      return 0;
+    });
+  } catch (error: unknown) {
+    console.error('Error searching products: ', error);
     throw error;
   }
 };

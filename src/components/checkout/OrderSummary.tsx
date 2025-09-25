@@ -8,7 +8,7 @@ interface OrderSummaryProps {
 
 export default function OrderSummary({ items }: OrderSummaryProps) {
   return (
-    <>
+    <Box>
       <Typography 
         sx={{ 
           fontSize: '16px', 
@@ -61,6 +61,6 @@ export default function OrderSummary({ items }: OrderSummaryProps) {
           </Box>
         ))}
       </Paper>
-    </>
+    </Box>
   )
 } 

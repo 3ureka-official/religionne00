@@ -1,37 +1,54 @@
-import { Box, Typography, Paper } from '@mui/material'
-import { CheckoutCustomerInfo } from '@/types/checkout'
+import React from 'react';
+import { Box, Paper, Typography } from '@mui/material';
+import { CheckoutCustomerInfo } from '@/types/checkout';
 
-interface CustomerInfoProps extends CheckoutCustomerInfo {}
+interface CustomerInfoProps {
+  customer: CheckoutCustomerInfo;
+}
 
-export default function CustomerInfo({ name, postalCode, address, email, phone }: CustomerInfoProps) {
+export default function CustomerInfo({ customer }: CustomerInfoProps) {
   return (
-    <>
-      <Typography 
-        sx={{ 
-          fontSize: '16px', 
-          fontWeight: 500, 
-          mb: 2, 
-          mt: 4 
-        }}
-      >
-        配送先・連絡先
+    <Box>
+      <Typography variant="h6" gutterBottom sx={{ fontSize: '16px', fontWeight: 500 }}>
+        お客様情報
       </Typography>
-
       <Paper variant="outlined" sx={{ mb: 4, p: 2 }}>
-        <Box sx={{ py: 1 }}>
+        <Box sx={{ mb: 2 }}>
+          <Typography variant="body2" color="text.secondary">
+            お名前
+          </Typography>
           <Typography variant="body1">
-            {name}
+            {customer.name}
           </Typography>
-          <Typography variant="body2" sx={{ mt: 1 }}>
-            〒{postalCode}<br />
-            {address}
+        </Box>
+        <Box sx={{ mb: 2 }}>
+          <Typography variant="body2" color="text.secondary">
+            メールアドレス
           </Typography>
-          <Typography variant="body2" sx={{ mt: 1 }}>
-            {email}<br />
-            {phone}
+          <Typography variant="body1">
+            {customer.email}
+          </Typography>
+        </Box>
+        <Box sx={{ mb: 2 }}>
+          <Typography variant="body2" color="text.secondary">
+            電話番号
+          </Typography>
+          <Typography variant="body1">
+            {customer.phone}
+          </Typography>
+        </Box>
+        <Box>
+          <Typography variant="body2" color="text.secondary">
+            お届け先住所
+          </Typography>
+          <Typography variant="body1">
+            〒{customer.postalCode}
+          </Typography>
+          <Typography variant="body1">
+            {customer.address}
           </Typography>
         </Box>
       </Paper>
-    </>
-  )
+    </Box>
+  );
 } 

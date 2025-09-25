@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useCart } from '@/features/cart/components/CartContext'
-import { addOrder } from '@/firebase/orderService'
+import { addOrder } from '@/firebase/orderService' // 復活
 import { OrderData } from '@/types/Storage'
 import { CheckoutOrderInfo, CheckoutPaymentInfo } from '@/types/checkout'
 import { buildFullAddress, createOrderItems, parseAddress } from '@/utils/checkout'
@@ -71,9 +71,7 @@ export const useCheckoutConfirm = () => {
   }
 }
 
-
-
-// 代引き注文完了処理
+// 代引き処理（元に戻す）
 const handleCompleteCodOrder = async (
   orderInfo: CheckoutOrderInfo,
   items: any[],
@@ -102,7 +100,8 @@ const handleCompleteCodOrder = async (
       paymentMethod: 'cod'
     }
     
-    await addOrder(orderData)
+    // 直接Firebaseに保存
+    await addOrder(orderData, 'processing')
     router.push('/checkout/complete')
   } catch (error) {
     console.error('注文処理中にエラーが発生しました:', error)
@@ -112,7 +111,7 @@ const handleCompleteCodOrder = async (
   }
 }
 
-// Stripe決済処理
+// Stripe処理（修正版）
 const handleStripeCheckout = async (
   orderInfo: CheckoutOrderInfo,
   items: any[],
@@ -143,35 +142,38 @@ const handleStripeCheckout = async (
       paymentMethod: 'credit'
     }
     
+    // 1. まず注文をFirebaseに作成
+    const orderId = await addOrder(orderData, 'pending')
+    console.log('注文作成完了:', orderId)
+    
+    // 2. Stripe Checkout Sessionを作成
+    const stripe = await import('@stripe/stripe-js').then(m => 
+      m.loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!)
+    )
+    
+    if (!stripe) throw new Error('Stripe初期化に失敗しました')
+    
+    // 3. サーバーサイドでCheckout Session作成（シンプルなAPI）
     const response = await fetch('/api/checkout', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(orderData)
+      body: JSON.stringify({
+        items: orderItems,
+        email: orderInfo.email,
+        shippingFee,
+        orderId
+      })
     })
     
-    if (!response.ok) {
-      throw new Error('決済処理の準備に失敗しました')
-    }
+    const { sessionId } = await response.json()
     
-    const result = await response.json()
+    // 4. Stripeページへリダイレクト
+    await stripe.redirectToCheckout({ sessionId })
     
-    if (result.url) {
-      // カート情報をセッションストレージに保存
-      const cartInfo = {
-        items: paymentInfo.items,
-        subtotal: total - shippingFee,
-        shippingFee,
-        total
-      }
-      sessionStorage.setItem('cartInfo', JSON.stringify(cartInfo))
-      window.location.href = result.url
-    } else {
-      throw new Error('決済URLが取得できませんでした')
-    }
   } catch (error) {
-    console.error('決済ページへの遷移に失敗しました:', error)
-    alert('決済処理の準備中にエラーが発生しました。もう一度お試しいただくか、代引きをご利用ください。')
+    console.error('決済処理エラー:', error)
+    alert('決済処理の準備中にエラーが発生しました。')
   } finally {
     setIsProcessing(false)
   }
-} 
+}

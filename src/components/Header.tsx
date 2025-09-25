@@ -82,7 +82,8 @@ function SearchBar({ isMobile }: { isMobile: boolean }) {
               visibility: searchQuery ? 'visible' : 'hidden',
               display: 'flex',
               alignItems: 'center',
-              justifyContent: 'center'
+              justifyContent: 'center',
+              marginRight: isMobile ? '0px' : '8px',
             }}>
               {searchQuery && (
                 <button
