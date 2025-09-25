@@ -22,15 +22,7 @@ export const checkoutSchema = yup.object().shape({
 
   postalCode: yup
     .string()
-    .required("郵便番号を入力してください")
-    .test("valid-postal-code", "有効な郵便番号を入力してください", (value) => {
-      if (!value) return false;
-      // ハイフンありの入力を許可
-      if (!/^[\d-]+$/.test(value)) return false;
-      // ハイフンを除去した数字が7桁であることを確認
-      const digitsOnly = value.replace(/-/g, '');
-      return digitsOnly.length === 7;
-    }),
+    .required("郵便番号を入力してください"),
   
   prefecture: yup
     .string()
@@ -56,13 +48,7 @@ export const checkoutSchema = yup.object().shape({
   
   phone: yup
     .string()
-    .required("電話番号を入力してください")
-    .test("valid-phone", "有効な電話番号を入力してください", (value) => {
-      if (!value) return false;
-      // 日本の携帯電話番号の形式をチェック（ハイフンあり・なし両方対応）
-      const phoneRegex = /^(070|080|090)-?\d{4}-?\d{4}$|^050-?\d{4}-?\d{4}$/;
-      return phoneRegex.test(value);
-    }),
+    .required("電話番号を入力してください"),
   
   paymentMethod: yup
     .string()

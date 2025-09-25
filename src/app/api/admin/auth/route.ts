@@ -1,5 +1,4 @@
 import { NextResponse } from 'next/server'
-import bcrypt from 'bcryptjs'
 
 export async function POST(request: Request) {
   try {
@@ -15,7 +14,9 @@ export async function POST(request: Request) {
       hasUsername: !!adminUsername, 
       hasPassword: !!adminPassword,
       adminUsername,
-      passwordPrefix: adminPassword?.substring(0, 10)
+      passwordPrefix: adminPassword?.substring(0, 3) + '***',
+      nodeEnv: process.env.NODE_ENV,
+      vercelEnv: process.env.VERCEL_ENV
     })
 
     if (!adminUsername || !adminPassword) {
@@ -26,7 +27,7 @@ export async function POST(request: Request) {
       )
     }
 
-    // ユーザー名とパスワードの検証
+    // ユーザー名の検証
     if (username !== adminUsername) {
       console.log('❌ ユーザー名が一致しません:', { input: username, expected: adminUsername })
       return NextResponse.json(
@@ -35,22 +36,9 @@ export async function POST(request: Request) {
       )
     }
 
-    // パスワードがハッシュ化されているかチェック
-    const isPasswordHashed = adminPassword.startsWith('$2a$') || adminPassword.startsWith('$2b$') || adminPassword.startsWith('$2y$')
-    
-    console.log('🔑 パスワード検証:', { isPasswordHashed })
-    
-    let isPasswordValid = false
-    if (isPasswordHashed) {
-      // ハッシュ化されたパスワードと比較
-      isPasswordValid = await bcrypt.compare(password, adminPassword)
-      console.log('🔍 ハッシュ比較結果:', isPasswordValid)
-    } else {
-      // プレーンテキストのパスワードと直接比較（開発用）
-      isPasswordValid = password === adminPassword
-      console.log('🔍 プレーンテキスト比較結果:', isPasswordValid)
-      console.warn('⚠️  管理者パスワードがプレーンテキストです。本番環境ではハッシュ化してください。')
-    }
+    // パスワードの検証（プレーンテキスト）
+    const isPasswordValid = password === adminPassword
+    console.log('🔍 パスワード比較結果:', isPasswordValid)
 
     if (!isPasswordValid) {
       console.log('❌ パスワードが一致しません')

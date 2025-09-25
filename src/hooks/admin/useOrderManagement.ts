@@ -1,6 +1,14 @@
 import { useState, useEffect, useMemo } from 'react';
-import { Order, OrderItem, getAllOrders, updateOrderStatus, getOrdersByStatus } from '@/firebase/orderService';
+import { getAllOrders, getOrdersByStatus, updateOrderStatus, Order, OrderItem } from '@/firebase/orderService';
 import { Timestamp } from 'firebase/firestore';
+
+// displayOrders, displayShipped の計算に必要
+interface UseOrderManagementProps {
+  searchTerm: string;
+  page: number;
+  rowsPerPage: number;
+  tabValue: number;
+}
 
 export interface OrderManagementState {
   preparingOrders: Order[];
@@ -12,15 +20,8 @@ export interface OrderManagementState {
 }
 
 export interface OrderManagementActions {
-  fetchOrdersAndShippedProducts: () => Promise<void>; 
+  fetchOrdersAndShippedProducts: () => Promise<void>;
   handleMarkAsShipped: (order: Order, callback?: () => void) => Promise<void>;
-}
-
-interface UseOrderManagementProps {
-  searchTerm: string;
-  page: number;
-  rowsPerPage: number;
-  tabValue: number; // displayOrders, displayShipped の計算に必要
 }
 
 export const useOrderManagement = ({
@@ -87,9 +88,24 @@ export const useOrderManagement = ({
     }
 
     try {
+      // ステータスを配送済みに更新
       await updateOrderStatus(originalOrderId, 'shipped');
       console.log(`Original order ${originalOrderId} status updated to 'shipped' in orders collection.`);
 
+      // 配送完了メール送信（失敗してもステータス更新は継続）
+      try {
+        await fetch('/api/send-shipping-email', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ orderId: originalOrderId })
+        });
+        console.log(`Shipping notification email sent for order ${originalOrderId}`);
+      } catch (emailError) {
+        console.error('Shipping email sending failed:', emailError);
+        // メール送信失敗はユーザーには通知しない（ログのみ）
+      }
+
+      // UIの状態を更新
       setPreparingOrders(prev => prev.filter(p => p.id !== originalOrderId));
       setShippedOrders(prev => {
         const filteredPrev = prev.filter(sp => sp.id !== originalOrderId);
