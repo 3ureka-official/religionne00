@@ -73,7 +73,7 @@ export default function CartPage() {
             <Typography sx={{ mb: 4, fontSize: '16px' }}>
               カートに商品がありません
             </Typography>
-            <Link href="/category" style={{ textDecoration: 'none' }}>
+            <Link href="/" style={{ textDecoration: 'none' }}>
               <Button
                 sx={{
                   border: '1px solid black',
