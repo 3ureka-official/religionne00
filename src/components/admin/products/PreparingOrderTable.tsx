@@ -65,7 +65,7 @@ export const PreparingOrderTable = ({ orders, onDetail }: PreparingOrderTablePro
               <TableCell>{formatTimestamp(order?.createdAt)}</TableCell>
               <TableCell>{order?.items && Array.isArray(order.items) ? order.items.length : 0}点</TableCell>
               <TableCell>¥{order?.total ? Number(order.total).toLocaleString() : 0}</TableCell>
-              <TableCell>{'paymentMethod' in order && order.paymentMethod === 'stripe_credit_card' ? 'クレジットカード' : order.paymentMethod === 'cod' ? '代引き' : 'PayPay'}</TableCell>
+              <TableCell>{'paymentMethod' in order && order.paymentMethod === 'credit' ? 'クレジットカード' : order.paymentMethod === 'cod' ? '代引き' : 'その他'}</TableCell>
               <TableCell align="center">
                 <Box sx={{ display: 'flex', gap: 1, justifyContent: 'center' }}>
                   <Button variant="outlined" size="small" onClick={() => onDetail(order)} sx={{ borderColor: 'black', color: 'black', borderRadius: 0, fontSize: '0.7rem', minWidth: 'auto', '&:hover': { borderColor: 'black', bgcolor: 'rgba(0, 0, 0, 0.04)' } }}>詳細</Button>

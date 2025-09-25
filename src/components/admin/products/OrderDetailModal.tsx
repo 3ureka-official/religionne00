@@ -204,7 +204,7 @@ export const OrderDetailModal = ({
                 )}
                 <Box>
                   <Typography variant="body2" color="text.secondary">支払い方法</Typography>
-                  <Typography variant="body1">{order.paymentMethod === 'stripe_credit_card' ? 'クレジットカード' : order.paymentMethod === 'cod' ? '代引き' : 'PayPay'}</Typography>
+                  <Typography variant="body1">{order.paymentMethod === 'credit' ? 'クレジットカード' : order.paymentMethod === 'cod' ? '代引き' : 'その他'}</Typography>
                 </Box>
               </Box>
             </Box>
@@ -215,7 +215,10 @@ export const OrderDetailModal = ({
         {tabValue === 1 && onShippingConfirm && (
           <Button 
             variant="contained"
-            onClick={() => onShippingConfirm(order)}
+            onClick={() => {
+              onShippingConfirm(order);
+              onClose()
+            }}
             sx={{ 
               bgcolor: 'black',
               color: 'white',

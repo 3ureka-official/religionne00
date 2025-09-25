@@ -10,9 +10,10 @@ import { MicroCMSProduct } from '@/lib/microcms'
 interface ProductCardProps {
   product: MicroCMSProduct;
   featured?: boolean;
+  displaySize?: boolean;
 }
 
-const ProductCard = ({ product, featured = false }: ProductCardProps) => {
+const ProductCard = ({ product, featured = false, displaySize = false }: ProductCardProps) => {
   const theme = useTheme()
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'))
   const [selectedSize, setSelectedSize] = useState<string | null>(null)
@@ -127,7 +128,7 @@ const ProductCard = ({ product, featured = false }: ProductCardProps) => {
           </Typography>
           
           {/* サイズ表示 */}
-          {hasSingleSize && (
+          {displaySize && hasSingleSize && (
             <Typography
               sx={{
                 fontSize: { xs: '8px', sm: featured ? '16px' : '12px' },
@@ -139,7 +140,7 @@ const ProductCard = ({ product, featured = false }: ProductCardProps) => {
           )}
           
           {/* 複数サイズボタン */}
-          {hasMultipleSizes && (
+          {displaySize && hasMultipleSizes && (
             <Box sx={{ 
               display: 'flex', 
               flexWrap: 'wrap', 

@@ -7,15 +7,19 @@ import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { ThemeProvider } from '@mui/material/styles';
 import theme from '@/styles/theme';
-import { MicroCMSProduct } from '@/lib/microcms';
+import { Product } from '@/firebase/productService';
+import { convertToMicroCMSFormat } from '@/lib/adapters';
 
 interface SearchResultsProps {
   query: string;
-  products: MicroCMSProduct[];
+  products: Product[];
 }
 
 export default function SearchResults({ query, products }: SearchResultsProps) {
   const displayTitle = query ? `"${query}"の検索結果` : '検索結果';
+  
+  // Firebase ProductをMicroCMSProduct形式に変換
+  const convertedProducts = products.map(convertToMicroCMSFormat);
   
   return (
     <ThemeProvider theme={theme}>
@@ -65,13 +69,7 @@ export default function SearchResults({ query, products }: SearchResultsProps) {
           </Typography>
 
           {/* 検索結果の件数表示 */}
-          <Typography
-            sx={{
-              fontSize: { xs: '14px', sm: '16px' },
-              mb: { xs: 3, sm: 4 },
-              textAlign: 'center',
-            }}
-          >
+          <Typography sx={{ mb: 3, fontSize: { xs: '14px', sm: '16px' } }}>
             {products.length > 0 
               ? `${products.length}件の商品が見つかりました`
               : '商品が見つかりませんでした'}
@@ -85,7 +83,7 @@ export default function SearchResults({ query, products }: SearchResultsProps) {
               gap: { xs: '1rem 0.5rem', sm: '2rem 1rem' },
               mb: { xs: 4, sm: 6 }
             }}>
-              {products.map((product) => (
+              {convertedProducts.map((product) => (
                 <Box key={product.id}>
                   <ProductCard product={product} />
                 </Box>

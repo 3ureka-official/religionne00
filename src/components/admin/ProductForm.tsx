@@ -1,26 +1,37 @@
 'use client'
 
 import { useState, useRef, useEffect } from 'react'
-import { useRouter, useParams } from 'next/navigation'
+import { useRouter } from 'next/navigation'
 import { Box, Typography, Button, TextField, FormControl, Select, MenuItem, Divider, IconButton, CircularProgress, Alert } from '@mui/material'
 import ArrowBackIcon from '@mui/icons-material/ArrowBack'
 import AddPhotoAlternateIcon from '@mui/icons-material/AddPhotoAlternate'
 import CloseIcon from '@mui/icons-material/Close'
 import AddIcon from '@mui/icons-material/Add'
-import { Product, getProduct, updateProduct, uploadProductImage, deleteProductImage } from '@/firebase/productService'
+import { Product, uploadProductImage, deleteProductImage } from '@/firebase/productService'
 import { fetchCategories } from '@/lib/microcms'
 import { MicroCMSCategory } from '@/lib/microcms'
 
 // サイズごとの在庫を管理するインターフェース
-interface SizeInventory {
+export interface SizeInventory {
   size: string;
   stock: string | number;
 }
 
-export default function EditProductPage() {
+export interface ProductFormProps {
+  mode: 'new' | 'edit';
+  initialData?: Product;
+  onSubmit: (data: {
+    formData: Omit<Product, 'id' | 'images'>;
+    sizeInventories: SizeInventory[];
+    uploadingImages: File[];
+    imagesToDelete?: string[];
+  }) => Promise<void>;
+  title: string;
+  submitButtonText: string;
+}
+
+export default function ProductForm({ mode, initialData, onSubmit, title, submitButtonText }: ProductFormProps) {
   const router = useRouter()
-  const params = useParams()
-  const productId = params?.id as string
   const fileInputRef = useRef<HTMLInputElement>(null)
   
   // カテゴリーの状態
@@ -33,8 +44,7 @@ export default function EditProductPage() {
   ])
   
   // フォームの状態
-  const [formData, setFormData] = useState<Omit<Product, 'sizes'>>({
-    id: '',
+  const [formData, setFormData] = useState<Omit<Product, 'id' | 'sizes'>>({
     name: '',
     description: '',
     price: 0,
@@ -44,13 +54,33 @@ export default function EditProductPage() {
   })
   
   // UI状態
-  const [loading, setLoading] = useState(true)
-  const [saving, setSaving] = useState(false)
+  const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState<string | null>(null)
   const [uploadingImages, setUploadingImages] = useState<File[]>([])
   const [imagesPreviews, setImagesPreviews] = useState<string[]>([])
   const [imagesToDelete, setImagesToDelete] = useState<string[]>([])
+
+  // 初期データの設定（編集モードの場合）
+  useEffect(() => {
+    if (mode === 'edit' && initialData) {
+      setFormData(initialData)
+      
+      // 画像プレビューを設定
+      if (initialData.images && initialData.images.length > 0) {
+        setImagesPreviews(initialData.images)
+      }
+      
+      // サイズ在庫情報を設定
+      if (initialData.sizeInventories && initialData.sizeInventories.length > 0) {
+        const inventories = initialData.sizeInventories.map((item) => ({
+          size: item.size,
+          stock: item.stock
+        }));
+        setSizeInventories(inventories);
+      }
+    }
+  }, [mode, initialData])
   
   // カテゴリーデータの取得
   useEffect(() => {
@@ -71,52 +101,16 @@ export default function EditProductPage() {
     getCategoriesData()
   }, [])
   
-  // 商品データの取得
-  useEffect(() => {
-    const fetchProduct = async () => {
-      try {
-        setLoading(true)
-        const product = await getProduct(productId)
-        
-        if (!product) {
-          setError('商品が見つかりません')
-          return
-        }
-        
-        // 商品データをセット
-        setFormData(product)
-        
-        // 画像プレビューを設定
-        if (product.images && product.images.length > 0) {
-          setImagesPreviews(product.images)
-        }
-        
-        // サイズ在庫情報を設定
-        if (product.sizeInventories && product.sizeInventories.length > 0) {
-          const inventories = product.sizeInventories.map((item) => ({
-            size: item.size,
-            stock: item.stock
-          }));
-          setSizeInventories(inventories);
-        }
-        
-      } catch (err) {
-        console.error('商品の取得に失敗しました:', err)
-        setError('商品の取得に失敗しました')
-      } finally {
-        setLoading(false)
-      }
-    }
-    
-    if (productId) {
-      fetchProduct()
-    }
-  }, [productId])
-  
   // テキストフィールドの変更ハンドラ
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target
-    setFormData(prev => ({ ...prev, [name]: value }))
+    
+    // 数値フィールドの処理
+    if (name === 'price') {
+      setFormData(prev => ({ ...prev, [name]: Number(value) }))
+    } else {
+      setFormData(prev => ({ ...prev, [name]: value }))
+    }
   }
   
   // セレクトボックスの変更ハンドラ
@@ -137,14 +131,13 @@ export default function EditProductPage() {
   
   // サイズと在庫の追加
   const handleAddInventory = () => {
-    const newId = Date.now().toString()
-    setSizeInventories(prev => [...prev, { id: newId, size: '', stock: '' }])
+    setSizeInventories(prev => [...prev, { size: '', stock: '' }])
   }
   
   // サイズと在庫の削除
   const handleRemoveInventory = (id: string) => {
     if (sizeInventories.length > 1) {
-      setSizeInventories(prev => prev.filter((item, index) => index !== Number(id)))
+      setSizeInventories(prev => prev.filter((_, index) => index !== Number(id)))
     }
   }
   
@@ -162,19 +155,27 @@ export default function EditProductPage() {
     }
   }
   
-  // 画像の削除（新規アップロード前のもの）
-  const handleRemoveNewImage = (index: number) => {
-    const imageIndexInAll = index - formData.images.length + imagesToDelete.length
-    if (imageIndexInAll >= 0) {
-      // 新しくアップロードしようとしていた画像を削除
+  // 画像の削除
+  const handleRemoveImage = (index: number) => {
+    if (mode === 'new') {
+      // 新規作成の場合：単純に削除
       URL.revokeObjectURL(imagesPreviews[index])
-      setUploadingImages(prev => prev.filter((_, i) => i !== imageIndexInAll))
+      setUploadingImages(prev => prev.filter((_, i) => i !== index))
       setImagesPreviews(prev => prev.filter((_, i) => i !== index))
     } else {
-      // 既存の画像を削除対象に追加
-      const imageUrl = formData.images[index + imagesToDelete.length]
-      setImagesToDelete(prev => [...prev, imageUrl])
-      setImagesPreviews(prev => prev.filter((_, i) => i !== index))
+      // 編集の場合：既存画像と新規画像を区別
+      const imageIndexInAll = index - (formData.images?.length || 0) + imagesToDelete.length
+      if (imageIndexInAll >= 0) {
+        // 新しくアップロードしようとしていた画像を削除
+        URL.revokeObjectURL(imagesPreviews[index])
+        setUploadingImages(prev => prev.filter((_, i) => i !== imageIndexInAll))
+        setImagesPreviews(prev => prev.filter((_, i) => i !== index))
+      } else {
+        // 既存の画像を削除対象に追加
+        const imageUrl = (formData.images || [])[index + imagesToDelete.length]
+        setImagesToDelete(prev => [...prev, imageUrl])
+        setImagesPreviews(prev => prev.filter((_, i) => i !== index))
+      }
     }
   }
   
@@ -185,7 +186,7 @@ export default function EditProductPage() {
     }
   }
   
-  // 商品更新処理
+  // フォーム送信処理
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     
@@ -196,47 +197,17 @@ export default function EditProductPage() {
     }
     
     try {
-      setSaving(true)
+      setLoading(true)
       setError(null)
       
-      // 既存の画像を削除
-      for (const imageUrl of imagesToDelete) {
-        try {
-          await deleteProductImage(imageUrl)
-        } catch (err) {
-          console.error('画像の削除に失敗しました:', err)
-        }
-      }
-      
-      // 新しい画像をアップロード
-      const uploadedImageUrls: string[] = []
-      
-      if (uploadingImages.length > 0) {
-        
-        for (const file of uploadingImages) {
-          const imageUrl = await uploadProductImage(file, productId)
-          uploadedImageUrls.push(imageUrl)
-          
-        }
-      }
-      
-      // 商品データの更新
-      const remainingImages = formData.images.filter(img => !imagesToDelete.includes(img))
-      const updatedImages = [...remainingImages, ...uploadedImageUrls]
-      
-      await updateProduct(productId, {
-        ...formData,
-        price: Number(formData.price),
-        images: updatedImages,
-        sizeInventories: sizeInventories
-          .filter(item => item.size !== '')
-          .map(item => ({
-            size: item.size,
-            stock: Number(item.stock) || 0
-          }))
+      await onSubmit({
+        formData,
+        sizeInventories,
+        uploadingImages,
+        imagesToDelete: mode === 'edit' ? imagesToDelete : undefined
       })
       
-      setSuccess('商品が正常に更新されました')
+      setSuccess(mode === 'new' ? '商品が正常に追加されました' : '商品が正常に更新されました')
       
       // 一覧ページに戻る
       setTimeout(() => {
@@ -244,24 +215,16 @@ export default function EditProductPage() {
       }, 1500)
       
     } catch (err) {
-      console.error('商品更新エラー:', err)
-      setError('商品の更新に失敗しました')
+      console.error('商品処理エラー:', err)
+      setError(mode === 'new' ? '商品の登録に失敗しました' : '商品の更新に失敗しました')
     } finally {
-      setSaving(false)
+      setLoading(false)
     }
   }
   
   // 前のページに戻る
   const handleBack = () => {
     router.back()
-  }
-  
-  if (loading) {
-    return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '70vh' }}>
-        <CircularProgress />
-      </Box>
-    )
   }
   
   return (
@@ -281,7 +244,7 @@ export default function EditProductPage() {
           戻る
         </Button>
         <Typography variant="h5" component="h1" sx={{ fontWeight: 'bold' }}>
-          商品の編集ページ
+          {title}
         </Typography>
       </Box>
       
@@ -298,7 +261,7 @@ export default function EditProductPage() {
         </Alert>
       )}
       
-      {/* 商品編集フォーム */}
+      {/* 商品フォーム */}
       <form onSubmit={handleSubmit}>
         {/* 出品画像 */}
         <Box sx={{ mb: 5 }}>
@@ -346,7 +309,7 @@ export default function EditProductPage() {
                   />
                   <IconButton
                     size="small"
-                    onClick={() => handleRemoveNewImage(index)}
+                    onClick={() => handleRemoveImage(index)}
                     sx={{
                       position: 'absolute',
                       top: 5,
@@ -408,7 +371,7 @@ export default function EditProductPage() {
             placeholder="商品名"
             InputProps={{
               endAdornment: (
-                <Typography variant="caption" sx={{ color: 'text.primary', fontWeight: 'bold' }}>
+                <Typography variant="caption" sx={{ color: 'text.primary', whiteSpace: 'nowrap', fontSize: '12px' }}>
                   {formData.name?.length || 0} / 40
                 </Typography>
               ),
@@ -444,7 +407,7 @@ export default function EditProductPage() {
             onChange={handleInputChange}
             InputProps={{
               startAdornment: (
-                <Typography sx={{ mr: 1, fontWeight: 'bold' }}>¥</Typography>
+                <Typography sx={{ mr: 1 }}>¥</Typography>
               ),
               inputProps: { min: 0 }
             }}
@@ -521,7 +484,7 @@ export default function EditProductPage() {
             <Typography variant="subtitle1" sx={{ fontWeight: 'bold' }}>
               商品説明
             </Typography>
-            <Typography variant="caption" sx={{ color: 'text.primary', fontWeight: 'bold' }}>
+            <Typography variant="caption" sx={{ color: 'text.primary', whiteSpace: 'nowrap', fontSize: '12px' }}>
               {formData.description?.length || 0} / 1000
             </Typography>
           </Box>
@@ -661,7 +624,7 @@ export default function EditProductPage() {
           <Button
             type="submit"
             variant="contained"
-            disabled={saving}
+            disabled={loading}
             sx={{
               minWidth: 120,
               py: 1.5,
@@ -674,12 +637,12 @@ export default function EditProductPage() {
               }
             }}
           >
-            {saving ? (
+            {loading ? (
               <>
                 <CircularProgress size={24} color="inherit" sx={{ mr: 1 }} />
                 保存中...
               </>
-            ) : '商品を更新'}
+            ) : submitButtonText}
           </Button>
         </Box>
       </form>

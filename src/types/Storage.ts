@@ -34,6 +34,7 @@ type OrderInfo = {
   paymentMethod: string,
   shippingFee: number,
   total: number,
+  isIslandAddress?: boolean
 }
 
 
@@ -45,16 +46,18 @@ type CustomerInfo = {
   city: string;
   address: string;
   building: string;
+  email: string;
+  phone: string;
 }
 
 type Item = {
   id: string;
   name: string;
-  description: string;
-  price: number;
+  description?: string;
+  price: string;
   quantity: number;
   image: string;
-  size: string;
+  size?: string;
 }
 
 type OrderData = {

@@ -18,7 +18,6 @@ interface CartContextType {
   items: CartItem[]
   addItem: (item: CartItem) => void
   removeItem: (id: string, size: string) => void
-  updateQuantity: (id: string, quantity: number) => void
   clearCart: () => void
   getTotalPrice: () => number
   getTotalItems: () => number
@@ -30,7 +29,6 @@ const CartContext = createContext<CartContextType>({
   items: [],
   addItem: () => {},
   removeItem: () => {},
-  updateQuantity: () => {},
   clearCart: () => {},
   getTotalPrice: () => 0,
   getTotalItems: () => 0,
@@ -139,7 +137,7 @@ export function CartProvider({ children }: CartProviderProps) {
 
   // カートから商品を削除する関数
   const removeItem = (id: string, size: string) => {
-    setItems(prevItems => prevItems.filter(item => item.id !== id && item.size !== size))
+    setItems(prevItems => prevItems.filter(item => !(item.id === id && item.size === size)))
     
     // カートが空になった場合はローカルストレージからも削除
     if (items.length === 1) {
@@ -147,16 +145,6 @@ export function CartProvider({ children }: CartProviderProps) {
     }
   }
 
-  // 商品の数量を更新する関数
-  const updateQuantity = (id: string, quantity: number) => {
-    if (quantity < 1) return
-    
-    setItems(prevItems => 
-      prevItems.map(item => 
-        item.id === id ? { ...item, quantity } : item
-      )
-    )
-  }
 
   // カートを空にする関数
   const clearCart = () => {
@@ -182,7 +170,6 @@ export function CartProvider({ children }: CartProviderProps) {
     items,
     addItem,
     removeItem,
-    updateQuantity,
     clearCart,
     getTotalPrice,
     getTotalItems,

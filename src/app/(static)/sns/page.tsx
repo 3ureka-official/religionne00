@@ -11,7 +11,7 @@ export default async function SNS() {
   const socialAccounts = settings.sns.map((sns) => ({
     name: sns.service,
     url: sns.url,
-    icon: <Image src={sns.icon.url} alt={sns.service} style={{ width: 50, height: 50 }} />,
+    icon: <Image src={sns.icon.url} alt={sns.service} width={80} height={80} />,
   }));
 
   return (

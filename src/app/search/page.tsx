@@ -1,4 +1,4 @@
-import { searchProducts } from '@/lib/microcms';
+import { searchProducts } from '@/firebase/productService';
 import SearchResults from './SearchResults';
 
 export default async function SearchPage({

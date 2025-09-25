@@ -12,7 +12,7 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { useCart } from '@/features/cart/components/CartContext'
 import { MicroCMSSettings } from '@/lib/microcms'
 import styles from '@/styles/prose'
-import { OrderInfo } from '@/types/Storage'
+import { OrderInfo, PaymentInfo } from '@/types/Storage'
 import Image from 'next/image'
 
 export default function OrderCompleteClient({settings}: {settings: MicroCMSSettings}) {
@@ -20,55 +20,21 @@ export default function OrderCompleteClient({settings}: {settings: MicroCMSSetti
   const searchParams = useSearchParams()
   const { clearCart } = useCart()
   const [orderInfo, setOrderInfo] = useState<OrderInfo | null>(null)
-  const [isPayPayPayment, setIsPayPayPayment] = useState(false)
+  const [paymentInfo, setPaymentInfo] = useState<PaymentInfo | null>(null)
   
   useEffect(() => {
-    // URLパラメータからPayPay決済情報を確認
-    const payPayPaymentId = searchParams.get('paypay_payment_id')
-    const orderId = searchParams.get('order_id')
+    // URLパラメータからStripe決済情報を確認
     const stripeSessionId = searchParams.get('session_id')
 
-    if (payPayPaymentId && orderId) {
-      // PayPay決済の場合
-      setIsPayPayPayment(true)
-      
-      // PayPay決済完了の確認API呼び出し
-      fetch(`/api/paypay/callback?paypay_payment_id=${payPayPaymentId}&order_id=${orderId}`)
-        .then(response => response.json())
-        .then(data => {
-          if (data.success) {
-            console.log('PayPay決済完了確認成功:', data)
-            // セッションストレージから注文情報を取得
-            const storedOrderInfo = sessionStorage.getItem('orderInfo')
-            
-            if (storedOrderInfo) {
-              setOrderInfo(JSON.parse(storedOrderInfo))
-            }
-            
-            // 注文完了後なのでセッションストレージとローカルストレージをクリア
-            clearCart()
-            sessionStorage.removeItem('orderInfo')
-            sessionStorage.removeItem('paymentInfo')
-            sessionStorage.removeItem('cartInfo')
-            localStorage.removeItem('shipping_form_data')
-            localStorage.removeItem('payment_method_data')
-          } else {
-            console.error('PayPay決済確認エラー:', data.error)
-            alert('PayPay決済の確認中にエラーが発生しました。')
-          }
-        })
-        .catch(error => {
-          console.error('PayPay決済確認API呼び出しエラー:', error)
-          alert('PayPay決済の確認中にエラーが発生しました。')
-        })
-    } else if (stripeSessionId) {
+    if (stripeSessionId) {
       // Stripe決済の場合（既存の処理）
       const storedOrderInfo = sessionStorage.getItem('orderInfo')
       const storedPaymentInfo = sessionStorage.getItem('paymentInfo')
       
       if (storedOrderInfo && storedPaymentInfo) {
         setOrderInfo(JSON.parse(storedOrderInfo))
-        
+        setPaymentInfo(JSON.parse(storedPaymentInfo))
+
         // 注文完了後なのでセッションストレージとローカルストレージをクリア
         clearCart()
         sessionStorage.removeItem('orderInfo')
@@ -80,9 +46,11 @@ export default function OrderCompleteClient({settings}: {settings: MicroCMSSetti
     } else {
       // セッションストレージから注文情報を取得（代引きなど）
       const storedOrderInfo = sessionStorage.getItem('orderInfo')
-      
-      if (storedOrderInfo) {
+      const storedPaymentInfo = sessionStorage.getItem('paymentInfo')
+
+      if (storedOrderInfo && storedPaymentInfo) {
         setOrderInfo(JSON.parse(storedOrderInfo))
+        setPaymentInfo(JSON.parse(storedPaymentInfo))
         
         // 注文完了後なのでセッションストレージとローカルストレージをクリア
         clearCart()
@@ -163,14 +131,48 @@ export default function OrderCompleteClient({settings}: {settings: MicroCMSSetti
                   ご注文情報
                 </Typography>
                 <Box sx={{ textAlign: 'left', fontSize: { xs: '13px', sm: '14px' } }}>
-                  <Typography sx={{ mb: 1, fontSize: { xs: '13px', sm: '14px' } }}>お名前: {orderInfo.customerInfo.lastName} {orderInfo.customerInfo.firstName}</Typography>
-                  <Typography sx={{ mb: 1, fontSize: { xs: '13px', sm: '14px' } }}>お届け先: 〒{orderInfo.customerInfo.postalCode}<br/>{orderInfo.customerInfo.prefecture}{orderInfo.customerInfo.city}{orderInfo.customerInfo.address}{orderInfo.customerInfo.building ? ` ${orderInfo.customerInfo.building}` : ''}</Typography>
-                  <Typography sx={{ mb: 1, fontSize: { xs: '13px', sm: '14px' } }}>お支払い方法: {
-                    orderInfo.paymentMethod === 'cod' ? '代引き' : 
-                    orderInfo.paymentMethod === 'credit' ? 'クレジットカード' : 
-                    orderInfo.paymentMethod === 'paypay' ? 'PayPay' :
-                    isPayPayPayment ? 'PayPay' : '銀行振込'
-                  }</Typography>
+                  <Box sx={{ mb: 2 }}>
+                    <Typography variant="body2" color="text.secondary">
+                      お名前
+                    </Typography>
+                    <Typography variant="body1">
+                      {orderInfo.customerInfo.lastName} {orderInfo.customerInfo.firstName}
+                    </Typography>
+                  </Box>
+                  <Box sx={{ mb: 2 }}>
+                    <Typography variant="body2" color="text.secondary">
+                      メールアドレス
+                    </Typography>
+                    <Typography variant="body1">
+                      {orderInfo.customerInfo.email}
+                    </Typography>
+                  </Box>
+                  <Box sx={{ mb: 2 }}>
+                    <Typography variant="body2" color="text.secondary">
+                      電話番号
+                    </Typography>
+                    <Typography variant="body1">
+                      {orderInfo.customerInfo.phone}
+                    </Typography>
+                  </Box>
+                  <Box sx={{ mb: 2 }}>
+                    <Typography variant="body2" color="text.secondary">
+                      お届け先
+                    </Typography>
+                    <Typography variant="body1">
+                      〒{orderInfo.customerInfo.postalCode}<br/>{orderInfo.customerInfo.prefecture}{orderInfo.customerInfo.city}{orderInfo.customerInfo.address}{orderInfo.customerInfo.building ? ` ${orderInfo.customerInfo.building}` : ''}
+                    </Typography>
+                  </Box>
+                  <Box sx={{ mb: 2 }}>
+                    <Typography variant="body2" color="text.secondary">
+                      お支払い方法
+                    </Typography>
+                    <Typography variant="body1">
+                      {orderInfo.paymentMethod === 'cod' ? '代引き' : 
+                      orderInfo.paymentMethod === 'credit' ? 'クレジットカード' : 
+                      'その他'}
+                    </Typography>
+                  </Box>
                 </Box>
               </Box>
             )}
@@ -187,7 +189,7 @@ export default function OrderCompleteClient({settings}: {settings: MicroCMSSetti
                       <Typography sx={{ mb: 1, fontSize: { xs: '13px', sm: '14px' } }}>{item.name}</Typography>
                       <Typography sx={{ mb: 1, fontSize: { xs: '13px', sm: '14px' } }}>{item.size}</Typography>
                       <Typography sx={{ mb: 1, fontSize: { xs: '13px', sm: '14px' } }}>{item.quantity}個</Typography> 
-                      <Typography sx={{ mb: 1, fontSize: { xs: '13px', sm: '14px' } }}>{item.price * item.quantity}円</Typography>
+                      <Typography sx={{ mb: 1, fontSize: { xs: '13px', sm: '14px' } }}>{Number(item.price) * item.quantity}円</Typography>
                     </Box>
                   ))}
                 </Box>
