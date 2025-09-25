@@ -55,9 +55,9 @@ export default function AdminLoginPage() {
       const result = await response.json()
 
       if (response.ok && result.success) {
-        sessionStorage.setItem('adminAuth', 'true')
-        router.push('/admin')
-      } else {
+      sessionStorage.setItem('adminAuth', 'true')
+      router.push('/admin')
+    } else {
         setError(result.message || 'ユーザー名またはパスワードが正しくありません')
       }
     } catch (error) {
@@ -93,9 +93,6 @@ export default function AdminLoginPage() {
               <Typography variant="h5" component="h1" sx={{ fontWeight: 'bold', mb: 1 }}>
                 管理者ログイン
               </Typography>
-              <Typography variant="body2" color="text.secondary">
-                管理画面にアクセスするには認証が必要です
-              </Typography>
             </Box>
             
             {error && (
@@ -121,7 +118,7 @@ export default function AdminLoginPage() {
                 onChange={handleChange}
                 required
                 disabled={isLoading}
-                sx={{ mb: 2 }}
+                sx={{ mb: 1 }}
               />
               <TextField
                 label="パスワード"

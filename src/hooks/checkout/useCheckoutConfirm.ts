@@ -101,7 +101,18 @@ const handleCompleteCodOrder = async (
     }
     
     // 直接Firebaseに保存
-    await addOrder(orderData, 'processing')
+    const orderId = await addOrder(orderData, 'processing')
+
+    try {
+      await fetch('/api/send-email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ orderData, orderId })
+      });
+    } catch (emailError) {
+      console.error('Email sending failed:', emailError);
+    }
+
     router.push('/checkout/complete')
   } catch (error) {
     console.error('注文処理中にエラーが発生しました:', error)

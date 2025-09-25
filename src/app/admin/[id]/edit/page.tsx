@@ -13,7 +13,7 @@ export default function EditProductPage() {
   const [loading, setLoading] = useState(true)
   const [product, setProduct] = useState<Product | null>(null)
   const [error, setError] = useState<string | null>(null)
-
+  
   // 商品データの取得
   useEffect(() => {
     const fetchProduct = async () => {
@@ -39,14 +39,14 @@ export default function EditProductPage() {
       fetchProduct()
     }
   }, [productId])
-
+  
   const handleSubmit = async (data: {
     formData: Omit<Product, 'id' | 'images'>;
     sizeInventories: SizeInventory[];
     uploadingImages: File[];
     imagesToDelete?: string[];
   }) => {
-    // 既存の画像を削除
+      // 既存の画像を削除
     if (data.imagesToDelete) {
       for (const imageUrl of data.imagesToDelete) {
         try {
@@ -54,36 +54,36 @@ export default function EditProductPage() {
         } catch (err) {
           console.error('画像の削除に失敗しました:', err)
         }
+        }
       }
-    }
-    
-    // 新しい画像をアップロード
-    const uploadedImageUrls: string[] = []
-    
+      
+      // 新しい画像をアップロード
+      const uploadedImageUrls: string[] = []
+      
     if (data.uploadingImages.length > 0) {
       for (const file of data.uploadingImages) {
-        const imageUrl = await uploadProductImage(file, productId)
-        uploadedImageUrls.push(imageUrl)
+          const imageUrl = await uploadProductImage(file, productId)
+          uploadedImageUrls.push(imageUrl)
+        }
       }
-    }
-    
-    // 商品データの更新
+      
+      // 商品データの更新
     const remainingImages = (product?.images || []).filter(img => !data.imagesToDelete?.includes(img))
-    const updatedImages = [...remainingImages, ...uploadedImageUrls]
-    
-    await updateProduct(productId, {
+      const updatedImages = [...remainingImages, ...uploadedImageUrls]
+      
+      await updateProduct(productId, {
       ...data.formData,
       price: Number(data.formData.price),
-      images: updatedImages,
+        images: updatedImages,
       sizeInventories: data.sizeInventories
-        .filter(item => item.size !== '')
-        .map(item => ({
-          size: item.size,
-          stock: Number(item.stock) || 0
-        }))
-    })
+          .filter(item => item.size !== '')
+          .map(item => ({
+            size: item.size,
+            stock: Number(item.stock) || 0
+          }))
+      })
   }
-
+  
   if (loading) {
     return (
       <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '70vh' }}>
@@ -91,9 +91,9 @@ export default function EditProductPage() {
       </Box>
     )
   }
-
+  
   if (error) {
-    return (
+  return (
       <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '70vh' }}>
         <div>{error}</div>
       </Box>
@@ -104,7 +104,7 @@ export default function EditProductPage() {
     return (
       <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '70vh' }}>
         <div>商品が見つかりません</div>
-      </Box>
+              </Box>
     )
   }
 

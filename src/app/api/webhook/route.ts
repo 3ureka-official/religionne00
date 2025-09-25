@@ -2,6 +2,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import Stripe from "stripe";
 import { addOrder } from '@/firebase/orderService';
+import { sendAdminNotificationEmail, sendOrderConfirmationEmail } from "@/services/emailService";
 
 export const runtime = "nodejs";
 export const dynamic = 'force-dynamic';
@@ -63,6 +64,16 @@ export async function POST(req: NextRequest) {
             // 決済成功時に初めて注文を作成
             const orderId = await addOrder(orderData, 'processing');
             console.log(`Order ${orderId} created and confirmed as processing`);
+
+            try {
+              await Promise.all([
+                sendOrderConfirmationEmail({ orderData, orderId }),
+                sendAdminNotificationEmail({ orderData, orderId })
+              ]);
+              console.log('Order confirmation emails sent successfully');
+            } catch (emailError) {
+              console.error('Email sending failed:', emailError);
+            }
             
             return NextResponse.json({
               received: true,
