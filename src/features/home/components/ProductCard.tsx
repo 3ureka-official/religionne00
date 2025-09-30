@@ -5,7 +5,7 @@ import { useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { MicroCMSProduct } from '@/lib/microcms'
-
+import { formatPrice } from '@/utils/formatters'
 // 商品コンポーネント
 interface ProductCardProps {
   product: MicroCMSProduct;
@@ -124,7 +124,7 @@ const ProductCard = ({ product, featured = false, displaySize = false }: Product
               mb: hasSingleSize || hasMultipleSizes ? 0.5 : 0
             }}
           >
-            ¥ {product.stripe_price_id}
+            {formatPrice(Number(product.stripe_price_id))}
           </Typography>
           
           {/* サイズ表示 */}

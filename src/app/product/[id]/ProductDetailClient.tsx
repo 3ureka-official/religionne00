@@ -10,6 +10,7 @@ import { ThemeProvider } from '@mui/material/styles';
 import theme from '@/styles/theme';
 import { useCart } from '@/features/cart/components/CartContext';
 import ProductCard from '@/features/home/components/ProductCard';
+import { formatPrice } from '@/utils/formatters';
 
 interface ProductImage {
   id: number;
@@ -262,7 +263,7 @@ export default function ProductDetailClient({ product, relatedProducts = [] }: P
                     mb: 3,
                   }}
                 >
-                  ¥ {product.stripe_price_id} (tax in)
+                  {formatPrice(Number(product.stripe_price_id))} (tax in)
                 </Typography>
 
                 <Typography

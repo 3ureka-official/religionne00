@@ -21,5 +21,11 @@ export function formatDate(date: Date): string {
  * @returns ¥付きの価格文字列
  */
 export function formatPrice(price: number): string {
-  return `¥${price.toLocaleString()}`;
+  const formattedPrice = price.toLocaleString('ja-JP', {
+    style: 'currency',
+    currency: 'JPY',
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0
+  });
+  return formattedPrice;
 } 
