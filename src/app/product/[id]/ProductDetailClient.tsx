@@ -249,7 +249,7 @@ export default function ProductDetailClient({ product, relatedProducts = [] }: P
                 <Typography
                   variant="h1"
                   sx={{
-                    fontSize: { xs: '18px', sm: '20px' },
+                    fontSize: { xs: '20px', sm: '24px' },
                     fontWeight: 'normal',
                     mb: 1,
                   }}
@@ -259,8 +259,9 @@ export default function ProductDetailClient({ product, relatedProducts = [] }: P
 
                 <Typography
                   sx={{
-                    fontSize: { xs: '14px', sm: '16px' },
-                    mb: 3,
+                    fontSize: { xs: '15px', sm: '17px' },
+                    my: 3,
+                    fontWeight: 'bold',
                   }}
                 >
                   {formatPrice(Number(product.stripe_price_id))} (tax in)
@@ -268,15 +269,24 @@ export default function ProductDetailClient({ product, relatedProducts = [] }: P
 
                 <Typography
                   sx={{
-                    fontSize: { xs: '14px', sm: '16px' },
-                    mb: 1,
+                    mt: 4,
+                    fontSize: { xs: '12px', sm: '14px' },
                   }}
                 >
-                  size:
+                  サイズ:
                 </Typography>
 
                 <Box sx={{ display: 'flex', gap: 1, mb: 3, flexWrap: 'wrap' }}>
-                  {product.sizeInventories && product.sizeInventories.map((item) => (
+                  {product.sizeInventories.length === 1 ? (
+                    <Typography
+                      sx={{
+                        fontSize: { xs: '12px', sm: '14px' },
+                        mb: 1,
+                      }}
+                    >
+                      {product.sizeInventories[0].size}
+                    </Typography>
+                    ) : (product.sizeInventories && product.sizeInventories.map((item) => (
                     <Box
                       key={item.size}
                       sx={{
@@ -295,7 +305,7 @@ export default function ProductDetailClient({ product, relatedProducts = [] }: P
                     >
                       {item.size}
                     </Box>
-                  ))}
+                  )))}
                 </Box>
 
                 {/* モバイルビューでは商品説明がカートボタンより上に表示される順序を変更 */}
@@ -303,8 +313,7 @@ export default function ProductDetailClient({ product, relatedProducts = [] }: P
                   <Box sx={{ order: { xs: 2, md: 1 } }}>
                     <Typography
                       sx={{
-                        fontSize: { xs: '14px', sm: '16px' },
-                        mb: 1,
+                        fontSize: { xs: '12px', sm: '14px' },
                       }}
                     >
                       商品説明:
@@ -312,7 +321,7 @@ export default function ProductDetailClient({ product, relatedProducts = [] }: P
 
                     <Typography
                       sx={{
-                        fontSize: { xs: '14px', sm: '16px' },
+                        fontSize: { xs: '12px', sm: '14px' },
                         mb: { xs: 2, md: 4 },
                         lineHeight: 1.6,
                       }}
