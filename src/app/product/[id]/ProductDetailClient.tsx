@@ -249,7 +249,7 @@ export default function ProductDetailClient({ product, relatedProducts = [] }: P
                 <Typography
                   variant="h1"
                   sx={{
-                    fontSize: { xs: '20px', sm: '24px' },
+                    fontSize: { xs: '22px', sm: '24px' },
                     fontWeight: 'normal',
                     mb: 1,
                   }}
@@ -257,15 +257,27 @@ export default function ProductDetailClient({ product, relatedProducts = [] }: P
                   {product.name}
                 </Typography>
 
+                <Box sx={{ display: 'flex', flexDirection: 'row', gap: 1, alignItems: 'center' }}>
                 <Typography
                   sx={{
-                    fontSize: { xs: '15px', sm: '17px' },
+                    fontSize: { xs: '16px', sm: '18px' },
+                    my: 3,
+                    fontWeight: 'bold',
+                    letterSpacing: '0.2',
+                  }}
+                >
+                  {formatPrice(Number(product.stripe_price_id))}
+                </Typography>
+                <Typography
+                  sx={{
+                    fontSize: { xs: '14px', sm: '16px' },
                     my: 3,
                     fontWeight: 'bold',
                   }}
                 >
-                  {formatPrice(Number(product.stripe_price_id))} (tax in)
+                  (税込)
                 </Typography>
+                </Box>
 
                 <Typography
                   sx={{
