@@ -13,7 +13,7 @@ interface BrandCarouselProps {
 
 export default function BrandCarousel({ brandImages }: BrandCarouselProps) {
   const [activeSlide, setActiveSlide] = useState(0)
-  const [emblaRef, emblaApi] = useEmblaCarousel({ loop: true }, [Autoplay({ delay: 3000 })])
+  const [emblaRef, emblaApi] = useEmblaCarousel({ loop: true, duration: 50 }, [Autoplay({ delay: 4500 })])
   
   useEffect(() => {
     if (!emblaApi) return
