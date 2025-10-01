@@ -257,14 +257,17 @@ const Pagination = ({ totalItems, itemsPerPage, onPageChange, currentPage }: Pag
 interface FeatureSectionProps {
   products: MicroCMSProduct[];
   settings: MicroCMSSettings;
-  pickUpProduct: MicroCMSProduct | null;
+  pickUpProducts: MicroCMSProduct[];
   initialPage?: number; // 初期ページ番号（オプション）
 }
 
-const FeatureSection = ({ products, settings, pickUpProduct, initialPage = 1 }: FeatureSectionProps) => {
+const FeatureSection = ({ products, settings, pickUpProducts, initialPage = 1 }: FeatureSectionProps) => {
   const [categoryModalOpen, setCategoryModalOpen] = useState(false)
   const [selectedCategory, setSelectedCategory] = useState('Original')
   const [currentPage, setCurrentPage] = useState(initialPage) // 初期ページを設定
+
+  const theme = useTheme()
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'))
   
   // スクロールトップ関数
   const scrollToTop = () => {
@@ -280,11 +283,11 @@ const FeatureSection = ({ products, settings, pickUpProduct, initialPage = 1 }: 
   }, [currentPage]);
   
   // ピックアップ商品があるかどうか確認
-  const hasPickUpProduct = !!pickUpProduct?.id
+  const hasPickUpProduct = pickUpProducts && pickUpProducts.length > 0
   
   // PCでは4x4=16枚、ピックアップがある場合は15枚(ピックアップ+残り14枚)
   // モバイルでは3列で表示
-  const ITEMS_PER_PAGE = hasPickUpProduct ? 15 : 16
+  const ITEMS_PER_PAGE = isMobile ? 15 : 16
   
   // const handleCategoryClick = (category: string) => {
   //   setSelectedCategory(category)
@@ -302,12 +305,16 @@ const FeatureSection = ({ products, settings, pickUpProduct, initialPage = 1 }: 
     setCurrentPage(1) // カテゴリー変更時にページを1に戻す
     scrollToTop()
   }
+
+  let filteredProducts = products.filter(product => !pickUpProducts.some(pickUpProduct => pickUpProduct.id === product.id))
+
+  filteredProducts = [...filteredProducts, ...filteredProducts, ...filteredProducts, ...filteredProducts, ...filteredProducts, ...filteredProducts, ...filteredProducts]
   
   // カテゴリーでフィルタリングした商品リスト
-  const filteredProducts = selectedCategory === 'Original' 
-    ? products.filter(product => !hasPickUpProduct || product.id !== pickUpProduct?.id) 
-    : products.filter(product => product.category?.category === selectedCategory && 
-        (!hasPickUpProduct || product.id !== pickUpProduct?.id));
+  // const filteredProducts = selectedCategory === 'Original' 
+  //   ? products.filter(product => !hasPickUpProduct || product.id !== pickUpProducts[0]?.id) 
+  //   : products.filter(product => product.category?.category === selectedCategory && 
+  //       (!hasPickUpProduct || product.id !== pickUpProducts[0]?.id));
   
   // 現在のページに表示する商品
   const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
@@ -323,77 +330,66 @@ const FeatureSection = ({ products, settings, pickUpProduct, initialPage = 1 }: 
       )}
 
       {/* メインコンテンツエリア */}
-      <Box sx={{ 
-        display: 'grid', 
-        gridTemplateColumns: { xs: 'repeat(3, minmax(0, 1fr))', lg: 'repeat(4, 1fr)' },
-        gap: { xs: '1rem 0.3rem', sm: '2rem 1rem' },
-        mb: { xs: 4, sm: 6 },
-        width: '100%',
-        mx: 'auto',
-        px: { xs: '0.1rem', sm: 0 }
-      }}>
-        {/* 1ページ目かつピックアップ商品がある場合 */}
-        {currentPage === 1 && hasPickUpProduct && pickUpProduct && (
-          <>
-            {/* ピックアップ商品 (2列分) */}
-            <Box sx={{ 
-              gridColumn: 'span 2', 
-              gridRow: '1',
-              pr: { xs: 0.5, sm: 0 }
-            }}>
-              <ProductCard featured={true} product={pickUpProduct} />
-            </Box>
-            
-            {/* サイド商品 (1列に2つ積み重ね) */}
-            <Box sx={{
-              display: 'flex',
-              flexDirection: 'column',
-              gridColumn: 'span 1',
-              gridRow: '1',
-              gap: { xs: '1rem', sm: '2rem' },
-              height: '100%',
-              pl: { xs: 0.5, sm: 0 }
-            }}>
-              {currentPageProducts.slice(0, 2).map((product, index) => (
-                <Box key={index} sx={{ flex: 1 }}>
-                  <ProductCard product={product} />
-                </Box>
-              ))}
-            </Box>
-            
-            {/* 4列目（PCのみ） - 1列に2つ積み重ね */}
-            <Box sx={{
-              display: { xs: 'none', lg: 'flex' },
-              flexDirection: 'column',
-              gridColumn: 'span 1',
-              gridRow: '1',
-              gap: { sm: '2rem' },
-              height: '100%'
-            }}>
-              {currentPageProducts.slice(2, 4).map((product, index) => (
-                <Box key={`col4-${index}`} sx={{ flex: 1 }}>
-                  <ProductCard product={product} />
-                </Box>
-              ))}
-            </Box>
-            
-            {/* 2行目以降の商品 */}
-            {currentPageProducts.slice(4).map((product, index) => (
+      {currentPage === 1 && hasPickUpProduct && pickUpProducts.length > 0 && 
+      <Box mt={4} mx={2}>
+        <Typography sx={{ fontSize: { xs: '18px', sm: '25px' }, fontWeight: 'bold' }}>
+          PICK UP
+        </Typography>
+
+        <Box sx={{ 
+          display: 'grid', 
+          gridTemplateColumns: { xs: pickUpProducts.length >= 3 ? 'repeat(3, minmax(0, 1fr))' : `repeat(${pickUpProducts.length}, minmax(0, 1fr))`, lg: pickUpProducts.length >= 4 ? 'repeat(4, 1fr)' : pickUpProducts.length == 3 ? 'repeat(3, 1fr)' : 'repeat(2, 1fr)' },
+          gap: { xs: '1rem 1rem', sm: `3rem ${pickUpProducts.length >= 4 || pickUpProducts.length === 1 ? '2rem' : `${5-pickUpProducts.length}rem`}` },
+          mb: { xs: 4, sm: 6 },
+          pt: { xs: 1, sm: 2 },
+          width: '100%',
+          mx: 'auto',
+          px: { xs: '0.1rem', sm: 0 }
+        }}>
+          {/* 1ページ目かつピックアップ商品がある場合 */}
+            {pickUpProducts.map((product, index) => (
               <Box key={`grid-${index}`}>
                 <ProductCard product={product} />
               </Box>
             ))}
-          </>
-        )}
+        </Box>
+      </Box>
+      }
+      
+      <Box mt={4} mx={2}>
+      {(currentPage === 1) && (
+        <Typography sx={{ fontSize: { xs: '18px', sm: '25px' }, fontWeight: 'bold' }}>
+          ITEMS
+        </Typography>
+      )}
+      <Box sx={{ 
+        display: 'grid', 
+        gridTemplateColumns: { xs: 'repeat(3, minmax(0, 1fr))', lg: 'repeat(4, 1fr)' },
+        gap: { xs: '1rem 1rem', sm: '3rem 2rem' },
+        mb: { xs: 4, sm: 6 },
+        pt: { xs: 1, sm: 2 },
+        width: '100%',
+        mx: 'auto',
+        px: { xs: '0.1rem', sm: 0 }
+      }}>
+
+        {/* 2行目以降の商品 */}
+        {currentPageProducts.map((product, index) => (
+          <Box key={`grid-${index}`}>
+            <ProductCard product={product} />
+          </Box>
+        ))}
         
         {/* ピックアップ商品がない場合または2ページ目以降 */}
-        {(currentPage !== 1 || !hasPickUpProduct || !pickUpProduct) && (
+        {(currentPage !== 1 || !hasPickUpProduct || pickUpProducts.length === 0) && (
           currentPageProducts.map((product, index) => (
             <Box key={index}>
               <ProductCard product={product} />
             </Box>
           ))
         )}
+      </Box>
+
       </Box>
 
       {/* ページネーション */}

@@ -1,6 +1,6 @@
 'use client'
 
-import { Box, Typography, Paper, useMediaQuery, useTheme } from '@mui/material'
+import { Box, Typography, Paper, useMediaQuery, useTheme, Chip, Divider } from '@mui/material'
 import { useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
@@ -9,11 +9,9 @@ import { formatPrice } from '@/utils/formatters'
 // 商品コンポーネント
 interface ProductCardProps {
   product: MicroCMSProduct;
-  featured?: boolean;
-  displaySize?: boolean;
 }
 
-const ProductCard = ({ product, featured = false, displaySize = false }: ProductCardProps) => {
+const ProductCard = ({ product }: ProductCardProps) => {
   const theme = useTheme()
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'))
   const [selectedSize, setSelectedSize] = useState<string | null>(null)
@@ -36,7 +34,7 @@ const ProductCard = ({ product, featured = false, displaySize = false }: Product
       <Paper
         elevation={0}
         sx={{
-          overflow: 'hidden',
+          // overflow: 'hidden',
           border: 'none',
           height: '100%',
           width: '100%',
@@ -52,24 +50,12 @@ const ProductCard = ({ product, featured = false, displaySize = false }: Product
           }
         }}
       >
-        {featured && (
-          <Typography
-            sx={{
-              p: { xs: 0.5, sm: 1 },
-              fontSize: { xs: '18px', sm: '28px' },
-              fontWeight: 'normal',
-              textAlign: 'center',
-            }}
-          >
-            pick up!!!
-          </Typography>
-        )}
         <Box
           sx={{
             bgcolor: '#D9D9D9',
             pt: '100%',
             position: 'relative',
-            flex: featured ? '1 0 auto' : 'none',
+            flex: '1 0 auto',
             aspectRatio: '1/1',
           }}
         >
@@ -81,7 +67,7 @@ const ProductCard = ({ product, featured = false, displaySize = false }: Product
               width={product.images[0].width || 1000}
               className="object-cover absolute top-0 left-0 w-full h-full"
               quality={90}
-              priority={featured}
+              priority={true}
               sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
             />
           ) : (
@@ -100,10 +86,10 @@ const ProductCard = ({ product, featured = false, displaySize = false }: Product
             </Box>
           )}
         </Box>
-        <Box sx={{ p: isMobile ? 0.2 : 1 }}>
+        <Box sx={{ pt: 1, pb: {xs: 0.5, sm: 1} }}>
           <Typography
             sx={{
-              fontSize: { xs: '9px', sm: featured ? '20px' : '14px' },
+              fontSize: { xs: '12px', sm: '14px' },
               fontWeight: 'normal',
               mb: 0.2,
               overflow: 'hidden',
@@ -117,66 +103,36 @@ const ProductCard = ({ product, featured = false, displaySize = false }: Product
           >
             {product.name}
           </Typography>
+
+          <Box sx={{ display: 'flex', flexDirection: 'row', gap: 0.2, alignItems: 'center', 
+            mb: hasSingleSize || hasMultipleSizes ? 0.5 : 0,
+            mt: 0.5,
+              }}>
+            <Typography
+              sx={{
+                fontSize: { xs: '11px', sm: '12px' },
+                fontWeight: 'normal',
+                textDecoration: 'underline',
+              }}
+            >
+              {product.category.category} 
+            </Typography>
+          </Box>
+          
           <Typography
             sx={{
-              fontSize: { xs: '9px', sm: featured ? '20px' : '14px' },
-              fontWeight: 'normal',
-              mb: hasSingleSize || hasMultipleSizes ? 0.5 : 0
+              fontSize: { xs: '11px', sm: '14px' },
+              // fontWeight: 'normal',
+              mb: hasSingleSize || hasMultipleSizes ? 0.5 : 0,
+              mt: 0.5,
+              fontWeight: 'bold',
             }}
           >
             {formatPrice(Number(product.stripe_price_id))}
           </Typography>
-          
-          {/* サイズ表示 */}
-          {displaySize && hasSingleSize && (
-            <Typography
-              sx={{
-                fontSize: { xs: '8px', sm: featured ? '16px' : '12px' },
-                color: 'text.secondary',
-              }}
-            >
-              サイズ: {singleSize}
-            </Typography>
-          )}
-          
-          {/* 複数サイズボタン */}
-          {displaySize && hasMultipleSizes && (
-            <Box sx={{ 
-              display: 'flex', 
-              flexWrap: 'wrap', 
-              gap: 0.5, 
-              mt: 0.5 
-            }}>
-              {product.sizes.map((item) => (
-                <Box
-                  key={item.size}
-                  onClick={(e) => {
-                    e.preventDefault();
-                    handleSizeSelect(item.size);
-                  }}
-                  sx={{
-                    border: '1px solid rgba(0, 0, 0, 0.3)',
-                    borderRadius: '2px',
-                    px: { xs: 0.5, sm: 1 },
-                    py: { xs: 0.1, sm: 0.2 },
-                    fontSize: { xs: '7px', sm: featured ? '14px' : '10px' },
-                    cursor: 'pointer',
-                    bgcolor: selectedSize === item.size ? 'rgba(0, 0, 0, 0.8)' : 'transparent',
-                    color: selectedSize === item.size ? 'white' : 'black',
-                    '&:hover': {
-                      bgcolor: selectedSize === item.size ? 'rgba(0, 0, 0, 0.8)' : 'rgba(0, 0, 0, 0.05)',
-                    },
-                    minWidth: { xs: '18px', sm: '30px' },
-                    textAlign: 'center',
-                    whiteSpace: 'nowrap',
-                  }}
-                >
-                  {item.size}
-                </Box>
-              ))}
-            </Box>
-          )}
         </Box>
+
+        <Divider sx={{ bgcolor: 'black', borderWidth: '0.5px' }} />
       </Paper>
     </Link>
   )
