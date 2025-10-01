@@ -40,7 +40,7 @@ function SearchBar({ isMobile }: { isMobile: boolean }) {
           alignItems: 'center',
           border: '1px solid #444444',
           borderRadius: '4px',
-          padding: { xs: '6px 8px', sm: '8px 10px' },
+          padding: { xs: '5px 8px', sm: '8px 10px' },
           width: '100%',
           maxWidth: { xs: '300px', sm: '350px', md: '550px' },
         }}>
@@ -57,7 +57,7 @@ function SearchBar({ isMobile }: { isMobile: boolean }) {
                 alignItems: 'center'
               }}
             >
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="#AAAAAA" viewBox="0 0 16 16">
+              <svg xmlns="http://www.w3.org/2000/svg" width={isMobile ? "14" : "16"} height={isMobile ? "14" : "16"} fill="#AAAAAA" viewBox="0 0 16 16">
                 <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z" />
               </svg>
             </button>
@@ -71,7 +71,7 @@ function SearchBar({ isMobile }: { isMobile: boolean }) {
               width: '100%',
               border: 'none',
               outline: 'none',
-              fontSize: isMobile ? '12px' : '13px'
+              fontSize: isMobile ? '11px' : '13px'
             }}
           />
           <Box sx={{ display: 'flex', alignItems: 'center' }}>
@@ -245,7 +245,7 @@ const Header = () => {
           zIndex: 1000,
         }}
       >
-        <Container maxWidth="lg" sx={{ px: { xs: 1, sm: 2 }, py: { xs: 1, sm: 1.5 },overflow: 'hidden' }}>
+        <Container maxWidth="lg" sx={{ px: { xs: 1, sm: 2 }, pt: { xs: 1, sm: 1.5 }, pb: { xs: 1.3, sm: 1.5 }, overflow: 'hidden' }}>
           {/* Bottom Row: Menu Button, Search Bar, and Icons */}
           <Box sx={{
             display: 'flex',
@@ -284,7 +284,7 @@ const Header = () => {
                   alignItems: 'center',
                   border: '1px solid #444444',
                   borderRadius: '4px',
-                  padding: { xs: '6px 8px', sm: '8px 10px' },
+                  padding: { xs: '5px 8px', sm: '8px 10px' },
                   width: '100%',
                   maxWidth: { xs: '300px', sm: '350px', md: '550px' },
                 }}>
@@ -296,7 +296,7 @@ const Header = () => {
                       width: '100%',
                       border: 'none',
                       outline: 'none',
-                      fontSize: isMobile ? '12px' : '13px'
+                      fontSize: isMobile ? '11px' : '13px'
                     }}
                   />
                 </Box>
