@@ -370,8 +370,8 @@ const Header = () => {
           }}
           role="presentation"
         >
-          <Typography variant="h6" sx={{ mb: 3, fontSize: { xs: '1.1rem', sm: '1.25rem' } }}>
-            Menu
+          <Typography variant="h6" sx={{ mb: 3, fontSize: { xs: '1.1rem', sm: '1.25rem' }, fontWeight: 'bold' }}>
+            MENU
           </Typography>
           <List>
             {menuItems.map((text, index) => (
