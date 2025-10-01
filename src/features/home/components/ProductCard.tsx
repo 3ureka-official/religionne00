@@ -1,32 +1,30 @@
 'use client'
 
 import { Box, Typography, Paper, useMediaQuery, useTheme, Chip, Divider } from '@mui/material'
-import { useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
-import { MicroCMSProduct } from '@/lib/microcms'
+import { MicroCMSCategory, MicroCMSProduct } from '@/lib/microcms'
 import { formatPrice } from '@/utils/formatters'
+import { useRouter } from 'next/navigation'
 // 商品コンポーネント
 interface ProductCardProps {
   product: MicroCMSProduct;
+  categories?: MicroCMSCategory[];
 }
 
-const ProductCard = ({ product }: ProductCardProps) => {
+const ProductCard = ({ product, categories }: ProductCardProps) => {
   const theme = useTheme()
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'))
-  const [selectedSize, setSelectedSize] = useState<string | null>(null)
+  const router = useRouter()
 
-  // サイズが一つだけあるかチェック
-  const hasSingleSize = product.sizes && product.sizes.length === 1
-  // 複数サイズがあるかチェック
-  const hasMultipleSizes = product.sizes && product.sizes.length > 1
-  
-  // 単一サイズの取得
-  const singleSize = hasSingleSize ? product.sizes[0].size : null
 
   // サイズ選択処理
-  const handleSizeSelect = (size: string) => {
-    setSelectedSize(size === selectedSize ? null : size)
+  const handleCategoryClick = (e: React.MouseEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+
+    const matchedCategory = categories?.find((cat) => cat.category === product.category.category);
+    router.push(`/category/${matchedCategory?.id}`)
   }
 
   return (
@@ -104,26 +102,31 @@ const ProductCard = ({ product }: ProductCardProps) => {
             {product.name}
           </Typography>
 
-          <Box sx={{ display: 'flex', flexDirection: 'row', gap: 0.2, alignItems: 'center', 
-            mb: hasSingleSize || hasMultipleSizes ? 0.5 : 0,
+          <Box sx={{ 
+            display: 'flex', 
+            flexDirection: 'row', 
+            gap: 0.2, 
+            alignItems: 'center', 
+            mb: 0.5,
             mt: 0.5,
-              }}>
-            <Typography
-              sx={{
-                fontSize: { xs: '11px', sm: '12px' },
-                fontWeight: 'normal',
+            fontSize: { xs: '11px', sm: '12px' },
+            fontWeight: 'normal',
+          }}>
+            <span
+              onClick={handleCategoryClick}
+              style={{
+                cursor: 'pointer',
                 textDecoration: 'underline',
               }}
             >
               {product.category.category} 
-            </Typography>
+            </span>
           </Box>
           
           <Typography
             sx={{
               fontSize: { xs: '11px', sm: '14px' },
-              // fontWeight: 'normal',
-              mb: hasSingleSize || hasMultipleSizes ? 0.5 : 0,
+              mb: 0.5,
               mt: 0.5,
               fontWeight: 'bold',
             }}

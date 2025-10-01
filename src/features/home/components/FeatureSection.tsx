@@ -2,16 +2,17 @@
 
 import { Box, Typography } from '@mui/material'
 import ProductCard from './ProductCard'
-import { MicroCMSProduct, MicroCMSSettings } from '@/lib/microcms';
+import { MicroCMSCategory, MicroCMSProduct, MicroCMSSettings } from '@/lib/microcms';
 import HomeHero from './HomeHero';
 
 interface FeatureSectionProps {
   products: MicroCMSProduct[];
   settings: MicroCMSSettings;
   pickUpProducts: MicroCMSProduct[];
+  categories: MicroCMSCategory[];
 }
 
-const FeatureSection = ({ products, settings, pickUpProducts }: FeatureSectionProps) => {
+const FeatureSection = ({ products, settings, pickUpProducts, categories }: FeatureSectionProps) => {
   // ピックアップ商品があるかどうか確認
   const hasPickUpProduct = pickUpProducts && pickUpProducts.length > 0
   
@@ -44,7 +45,7 @@ const FeatureSection = ({ products, settings, pickUpProducts }: FeatureSectionPr
         }}>
             {pickUpProducts.map((product, index) => (
               <Box key={`grid-${index}`}>
-                <ProductCard product={product} />
+                <ProductCard product={product} categories={categories} />
               </Box>
             ))}
         </Box>
@@ -68,7 +69,7 @@ const FeatureSection = ({ products, settings, pickUpProducts }: FeatureSectionPr
         }}>
           {filteredProducts.map((product, index) => (
             <Box key={`grid-${index}`}>
-              <ProductCard product={product} />
+              <ProductCard product={product} categories={categories} />
             </Box>
           ))}
         </Box>
