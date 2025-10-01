@@ -39,7 +39,7 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
       category: {
         id: product.category.id,
         category: product.category.category
-      }
+      },
     }));
 
   return <ProductDetailClient product={transformedProduct} relatedProducts={filteredRelatedProducts} />;

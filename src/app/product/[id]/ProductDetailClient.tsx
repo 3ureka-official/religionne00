@@ -65,6 +65,8 @@ export default function ProductDetailClient({ product, relatedProducts = [] }: P
   const [alertMessage, setAlertMessage] = useState('');
   const [alertSeverity, setAlertSeverity] = useState<'success' | 'error'>('success');
 
+  console.log(product);
+
   const { addItem } = useCart();
 
   // サイズを選択する処理
@@ -163,7 +165,6 @@ export default function ProductDetailClient({ product, relatedProducts = [] }: P
                     pt: '100%',
                     position: 'relative',
                     bgcolor: '#D9D9D9',
-                    border: '1px solid rgba(0, 0, 0, 0.3)',
                   }}
                 >
                   <Box
@@ -300,7 +301,7 @@ export default function ProductDetailClient({ product, relatedProducts = [] }: P
                     fontSize: { xs: '12px', sm: '14px' },
                   }}
                 >
-                  サイズ:
+                  Size:
                 </Typography>
 
                 <Box sx={{ display: 'flex', gap: 1, mb: 3, flexWrap: 'wrap' }}>
@@ -339,19 +340,18 @@ export default function ProductDetailClient({ product, relatedProducts = [] }: P
 
                 {/* モバイルビューでは商品説明がカートボタンより上に表示される順序を変更 */}
                 <Box sx={{ display: { xs: 'flex', md: 'block' }, flexDirection: 'column' }}>
-                  <Box sx={{ order: { xs: 2, md: 1 } }}>
+                  <Box sx={{ order: { xs: 2, md: 1 }, mb: { xs: 2, md: 4 }, }}>
                     <Typography
                       sx={{
                         fontSize: { xs: '12px', sm: '14px' },
                       }}
                     >
-                      商品説明:
+                      Details:
                     </Typography>
 
                     <Typography
                       sx={{
                         fontSize: { xs: '12px', sm: '14px' },
-                        mb: { xs: 2, md: 4 },
                         lineHeight: 1.6,
                       }}
                     >
@@ -362,10 +362,16 @@ export default function ProductDetailClient({ product, relatedProducts = [] }: P
                       <Link href={product.link} target="_blank" rel="noopener noreferrer">
                         <Typography
                           sx={{
+                            mt: 1,
                             fontSize: { xs: '12px', sm: '14px' },
+                            color: '#006AFF',
+                            textDecoration: 'underline',
+                            '&:hover': {
+                              color: '#006ADD',
+                            },
                           }}
                         >
-                          {product.link}
+                          Look Book
                         </Typography>
                       </Link>
                     )}
@@ -404,12 +410,12 @@ export default function ProductDetailClient({ product, relatedProducts = [] }: P
                 <Typography 
                   variant="h2" 
                   sx={{ 
-                    fontSize: { xs: '16px', sm: '18px' }, 
+                    fontSize: { xs: '18px', sm: '20px' }, 
                     mb: 1.5, 
-                    fontWeight: 'normal',
+                    fontWeight: 'bold',
                   }}
                 >
-                  関連商品
+                  Related Items
                 </Typography>
 
                 <Divider sx={{ bgcolor: 'black', borderWidth: '0.9px', mb: 2 }} />

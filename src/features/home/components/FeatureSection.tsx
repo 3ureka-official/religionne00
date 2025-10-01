@@ -17,20 +17,18 @@ const FeatureSection = ({ products, settings, pickUpProducts, categories }: Feat
   const hasPickUpProduct = pickUpProducts && pickUpProducts.length > 0
   
 
-  let filteredProducts = products.filter(product => !pickUpProducts.some(pickUpProduct => pickUpProduct.id === product.id))
-
-  filteredProducts = [...filteredProducts, ...filteredProducts, ...filteredProducts, ...filteredProducts, ...filteredProducts, ...filteredProducts, ...filteredProducts]
+  const filteredProducts = products.filter(product => !pickUpProducts.some(pickUpProduct => pickUpProduct.id === product.id))
 
 
   return (
     <Box>
-      <HomeHero carouselImages={settings.carouselImages} />
+      <HomeHero carouselImages={settings.carouselImages} products={products} />
 
       {/* メインコンテンツエリア */}
       {hasPickUpProduct && 
       <Box mt={4} mx={2}>
         <Typography sx={{ fontSize: { xs: '18px', sm: '25px' }, fontWeight: 'bold' }}>
-          PICK UP
+          Pick Up
         </Typography>
 
         <Box sx={{ 
@@ -54,7 +52,7 @@ const FeatureSection = ({ products, settings, pickUpProducts, categories }: Feat
       
       <Box mt={4} mx={2}>
         <Typography sx={{ fontSize: { xs: '18px', sm: '25px' }, fontWeight: 'bold' }}>
-          ITEMS
+          Items
         </Typography>
       
         <Box sx={{ 

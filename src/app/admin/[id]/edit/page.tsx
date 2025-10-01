@@ -3,8 +3,10 @@
 import { useState, useEffect } from 'react'
 import { useParams } from 'next/navigation'
 import { CircularProgress, Box } from '@mui/material'
-import ProductForm, { SizeInventory } from '@/components/admin/ProductForm'
+import ProductForm from '@/components/admin/ProductForm'
+import { sizeInventorySchema } from '@/schemas/productSchema'
 import { Product, getProduct, updateProduct, uploadProductImage, deleteProductImage } from '@/firebase/productService'
+import * as yup from 'yup'
 
 export default function EditProductPage() {
   const params = useParams()
@@ -42,7 +44,7 @@ export default function EditProductPage() {
   
   const handleSubmit = async (data: {
     formData: Omit<Product, 'id' | 'images'>;
-    sizeInventories: SizeInventory[];
+    sizeInventories: yup.InferType<typeof sizeInventorySchema>[];
     uploadingImages: File[];
     imagesToDelete?: string[];
   }) => {

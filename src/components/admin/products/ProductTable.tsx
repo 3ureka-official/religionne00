@@ -67,6 +67,7 @@ export const ProductTable = ({ products, selectedImageIndex, onEdit, onDelete, o
           <TableCell>価格</TableCell>
           <TableCell>カテゴリ</TableCell>
           <TableCell>出品日</TableCell>
+          <TableCell>在庫</TableCell>
           <TableCell>ステータス</TableCell>
           <TableCell>おすすめ</TableCell>
           <TableCell align="center">アクション</TableCell>
@@ -116,6 +117,7 @@ export const ProductTable = ({ products, selectedImageIndex, onEdit, onDelete, o
               <TableCell>¥{Number(product.price).toLocaleString()}</TableCell>
               <TableCell>{product.category}</TableCell>
               <TableCell>{formatTimestamp(product.createdAt)}</TableCell>
+              <TableCell sx={{ color: product.sizeInventories?.reduce((acc, curr) => acc + curr.stock, 0) === 0 ? 'red' : 'black' }}>{product.sizeInventories?.reduce((acc, curr) => acc + curr.stock, 0) === 0 ? '在庫切れ' : product.sizeInventories?.reduce((acc, curr) => acc + curr.stock, 0)}</TableCell>
               <TableCell>
                 <Chip
                   label={product.isPublished ? '公開中' : '非公開'}

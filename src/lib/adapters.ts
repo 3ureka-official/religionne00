@@ -67,6 +67,7 @@ export const convertToProductDetailFormat = (product: Product) => {
     sizeInventories: (product.sizeInventories || []).map(item => ({
       size: item.size,
       stock: Number(item.stock)
-    }))
+    })),
+    link: product.link
   }
 } 

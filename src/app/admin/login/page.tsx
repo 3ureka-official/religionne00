@@ -119,6 +119,7 @@ export default function AdminLoginPage() {
                 required
                 disabled={isLoading}
                 sx={{ mb: 1 }}
+                size="small"
               />
               <TextField
                 label="パスワード"
@@ -131,6 +132,7 @@ export default function AdminLoginPage() {
                 onChange={handleChange}
                 required
                 disabled={isLoading}
+                size="small"
                 InputProps={{
                   endAdornment: (
                     <InputAdornment position="end">
