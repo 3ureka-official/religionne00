@@ -110,7 +110,7 @@ export default function ProductDetailClient({ product, relatedProducts = [] }: P
     setShowAlert(false);
   };
 
-  const isSoldOut = product.sizeInventories.some(size => size.stock === 0);
+  const isSoldOut = product.sizeInventories.every(size => size.stock === 0);
 
   return (
     <ThemeProvider theme={theme}>
@@ -319,13 +319,15 @@ export default function ProductDetailClient({ product, relatedProducts = [] }: P
                         py: 0.5,
                         fontSize: { xs: '12px', sm: '14px' },
                         cursor: 'pointer',
-                        bgcolor: selectedSize === item.size ? 'rgba(0, 0, 0, 0.8)' : 'transparent',
-                        color: selectedSize === item.size ? 'white' : 'black',
+                        bgcolor: (item.stock === 0) ? 'rgba(0, 0, 0, 0.05)' : selectedSize === item.size ? 'rgba(0, 0, 0, 0.8)' : 'transparent',
+                        color: (item.stock === 0) ? 'rgba(0, 0, 0, 0.5)' : selectedSize === item.size ? 'white' : 'black',
                         '&:hover': {
-                          bgcolor: selectedSize === item.size ? 'rgba(0, 0, 0, 0.8)' : 'rgba(0, 0, 0, 0.05)',
+                          bgcolor: (item.stock === 0) ? 'rgba(0, 0, 0, 0.05)' : selectedSize === item.size ? 'rgba(0, 0, 0, 0.8)' : 'rgba(0, 0, 0, 0.05)',
                         },
                       }}
-                      onClick={() => handleSizeSelect(item.size)}
+                      onClick={() =>
+                        item.stock > 0 && handleSizeSelect(item.size)
+                      }
                     >
                       {item.size}
                     </Box>
