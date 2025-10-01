@@ -1,6 +1,6 @@
 'use client'
 
-import { Box, Typography, Button, Pagination, TextField, InputAdornment, Tabs, Tab, FormControl, InputLabel, Select, MenuItem } from '@mui/material'
+import { Box, Typography, Button, Pagination, TextField, InputAdornment, FormControl, InputLabel, Select, MenuItem } from '@mui/material'
 import { useState, useEffect, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import AddIcon from '@mui/icons-material/Add'
@@ -12,11 +12,8 @@ import {
   updateProduct
 } from '@/firebase/productService'
 import { fetchCategories } from '@/lib/microcms'
-import { Order } from '@/firebase/orderService'
 // 新しく作成したテーブルコンポーネントをインポート
 import { ProductTable } from '@/components/admin/products/ProductTable';
-import { PreparingOrderTable } from '@/components/admin/products/PreparingOrderTable';
-import { ShippedProductTable } from '@/components/admin/products/ShippedProductTable';
 // 新しく作成したモーダルコンポーネントをインポート
 import { ProductDetailModal } from '@/components/admin/products/ProductDetailModal';
 import { OrderDetailModal } from '@/components/admin/products/OrderDetailModal';
@@ -26,33 +23,7 @@ import { ShippingConfirmDialog } from '@/components/admin/products/ShippingConfi
 import { useAdminPageUI } from '@/hooks/admin/useAdminPageUI';
 import { useOrderManagement } from '@/hooks/admin/useOrderManagement';
 
-// タブパネルのインターフェース
-interface TabPanelProps {
-  children?: React.ReactNode;
-  index: number;
-  value: number;
-}
 
-// タブパネルコンポーネント
-function TabPanel(props: TabPanelProps) {
-  const { children, value, index, ...other } = props;
-
-  return (
-    <div
-      role="tabpanel"
-      hidden={value !== index}
-      id={`product-tabpanel-${index}`}
-      aria-labelledby={`product-tab-${index}`}
-      {...other}
-    >
-      {value === index && (
-        <Box sx={{ pt: 3 }}>
-          {children}
-        </Box>
-      )}
-    </div>
-  );
-}
 
 export default function AdminProductsPage() {
   const router = useRouter()
@@ -70,8 +41,6 @@ export default function AdminProductsPage() {
       tabValue, 
       detailModalOpen, 
       selectedProduct, 
-      selectedOrder, 
-      selectedShipped, 
       selectedImageIndex 
     },
     {
@@ -80,12 +49,8 @@ export default function AdminProductsPage() {
       handlePageChange,
       openDeleteDialog,
       closeDeleteDialog,
-      openShippingConfirm,
       closeShippingConfirm,
-      handleTabChange,
       openProductDetail,
-      openOrderDetail,
-      openShippedOrderDetail,
       closeDetailModal,
       setSelectedImageIndex
     }
@@ -95,13 +60,17 @@ export default function AdminProductsPage() {
   const [publishFilter, setPublishFilter] = useState<string>('') // 'published' | 'unpublished'
   const [recommendedFilter, setRecommendedFilter] = useState<string>('') // 'recommended' | 'not-recommended'
 
+  // ソート用の状態を追加
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc')
+
+  // ソート順を切り替える
+  const toggleSortOrder = () => {
+    setSortOrder(prev => prev === 'desc' ? 'asc' : 'desc')
+  }
+
   // 注文管理フックを使用
   const [
     {
-      preparingOrders,
-      shippedOrders,
-      displayOrders,
-      displayShipped,
       loadingOrders,
       errorOrders
     },
@@ -164,7 +133,7 @@ export default function AdminProductsPage() {
   const displayProducts = useMemo(() => {
     if (tabValue !== 0) return [];
 
-    const filtered = products.filter(product => {
+    let filtered = products.filter(product => {
       // 検索フィルター
       if (searchTerm && (!product.name || !product.name.toLowerCase().includes(searchTerm.toLowerCase()))) {
         return false;
@@ -194,8 +163,16 @@ export default function AdminProductsPage() {
       return true;
     });
     
+    // 出品日でソート
+    filtered = filtered.sort((a, b) => {
+      const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0
+      const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0
+      
+      return sortOrder === 'desc' ? dateB - dateA : dateA - dateB
+    })
+    
     return filtered.slice((page - 1) * rowsPerPage, page * rowsPerPage);
-  }, [products, searchTerm, selectedCategory, publishFilter, recommendedFilter, page, rowsPerPage, tabValue]);
+  }, [products, searchTerm, selectedCategory, publishFilter, recommendedFilter, sortOrder, page, rowsPerPage, tabValue]);
 
   // CRUD操作関連のハンドラ (ここは変更なし、ただしUIフックのアクションを呼び出す場合がある)
   const togglePublishStatus = async (product: Product) => {
@@ -281,25 +258,11 @@ export default function AdminProductsPage() {
 
       {/* タブ */}
       <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
-        <Tabs value={tabValue} onChange={handleTabChange} aria-label="product status tabs">
-          <Tab 
-            label="出品中" 
-            sx={{ textTransform: 'none', fontWeight: tabValue === 0 ? 'bold' : 'normal' }} 
-          />
-          <Tab 
-            label="配送準備中" 
-            sx={{ textTransform: 'none', fontWeight: tabValue === 1 ? 'bold' : 'normal' }} 
-          />
-          <Tab 
-            label="配送済み" 
-            sx={{ textTransform: 'none', fontWeight: tabValue === 2 ? 'bold' : 'normal' }} 
-          />
-        </Tabs>
+        {/* タブなし - 商品管理のみ */}
       </Box>
 
       {/* 検索とフィルタリング */}
-      {tabValue === 0 && (
-        <Box sx={{ display: 'flex', mt: 3, mb: 3, gap: 2, flexWrap: 'wrap' }}>
+      <Box sx={{ display: 'flex', mt: 3, mb: 3, gap: 2, flexWrap: 'wrap' }}>
           {/* 検索バー */}
           <TextField
             placeholder="商品名で検索"
@@ -401,7 +364,6 @@ export default function AdminProductsPage() {
             </Select>
           </FormControl>
         </Box>
-      )}
 
       {loading || loadingOrders ? (
         <Box sx={{ textAlign: 'center', py: 4 }}>
@@ -413,34 +375,19 @@ export default function AdminProductsPage() {
         </Box>
       ) : (
         <>
-          <TabPanel value={tabValue} index={0}>
-            <ProductTable
-              products={displayProducts}
-              selectedImageIndex={selectedImageIndex} // UIフックの状態
-              onEdit={handleEditProduct}
-              onDelete={openDeleteDialog} // UIフックのアクション
-              onTogglePublish={togglePublishStatus}
-              onToggleRecommended={toggleRecommended}
-              onDetail={openProductDetail} // UIフックのアクション
-            />
-          </TabPanel>
-          
-          <TabPanel value={tabValue} index={1}>
-            <PreparingOrderTable
-              orders={displayOrders}
-              onDetail={openOrderDetail} // UIフックのアクション
-              onShippingConfirm={openShippingConfirm}
-            />
-          </TabPanel>
-          
-          <TabPanel value={tabValue} index={2}>
-            <ShippedProductTable
-              shippedOrders={displayShipped}
-              onDetail={openShippedOrderDetail} // UIフックのアクション
-            />
-          </TabPanel>
+          <ProductTable
+            products={displayProducts}
+            selectedImageIndex={selectedImageIndex} // UIフックの状態
+            onEdit={handleEditProduct}
+            onDelete={openDeleteDialog} // UIフックのアクション
+            onTogglePublish={togglePublishStatus}
+            onToggleRecommended={toggleRecommended}
+            onDetail={openProductDetail} // UIフックのアクション
+            sortOrder={sortOrder} // 追加
+            onSortChange={toggleSortOrder} // 追加
+          />
 
-          {products.length > 0 && tabValue === 0 && (
+          {products.length > 0 && (
             <Box sx={{ display: 'flex', justifyContent: 'center' }}>
               <Pagination
                 count={Math.ceil(products.length / rowsPerPage)}
@@ -451,58 +398,17 @@ export default function AdminProductsPage() {
               />
             </Box>
           )}
-          {preparingOrders.length > 0 && tabValue === 1 && (
-             <Box sx={{ display: 'flex', justifyContent: 'center' }}>
-              <Pagination
-                count={Math.ceil(preparingOrders.length / rowsPerPage)}
-                page={page} // UIフックの状態
-                onChange={handlePageChange} // UIフックのアクション
-                color="standard"
-                shape="rounded"
-              />
-            </Box>
-          )}
-          {shippedOrders.length > 0 && tabValue === 2 && (
-            <Box sx={{ display: 'flex', justifyContent: 'center' }}>
-              <Pagination
-                count={Math.ceil(shippedOrders.length / rowsPerPage)}
-                page={page} // UIフックの状態
-                onChange={handlePageChange} // UIフックのアクション
-                color="standard"
-                shape="rounded"
-              />
-            </Box>
-          )}
         </>
       )}
 
-      {tabValue === 0 && (
-        <ProductDetailModal
-          open={detailModalOpen} // UIフックの状態
-          onClose={closeDetailModal} // UIフックのアクション
-          product={selectedProduct} // UIフックの状態
-          selectedImageIndex={selectedImageIndex} // UIフックの状態
-          setSelectedImageIndex={setSelectedImageIndex} // UIフックのアクション
-          onEditProduct={(productId) => { if (productId) handleEditProduct(productId); }}
-        />
-      )}
-      {tabValue === 1 && (
-        <OrderDetailModal
-          open={detailModalOpen} // UIフックの状態
-          onClose={closeDetailModal} // UIフックのアクション
-          order={selectedOrder as Order} // UIフックの状態
-          tabValue={tabValue} // UIフックの状態
-          onShippingConfirm={openShippingConfirm} // UIフックのアクションを直接渡す
-        />
-      )}
-      {tabValue === 2 && (
-        <OrderDetailModal
-          open={detailModalOpen} // UIフックの状態
-          onClose={closeDetailModal} // UIフックのアクション
-          order={selectedShipped as Order} // UIフックの状態
-          tabValue={tabValue} // UIフックの状態
-        />
-      )}
+      <ProductDetailModal
+        open={detailModalOpen} // UIフックの状態
+        onClose={closeDetailModal} // UIフックのアクション
+        product={selectedProduct} // UIフックの状態
+        selectedImageIndex={selectedImageIndex} // UIフックの状態
+        setSelectedImageIndex={setSelectedImageIndex} // UIフックのアクション
+        onEditProduct={(productId) => { if (productId) handleEditProduct(productId); }}
+      />
 
       <DeleteProductDialog
         open={deleteDialogOpen} // UIフックの状態
