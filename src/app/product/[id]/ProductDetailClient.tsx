@@ -154,7 +154,7 @@ export default function ProductDetailClient({ product, relatedProducts = [] }: P
 
           <Box sx={{ display: 'flex', flexDirection: { xs: 'column', md: 'row' }, flexWrap: { md: 'wrap' }, mx: -2 }}>
             {/* 商品画像セクション */}
-            <Box sx={{ width: { xs: '100%', md: '58.333%' }, px: 2 }}>
+            <Box sx={{ width: { xs: '100%', md: '46%' }, px: 2 }}>
               <Box sx={{ mb: 2 }}>
                 <Box
                   sx={{
@@ -186,7 +186,7 @@ export default function ProductDetailClient({ product, relatedProducts = [] }: P
                       style={{ aspectRatio: '1/1' }}
                       quality={95}
                       priority={true}
-                      sizes="(max-width: 768px) 100vw, (max-width: 1200px) 60vw, 50vw"
+                      sizes="(max-width: 680px) 100vw, (max-width: 1200px) 60vw, 50vw"
                     />
                   </Box>
                 </Box>
@@ -198,7 +198,7 @@ export default function ProductDetailClient({ product, relatedProducts = [] }: P
                   <Box
                     key={image.id}
                     sx={{
-                      width: '25%',
+                      width: '16.667%',
                       px: 0.5,
                       mb: 1,
                     }}
@@ -246,7 +246,7 @@ export default function ProductDetailClient({ product, relatedProducts = [] }: P
             </Box>
 
             {/* 商品詳細セクション */}
-            <Box sx={{ width: { xs: '100%', md: '41.667%' }, px: 2, mt: { xs: 4, md: 0 } }}>
+            <Box sx={{ width: { xs: '100%', md: '53%' }, px: {xs: 2, md: 6}, mt: { xs: 4, md: 0 } }}>
               <Box sx={{ position: 'relative' }}>
                 <Typography
                   variant="h1"
@@ -271,7 +271,7 @@ export default function ProductDetailClient({ product, relatedProducts = [] }: P
                 </Typography>
                 <Typography
                   sx={{
-                    fontSize: { xs: '14px', sm: '16px' },
+                    fontSize: { xs: '10px', sm: '12px' },
                     fontWeight: 'bold',
                   }}
                 >
