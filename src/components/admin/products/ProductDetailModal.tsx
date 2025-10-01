@@ -125,7 +125,10 @@ export const ProductDetailModal = ({
             {/* 右側：情報エリア */}
             <Box sx={{ 
               width: { xs: '100%', sm: '70%' },
-              flex: 1 
+              flex: 1,
+              display: 'flex',
+              flexDirection: 'column',  
+              gap: 2
             }}>
               {/* 基本情報 */}
               <Typography variant="h6" component="h2" gutterBottom sx={{ fontWeight: 'bold' }}>
@@ -145,85 +148,106 @@ export const ProductDetailModal = ({
                   />
                 )}
               </Typography>
-              <Box sx={{ my: 3 }}>
-                <Typography variant="h5" sx={{ fontWeight: 'bold' }}>
+
+              <Box sx={{ mb: 1 }}>
+                <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 'bold', fontSize: '14px' }}>価格</Typography>
+                <Typography variant="body1">
                   ¥{Number(product.price).toLocaleString()}
                 </Typography>
               </Box>
-              <Box>
+
+              {/* サイズ・在庫情報 */}
+              <Box sx={{ mb: 1 }}>
+                <Typography variant="body2" sx={{ fontWeight: 'bold', fontSize: '14px' }}>サイズ・在庫</Typography>
+
+                {product.sizeInventories && product.sizeInventories.length > 0 ? (
+                  <TableContainer sx={{ 
+                    borderRadius: 1, 
+                    boxShadow: 'none', 
+                    border: '1px solid #eee',
+                    width: '100%'
+                  }}>
+                    <Table size="small">
+                      <TableHead sx={{ bgcolor: '#eee' }}>
+                        <TableRow>
+                          <TableCell sx={{ width: '50%', px: 2, fontSize: '14px' }}>サイズ</TableCell>
+                          <TableCell sx={{ width: '50%', px: 2, fontSize: '14px' }}>在庫</TableCell>
+                        </TableRow>
+                      </TableHead>
+                      <TableBody>
+                        {product.sizeInventories.map((item: SizeInventory, idx: number) => (
+                          <TableRow key={idx} sx={{ '&:last-child td, &:last-child th': { border: 0 } }}>
+                            <TableCell sx={{ px: 2, fontSize: '14px' }}>{item.size}</TableCell>
+                            <TableCell sx={{ px: 2, fontSize: '14px' }}>{item.stock}点</TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </TableContainer>
+                ) : (
+                  <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+                    サイズ・在庫情報はありません
+                  </Typography>
+                )}              
+              </Box>
+
+              {/* カテゴリ */}
+              <Box sx={{ mb: 1 }}>
+                <Typography  variant="body2" color="text.secondary">カテゴリ</Typography>
                 <Typography variant="body1">{product.category}</Typography>
               </Box>
-              <Divider sx={{ my: 2 }} />
-              {/* サイズ・在庫情報 */}
-              <Typography variant="subtitle1" sx={{ fontWeight: 'bold', mb: 2 }}>サイズ・在庫</Typography>
-              {product.sizeInventories && product.sizeInventories.length > 0 ? (
-                <TableContainer sx={{ 
-                  mb: 3, 
-                  bgcolor: '#fafafa', 
-                  borderRadius: 1, 
-                  boxShadow: 'none', 
-                  border: '1px solid #eee',
-                  width: '100%'
-                }}>
-                  <Table size="small">
-                    <TableHead>
-                      <TableRow>
-                        <TableCell sx={{ fontWeight: 'bold', width: '50%', py: 1.5, px: 2 }}>サイズ</TableCell>
-                        <TableCell sx={{ fontWeight: 'bold', width: '50%', py: 1.5, px: 2 }}>在庫</TableCell>
-                      </TableRow>
-                    </TableHead>
-                    <TableBody>
-                      {product.sizeInventories.map((item: SizeInventory, idx: number) => (
-                        <TableRow key={idx} sx={{ '&:last-child td, &:last-child th': { border: 0 } }}>
-                          <TableCell sx={{ py: 1.5, px: 2 }}>{item.size}</TableCell>
-                          <TableCell sx={{ py: 1.5, px: 2 }}>{item.stock}点</TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </TableContainer>
-              ) : (
-                <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-                  サイズ・在庫情報はありません
-                </Typography>
-              )}
-              
-              <Divider sx={{ my: 2 }} />
-              {/* 商品説明 */}
-              <Typography variant="subtitle1" sx={{ fontWeight: 'bold', mb: 2 }}>商品説明</Typography>
-              <Typography variant="body1" sx={{ whiteSpace: 'pre-wrap' }}>
-                {product.description || 'なし'}
-              </Typography>
-              
-              <Divider sx={{ my: 2 }} />
+
               {/* 出品日 */}
-              <Typography variant="subtitle1" sx={{ fontWeight: 'bold', mb: 2 }}>出品日</Typography>
-              <Typography variant="body1">
-                {product.createdAt?.toLocaleDateString('ja-JP', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
-              </Typography>
+              <Box sx={{ mb: 1 }}>
+                <Typography  variant="body2" color="text.secondary">出品日</Typography>
+                <Typography variant="body1">
+                  {product.createdAt?.toLocaleDateString('ja-JP', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                </Typography>              
+              </Box>
+
+              {/* 商品説明 */}
+              <Box sx={{ mb: 1 }}>
+                <Typography  variant="body2" color="text.secondary">商品説明</Typography>
+                <Typography variant="body1" sx={{ whiteSpace: 'pre-wrap' }}>
+                  {product.description || 'なし'}
+                </Typography>
+              </Box>
+
+              {/* リンク */}
+              <Box sx={{ mb: 1 }}>
+                <Typography variant="body2" color="text.secondary">リンク</Typography>
+                <Typography variant="body1" sx={{ whiteSpace: 'pre-wrap' }}>
+                  {product.link || 'なし'}
+                </Typography>
+              </Box>
+              
+              <Divider sx={{ my: 2 }} />
+              
+              
             </Box>
           </Box>
         )}
       </DialogContent>
       <DialogActions sx={{ borderTop: '1px solid #e0e0e0', p: { xs: 2, sm: 3 } }}>
+        <Button onClick={onClose} sx={{ width: 150, borderRadius: 0, color: '#006AFF', border: '1px solid #006AFF' }}>
+          閉じる
+        </Button>
         {onEditProduct && product.id && (
           <Button 
             onClick={() => onEditProduct(product.id)}
             sx={{ 
-              bgcolor: 'black',
+              bgcolor: '#006AFF',
               color: 'white',
               borderRadius: 0,
+              width: 150,
               '&:hover': {
-                bgcolor: 'rgba(0, 0, 0, 0.8)'
+                bgcolor: '#006ADD'
               }
             }}
           >
             編集する
           </Button>
         )}
-        <Button onClick={onClose} sx={{ color: 'text.secondary' }}>
-          閉じる
-        </Button>
       </DialogActions>
     </Dialog>
   );

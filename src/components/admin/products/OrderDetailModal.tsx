@@ -128,6 +128,12 @@ export const OrderDetailModal = ({
               </Typography>
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
                 <Box>
+                  <Typography variant="body2" color="text.secondary">注文ID</Typography>
+                  <Typography variant="body1">
+                    {order.id}
+                  </Typography>
+                </Box>
+                <Box>
                   <Typography variant="body2" color="text.secondary">注文日</Typography>
                   <Typography variant="body1">
                     {formatTimestamp(order.createdAt)}
@@ -212,6 +218,9 @@ export const OrderDetailModal = ({
         )}
       </DialogContent>
       <DialogActions sx={{ borderTop: '1px solid #e0e0e0', p: { xs: 2, sm: 3 } }}>
+        <Button onClick={onClose} sx={{ width: 150, borderRadius: 0, color: '#006AFF', border: '1px solid #006AFF' }}>
+          閉じる
+        </Button>
         {tabValue === 1 && onShippingConfirm && (
           <Button 
             variant="contained"
@@ -220,20 +229,19 @@ export const OrderDetailModal = ({
               onClose()
             }}
             sx={{ 
-              bgcolor: 'black',
+              bgcolor: '#006AFF',
               color: 'white',
               borderRadius: 0,
+              width: 150,
               '&:hover': {
-                bgcolor: 'rgba(0, 0, 0, 0.8)'
+                bgcolor: '#006ADD'
               }
             }}
           >
             配送済みにする
           </Button>
         )}
-        <Button onClick={onClose} sx={{ color: 'text.secondary' }}>
-          閉じる
-        </Button>
+        
       </DialogActions>
     </Dialog>
   );

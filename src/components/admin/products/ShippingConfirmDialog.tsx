@@ -32,11 +32,11 @@ export const ShippingConfirmDialog = ({
         <Button
           onClick={onConfirm}
           sx={{ 
-            bgcolor: 'black',
+            bgcolor: '#006AFF',
             color: 'white',
             borderRadius: 0,
             '&:hover': {
-              bgcolor: 'rgba(0, 0, 0, 0.8)'
+              bgcolor: '#006ADD'
             }
           }}
           autoFocus

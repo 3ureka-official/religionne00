@@ -91,6 +91,10 @@ export default function AdminProductsPage() {
     }
   ] = useAdminPageUI();
 
+  // フィルター用の状態を追加
+  const [publishFilter, setPublishFilter] = useState<string>('') // 'published' | 'unpublished'
+  const [recommendedFilter, setRecommendedFilter] = useState<string>('') // 'recommended' | 'not-recommended'
+
   // 注文管理フックを使用
   const [
     {
@@ -159,19 +163,39 @@ export default function AdminProductsPage() {
   // フィルタリング結果をuseMemoで管理
   const displayProducts = useMemo(() => {
     if (tabValue !== 0) return [];
-    
+
     const filtered = products.filter(product => {
+      // 検索フィルター
       if (searchTerm && (!product.name || !product.name.toLowerCase().includes(searchTerm.toLowerCase()))) {
         return false;
       }
+      
+      // カテゴリーフィルター
       if (selectedCategory && product.category !== selectedCategory) {
         return false;
       }
+      
+      // 公開状態フィルター
+      if (publishFilter === 'published' && !product.isPublished) {
+        return false;
+      }
+      if (publishFilter === 'unpublished' && product.isPublished) {
+        return false;
+      }
+      
+      // おすすめフィルター
+      if (recommendedFilter === 'recommended' && !product.isRecommended) {
+        return false;
+      }
+      if (recommendedFilter === 'not-recommended' && product.isRecommended) {
+        return false;
+      }
+      
       return true;
     });
     
     return filtered.slice((page - 1) * rowsPerPage, page * rowsPerPage);
-  }, [products, searchTerm, selectedCategory, page, rowsPerPage, tabValue]);
+  }, [products, searchTerm, selectedCategory, publishFilter, recommendedFilter, page, rowsPerPage, tabValue]);
 
   // CRUD操作関連のハンドラ (ここは変更なし、ただしUIフックのアクションを呼び出す場合がある)
   const togglePublishStatus = async (product: Product) => {
@@ -275,54 +299,109 @@ export default function AdminProductsPage() {
 
       {/* 検索とフィルタリング */}
       {tabValue === 0 && (
-      <Box sx={{ display: 'flex', mt: 3, mb: 3, gap: 2 }}>
-        <TextField
-          placeholder="商品名で検索"
-          variant="outlined"
-          size="small"
-          value={searchTerm}
-          onChange={handleSearch} // UIフックのアクション
-          sx={{ 
-            flexGrow: 1,
-            '& .MuiOutlinedInput-root': {
-              borderRadius: 0
-            }
-          }}
-          InputProps={{
-            startAdornment: (
-              <InputAdornment position="start">
-                <SearchIcon fontSize="small" />
-              </InputAdornment>
-            ),
-          }}
-        />
-        <FormControl 
-          variant="outlined" 
-          size="small" 
-          sx={{ 
-            minWidth: 200,
-            '& .MuiOutlinedInput-root': {
-              borderRadius: 0
-            }
-          }}
-        >
-          <InputLabel id="category-filter-label">カテゴリ</InputLabel>
-          <Select
-            labelId="category-filter-label"
-            value={selectedCategory} // UIフックの状態
-            onChange={handleCategoryChange} // UIフックのアクション
-            label="カテゴリ"
+        <Box sx={{ display: 'flex', mt: 3, mb: 3, gap: 2, flexWrap: 'wrap' }}>
+          {/* 検索バー */}
+          <TextField
+            placeholder="商品名で検索"
+            variant="outlined"
+            size="small"
+            value={searchTerm}
+            onChange={handleSearch}
+            sx={{ 
+              flexGrow: 1,
+              minWidth: '200px',
+              '& .MuiOutlinedInput-root': {
+                borderRadius: 0
+              }
+            }}
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <SearchIcon fontSize="small" />
+                </InputAdornment>
+              ),
+            }}
+          />
+          
+          {/* カテゴリーフィルター */}
+          <FormControl 
+            variant="outlined" 
+            size="small" 
+            sx={{ 
+              minWidth: 150,
+              '& .MuiOutlinedInput-root': {
+                borderRadius: 0
+              }
+            }}
           >
-            <MenuItem value="">すべて</MenuItem>
-            {categories.map((category) => (
-              <MenuItem key={category} value={category}>
-                {category}
-              </MenuItem>
-            ))}
-          </Select>
-        </FormControl>
-      </Box>
-    )}
+            <InputLabel id="category-filter-label">カテゴリ</InputLabel>
+            <Select
+              labelId="category-filter-label"
+              value={selectedCategory}
+              onChange={handleCategoryChange}
+              label="カテゴリ"
+              size="small"
+            >
+              <MenuItem value="">すべて</MenuItem>
+              {categories.map((category) => (
+                <MenuItem key={category} value={category}>
+                  {category}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+          
+          {/* 公開状態フィルター */}
+          <FormControl 
+            variant="outlined" 
+            size="small" 
+            sx={{ 
+              minWidth: 150,
+              '& .MuiOutlinedInput-root': {
+                borderRadius: 0
+              }
+            }}
+          >
+            <InputLabel id="publish-filter-label">公開状態</InputLabel>
+            <Select
+              labelId="publish-filter-label"
+              value={publishFilter}
+              onChange={(e) => setPublishFilter(e.target.value)}
+              label="公開状態"
+              size="small"
+            >
+              <MenuItem value="">すべて</MenuItem>
+              <MenuItem value="published">公開中</MenuItem>
+              <MenuItem value="unpublished">非公開</MenuItem>
+            </Select>
+          </FormControl>
+          
+          {/* おすすめフィルター */}
+          <FormControl 
+            variant="outlined" 
+            size="small" 
+            sx={{ 
+              minWidth: 150,
+              '& .MuiOutlinedInput-root': {
+                borderRadius: 0
+              }
+            }}
+          >
+            <InputLabel id="recommended-filter-label">おすすめ</InputLabel>
+            <Select
+              labelId="recommended-filter-label"
+              value={recommendedFilter}
+              onChange={(e) => setRecommendedFilter(e.target.value)}
+              label="おすすめ"
+              size="small"
+            >
+              <MenuItem value="">すべて</MenuItem>
+              <MenuItem value="recommended">おすすめ</MenuItem>
+              <MenuItem value="not-recommended">通常</MenuItem>
+            </Select>
+          </FormControl>
+        </Box>
+      )}
 
       {loading || loadingOrders ? (
         <Box sx={{ textAlign: 'center', py: 4 }}>
@@ -350,6 +429,7 @@ export default function AdminProductsPage() {
             <PreparingOrderTable
               orders={displayOrders}
               onDetail={openOrderDetail} // UIフックのアクション
+              onShippingConfirm={openShippingConfirm}
             />
           </TabPanel>
           
