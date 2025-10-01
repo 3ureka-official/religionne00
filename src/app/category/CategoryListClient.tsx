@@ -45,10 +45,10 @@ export default function CategoryListClient({ categories }: CategoryListClientPro
               }}
             >
               <Link href="/" passHref style={{ color: 'inherit', textDecoration: 'none' }}>
-                home
+                Home
               </Link>
               <Typography color="text.primary" sx={{ fontSize: 'inherit', fontWeight: 500 }}>
-                store
+                Store
               </Typography>
             </Breadcrumbs>
           </Box>
