@@ -26,12 +26,20 @@ export const DeleteProductDialog = ({
         </Typography>
       </DialogContent>
       <DialogActions>
-        <Button onClick={onClose} sx={{ color: 'text.primary' }}>
+        <Button onClick={onClose} sx={{ color: 'text.primary', minWidth: '120px' }}>
           キャンセル
         </Button>
         <Button
           onClick={onConfirm}
-          sx={{ color: 'error.main' }}
+          sx={{ 
+            minWidth: '120px',
+            bgcolor: 'red',
+            color: 'white',
+            borderRadius: 1,
+            '&:hover': {
+              bgcolor: '#B31B1B'
+            }
+          }}
           autoFocus
         >
           削除する
