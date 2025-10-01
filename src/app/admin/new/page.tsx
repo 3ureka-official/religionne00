@@ -1,22 +1,25 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { CircularProgress, Box } from '@mui/material'
-import ProductForm, { SizeInventory } from '@/components/admin/ProductForm'
+import ProductForm from '@/components/admin/ProductForm'
 import { Product, createProductWithStripe } from '@/firebase/productService'
+import { sizeInventorySchema } from '@/schemas/productSchema'
+import * as yup from 'yup'
 
 export default function NewProductPage() {
   const [loading, setLoading] = useState(false)
 
   const handleSubmit = async (data: {
     formData: Omit<Product, 'id' | 'images'>;
-    sizeInventories: SizeInventory[];
+    sizeInventories: yup.InferType<typeof sizeInventorySchema>[];
     uploadingImages: File[];
   }) => {
       // 商品データの準備
       const productData: Omit<Product, 'id' | 'images'> = {
       name: data.formData.name,
       description: data.formData.description,
+      link: data.formData.link,
       price: Number(data.formData.price),
       category: data.formData.category,
         isPublished: true,
