@@ -96,7 +96,6 @@ export default function AdminLayout({
               </Link>
             ))}
           </List>
-          <Divider />
           <List>
             <ListItem disablePadding>
               <ListItemButton onClick={handleLogout}>

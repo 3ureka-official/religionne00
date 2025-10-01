@@ -87,7 +87,7 @@ const ProductCard = ({ product, categories }: ProductCardProps) => {
         <Box sx={{ pt: 1, pb: {xs: 0.5, sm: 1} }}>
           <Typography
             sx={{
-              fontSize: { xs: '12px', sm: '14px' },
+              fontSize: { xs: '14px', sm: '16px' },
               fontWeight: 'normal',
               mb: 0.2,
               overflow: 'hidden',
@@ -125,7 +125,8 @@ const ProductCard = ({ product, categories }: ProductCardProps) => {
           
           <Typography
             sx={{
-              fontSize: { xs: '11px', sm: '14px' },
+              fontSize: { xs: '14px', sm: '16px' },
+              fontFamily: 'Helvetica',
               mb: 0.5,
               mt: 0.5,
               fontWeight: 'bold',
@@ -135,7 +136,7 @@ const ProductCard = ({ product, categories }: ProductCardProps) => {
           </Typography>
         </Box>
 
-        <Divider sx={{ bgcolor: 'black', borderWidth: '0.5px' }} />
+        <Divider sx={{ bgcolor: 'black', borderWidth: '0.9px' }} />
       </Paper>
     </Link>
   )

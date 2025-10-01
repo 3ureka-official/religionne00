@@ -36,7 +36,7 @@ const FeatureSection = ({ products, settings, pickUpProducts, categories }: Feat
         <Box sx={{ 
           display: 'grid', 
           gridTemplateColumns: { xs: pickUpProducts.length >= 3 ? 'repeat(3, minmax(0, 1fr))' : `repeat(${pickUpProducts.length}, minmax(0, 1fr))`, lg: pickUpProducts.length >= 4 ? 'repeat(4, 1fr)' : pickUpProducts.length == 3 ? 'repeat(3, 1fr)' : 'repeat(2, 1fr)' },
-          gap: { xs: '1rem 1rem', sm: `3rem ${pickUpProducts.length >= 4 || pickUpProducts.length === 1 ? '2rem' : `${5-pickUpProducts.length}rem`}` },
+          gap: { xs: '2rem 1rem', sm: `3rem ${pickUpProducts.length >= 4 || pickUpProducts.length === 1 ? '2rem' : `${5-pickUpProducts.length}rem`}` },
           mb: { xs: 4, sm: 6 },
           pt: { xs: 1, sm: 2 },
           width: '100%',
@@ -60,7 +60,7 @@ const FeatureSection = ({ products, settings, pickUpProducts, categories }: Feat
         <Box sx={{ 
           display: 'grid', 
           gridTemplateColumns: { xs: 'repeat(3, minmax(0, 1fr))', lg: 'repeat(4, 1fr)' },
-          gap: { xs: '1rem 1rem', sm: '3rem 2rem' },
+          gap: { xs: '2rem 1rem', sm: '3rem 2rem' },
           mb: { xs: 4, sm: 6 },
           pt: { xs: 1, sm: 2 },
           width: '100%',

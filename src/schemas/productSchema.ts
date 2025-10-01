@@ -23,7 +23,7 @@ export const productSchema = yup.object({
     .default(''),
   price: yup.number()
     .required('価格は必須です')
-    .min(0, '価格は0以上で入力してください')
+    .min(1, '価格を設定してください')
     .typeError('価格は数値で入力してください'),
   category: yup.string()
     .required('カテゴリーは必須です'),

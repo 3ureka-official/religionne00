@@ -1,6 +1,6 @@
 'use client';
 
-import { Box, Container, Typography, Button, Breadcrumbs, Snackbar, Alert } from '@mui/material';
+import { Box, Container, Typography, Button, Breadcrumbs, Snackbar, Alert, Divider } from '@mui/material';
 import Link from 'next/link';
 import Image from 'next/image';
 import React, { useState } from 'react';
@@ -39,6 +39,7 @@ interface ProductDetailClientProps {
     description: string;
     category: ProductCategory;
     sizeInventories: ProductSize[];
+    link?: string;
   };
   relatedProducts?: Array<{
     id: string;
@@ -260,23 +261,25 @@ export default function ProductDetailClient({ product, relatedProducts = [] }: P
                 </Typography>
 
                 <Box sx={{ mt: 3, display: 'flex', flexDirection: 'row', gap: 1, alignItems: 'center' }}>
-                <Typography
-                  sx={{
-                    fontSize: { xs: '16px', sm: '18px' },
-                    fontWeight: 'bold',
-                    letterSpacing: '0.2',
-                  }}
-                >
-                  {formatPrice(Number(product.stripe_price_id))}
-                </Typography>
-                <Typography
-                  sx={{
-                    fontSize: { xs: '10px', sm: '12px' },
-                    fontWeight: 'bold',
-                  }}
-                >
-                  (税込)
-                </Typography>
+                  <Typography
+                    variant='body1'
+                    fontFamily='Helvetica'
+                    sx={{
+                      fontSize: { xs: '18px', sm: '20px' },
+                      fontWeight: 'bold',
+                    }}
+                  >
+                    {formatPrice(Number(product.stripe_price_id))}
+                  </Typography>
+
+                  <Typography
+                    variant="body2"
+                    sx={{
+                      fontSize: { xs: '12px', sm: '14px' }, color: 'black'
+                    }}
+                  >
+                    {`(税込)`}
+                  </Typography>
                 </Box>
 
                 {isSoldOut && (
@@ -318,11 +321,11 @@ export default function ProductDetailClient({ product, relatedProducts = [] }: P
                         px: 2,
                         py: 0.5,
                         fontSize: { xs: '12px', sm: '14px' },
-                        cursor: 'pointer',
-                        bgcolor: (item.stock === 0) ? 'rgba(0, 0, 0, 0.05)' : selectedSize === item.size ? 'rgba(0, 0, 0, 0.8)' : 'transparent',
+                        cursor: (item.stock === 0) ? 'unset' : 'pointer',
+                        bgcolor: (item.stock === 0) ? 'rgba(0, 0, 0, 0.1)' : selectedSize === item.size ? 'rgba(0, 0, 0, 0.8)' : 'transparent',
                         color: (item.stock === 0) ? 'rgba(0, 0, 0, 0.5)' : selectedSize === item.size ? 'white' : 'black',
                         '&:hover': {
-                          bgcolor: (item.stock === 0) ? 'rgba(0, 0, 0, 0.05)' : selectedSize === item.size ? 'rgba(0, 0, 0, 0.8)' : 'rgba(0, 0, 0, 0.05)',
+                          bgcolor: (item.stock === 0) ? 'rgba(0, 0, 0, 0.1)' : selectedSize === item.size ? 'rgba(0, 0, 0, 0.8)' : 'rgba(0, 0, 0, 0.05)',
                         },
                       }}
                       onClick={() =>
@@ -354,10 +357,22 @@ export default function ProductDetailClient({ product, relatedProducts = [] }: P
                     >
                       {product.description}
                     </Typography>
+
+                    {product.link && (
+                      <Link href={product.link} target="_blank" rel="noopener noreferrer">
+                        <Typography
+                          sx={{
+                            fontSize: { xs: '12px', sm: '14px' },
+                          }}
+                        >
+                          {product.link}
+                        </Typography>
+                      </Link>
+                    )}
                   </Box>
 
                   <Box sx={{ order: { xs: 1, md: 2 }, mb: { xs: 3, md: 0 } }}>
-                    <Box sx={{ my: 1, width: '100%', height: '1px', bgcolor: 'black' }} />
+                    <Box sx={{ my: 1, width: '100%', height: '0.9px', bgcolor: 'black' }} />
 
                     <Button
                       variant="contained"
@@ -390,14 +405,15 @@ export default function ProductDetailClient({ product, relatedProducts = [] }: P
                   variant="h2" 
                   sx={{ 
                     fontSize: { xs: '16px', sm: '18px' }, 
-                    mb: 3, 
+                    mb: 1.5, 
                     fontWeight: 'normal',
-                    borderBottom: '1px solid black',
-                    pb: 1
                   }}
                 >
                   関連商品
                 </Typography>
+
+                <Divider sx={{ bgcolor: 'black', borderWidth: '0.9px', mb: 2 }} />
+
                 <Box sx={{ 
                   display: 'grid', 
                   gridTemplateColumns: { xs: 'repeat(3, 1fr)', md: 'repeat(4, 1fr)' },

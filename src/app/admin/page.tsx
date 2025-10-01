@@ -159,13 +159,17 @@ export default function AdminProductsPage() {
   // フィルタリング結果をuseMemoで管理
   const displayProducts = useMemo(() => {
     if (tabValue !== 0) return [];
-    let filtered = [...products];
-    if (searchTerm) {
-      filtered = filtered.filter(product => product.name && product.name.toLowerCase().includes(searchTerm.toLowerCase()));
-    }
-    if (selectedCategory) {
-      filtered = filtered.filter(product => product.category === selectedCategory);
-    }
+    
+    const filtered = products.filter(product => {
+      if (searchTerm && (!product.name || !product.name.toLowerCase().includes(searchTerm.toLowerCase()))) {
+        return false;
+      }
+      if (selectedCategory && product.category !== selectedCategory) {
+        return false;
+      }
+      return true;
+    });
+    
     return filtered.slice((page - 1) * rowsPerPage, page * rowsPerPage);
   }, [products, searchTerm, selectedCategory, page, rowsPerPage, tabValue]);
 
@@ -239,11 +243,11 @@ export default function AdminProductsPage() {
           startIcon={<AddIcon />}
           onClick={handleAddProduct}
           sx={{
-            bgcolor: 'black',
+            bgcolor: '#006AFF',
             color: 'white',
             borderRadius: 0,
             '&:hover': {
-              bgcolor: 'rgba(0, 0, 0, 0.8)'
+              bgcolor: '#006ADD'
             }
           }}
         >
