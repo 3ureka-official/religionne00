@@ -110,6 +110,8 @@ export default function ProductDetailClient({ product, relatedProducts = [] }: P
     setShowAlert(false);
   };
 
+  const isSoldOut = product.sizeInventories.some(size => size.stock === 0);
+
   return (
     <ThemeProvider theme={theme}>
       <Box
@@ -257,11 +259,10 @@ export default function ProductDetailClient({ product, relatedProducts = [] }: P
                   {product.name}
                 </Typography>
 
-                <Box sx={{ display: 'flex', flexDirection: 'row', gap: 1, alignItems: 'center' }}>
+                <Box sx={{ mt: 3, display: 'flex', flexDirection: 'row', gap: 1, alignItems: 'center' }}>
                 <Typography
                   sx={{
                     fontSize: { xs: '16px', sm: '18px' },
-                    my: 3,
                     fontWeight: 'bold',
                     letterSpacing: '0.2',
                   }}
@@ -271,13 +272,24 @@ export default function ProductDetailClient({ product, relatedProducts = [] }: P
                 <Typography
                   sx={{
                     fontSize: { xs: '14px', sm: '16px' },
-                    my: 3,
                     fontWeight: 'bold',
                   }}
                 >
                   (税込)
                 </Typography>
                 </Box>
+
+                {isSoldOut && (
+                  <Typography
+                    sx={{
+                      fontSize: { xs: '14px', sm: '16px' },
+                      color: '#F73644',
+                      fontWeight: "light",
+                    }}
+                  >
+                    SOLD&nbsp;OUT
+                  </Typography>
+                )}
 
                 <Typography
                   sx={{
@@ -349,8 +361,8 @@ export default function ProductDetailClient({ product, relatedProducts = [] }: P
                       variant="contained"
                       fullWidth
                       sx={{
-                        bgcolor: 'black',
-                        color: 'white',
+                        bgcolor: isSoldOut ? '#aaa !important' : 'black',
+                        color: isSoldOut ? 'white !important' : 'white',
                         borderRadius: 0,
                         py: 1.5,
                         mt: 1.5,
@@ -359,9 +371,10 @@ export default function ProductDetailClient({ product, relatedProducts = [] }: P
                           bgcolor: 'rgba(0, 0, 0, 0.8)',
                         },
                       }}
+                      disabled={isSoldOut}
                       onClick={handleAddToCart}
                     >
-                      Add to cart
+                      {isSoldOut ? 'Out of Stock' : 'Add to cart'}
                     </Button>
                   </Box>
                 </Box>
