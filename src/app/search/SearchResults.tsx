@@ -47,7 +47,7 @@ export default function SearchResults({ query, products }: SearchResultsProps) {
               }}
             >
               <Link href="/" passHref style={{ color: 'inherit', textDecoration: 'none' }}>
-                home
+                Home
               </Link>
               <Typography color="text.primary" sx={{ fontSize: 'inherit', fontWeight: 'bold' }}>
                 {displayTitle}

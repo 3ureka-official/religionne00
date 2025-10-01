@@ -141,10 +141,10 @@ export default function ProductDetailClient({ product, relatedProducts = [] }: P
               }}
             >
               <Link href="/" passHref style={{ color: 'inherit', textDecoration: 'none' }}>
-                home
+                Home
               </Link>
               <Link href="/category" passHref style={{ color: 'inherit', textDecoration: 'none' }}>
-                store
+                Store
               </Link>
               <Link href={`/category/${product.category.id}`} passHref style={{ color: 'inherit', textDecoration: 'none' }}>
                 {product.category.name}
