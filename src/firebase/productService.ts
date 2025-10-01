@@ -18,7 +18,6 @@ import {
 import { ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
 import { db, storage } from './config';
 import { createStripeProductWithPrice } from '@/services/stripeService';
-import { Timestamp } from 'firebase/firestore';
 
 
 // 商品の型定義
@@ -26,6 +25,7 @@ export interface Product {
   id?: string;
   name: string;
   description: string;
+  link: string;
   price: number; // 文字列許容をやめ、数値に統一
   category: string;
   images: string[];
