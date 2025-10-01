@@ -184,9 +184,8 @@ export const searchProducts = async (keyword: string): Promise<Product[]> => {
     const filteredProducts = products.filter(product => {
       const nameMatch = product.name.toLowerCase().includes(searchKeyword);
       const descriptionMatch = product.description.toLowerCase().includes(searchKeyword);
-      const categoryMatch = product.category.toLowerCase().includes(searchKeyword);
       
-      return nameMatch || descriptionMatch || categoryMatch;
+      return nameMatch || descriptionMatch;
     });
 
     // 関連度でソート（名前に含まれるものを優先）
