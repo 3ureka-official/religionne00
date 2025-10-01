@@ -19,8 +19,8 @@ export default async function Home() {
   const products = firebaseProducts.map(convertToMicroCMSFormat)
   
   // isRecommendedがtrueの商品をピックアップ商品として設定
-  const recommendedProduct = firebaseProducts.find(product => product.isRecommended === true)
-  const pickUpProduct = recommendedProduct ? convertToMicroCMSFormat(recommendedProduct) : null
+  const recommendedProducts = firebaseProducts.filter(product => product.isRecommended === true)
+  const pickUpProducts = recommendedProducts.map(product => convertToMicroCMSFormat(product))
   
 
   return (
@@ -38,7 +38,7 @@ export default async function Home() {
           <FeatureSection 
             products={products} 
             settings={settings}
-            pickUpProduct={pickUpProduct}
+            pickUpProducts={pickUpProducts}
             initialPage={1}
           />
         </Container>
