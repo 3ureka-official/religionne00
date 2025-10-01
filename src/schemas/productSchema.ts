@@ -19,13 +19,14 @@ export const productSchema = yup.object({
     .default(''),
   link: yup.string()
     .url('有効なURLを入力してください')
-    .required('リンクは必須です')
     .default(''),
   price: yup.number()
     .required('価格は必須です')
     .min(1, '価格を設定してください')
     .typeError('価格は数値で入力してください'),
-  category: yup.string()
+  category: yup.array()
+    .of(yup.string().required())
+    .min(1, '少なくとも1つのカテゴリーを選択してください')
     .required('カテゴリーは必須です'),
   isPublished: yup.boolean().default(false),
   sizeInventories: yup.array()
