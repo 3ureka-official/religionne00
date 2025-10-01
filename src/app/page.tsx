@@ -39,7 +39,6 @@ export default async function Home() {
             products={products} 
             settings={settings}
             pickUpProducts={pickUpProducts}
-            initialPage={1}
           />
         </Container>
         <Footer />
