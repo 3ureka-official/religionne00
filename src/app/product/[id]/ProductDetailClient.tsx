@@ -11,6 +11,7 @@ import theme from '@/styles/theme';
 import { useCart } from '@/features/cart/components/CartContext';
 import ProductCard from '@/features/home/components/ProductCard';
 import { formatPrice } from '@/utils/formatters';
+import { useRouter } from 'next/navigation';
 
 interface ProductImage {
   id: number;
@@ -27,7 +28,7 @@ interface ProductSize {
 
 interface ProductCategory {
   id: string;
-  name: string;
+  category: string;
 }
 
 interface ProductDetailClientProps {
@@ -37,7 +38,7 @@ interface ProductDetailClientProps {
     stripe_price_id: string;
     images: ProductImage[];
     description: string;
-    category: ProductCategory;
+    category: ProductCategory[];
     sizeInventories: ProductSize[];
     link?: string;
   };
@@ -54,18 +55,32 @@ interface ProductDetailClientProps {
     category: {
       id: string;
       category: string;
-    };
+    }[];
   }>;
+  categories: {
+    id: string;
+    category: string;
+  }[];
 }
 
-export default function ProductDetailClient({ product, relatedProducts = [] }: ProductDetailClientProps) {
+export default function ProductDetailClient({ product, relatedProducts = [], categories }: ProductDetailClientProps) {
   const [selectedImage, setSelectedImage] = useState<ProductImage>(product.images[0]);
   const [selectedSize, setSelectedSize] = useState<string | null>(null);
   const [showAlert, setShowAlert] = useState(false);
   const [alertMessage, setAlertMessage] = useState('');
   const [alertSeverity, setAlertSeverity] = useState<'success' | 'error'>('success');
+  const router = useRouter();
 
-  console.log(product);
+  const handleCategoryClick = (e: React.MouseEvent, category: string) => {
+    e.preventDefault()
+    e.stopPropagation()
+
+    const matchedCategory = categories?.find(cat => cat.category === category)
+
+    if (matchedCategory) {
+      router.push(`/category/${matchedCategory.id}`)
+    }
+  }
 
   const { addItem } = useCart();
 
@@ -146,8 +161,8 @@ export default function ProductDetailClient({ product, relatedProducts = [] }: P
               <Link href="/category" passHref style={{ color: 'inherit', textDecoration: 'none' }}>
                 Store
               </Link>
-              <Link href={`/category/${product.category.id}`} passHref style={{ color: 'inherit', textDecoration: 'none' }}>
-                {product.category.name}
+              <Link href={`/category/${product.category[0]?.id || ''}`} passHref style={{ color: 'inherit', textDecoration: 'none' }}>
+                {product.category[0]?.category || ''}
               </Link>
               <Typography color="text.primary" sx={{ fontSize: 'inherit', fontWeight: 'bold' }}>
                 {product.name}
@@ -301,6 +316,33 @@ export default function ProductDetailClient({ product, relatedProducts = [] }: P
                     fontSize: { xs: '12px', sm: '14px' },
                   }}
                 >
+                  Category:
+                </Typography>
+
+                <Box sx={{ display: 'flex', flexDirection: 'row', gap: 1, alignItems: 'center', 
+                          fontSize: { xs: '12px', sm: '14px' } }}>
+                    {product.category.map((cat, index) => (
+                      <span
+                        key={cat.id}
+                        onClick={(e) => handleCategoryClick(e, cat.category || '')} 
+                        style={{
+                          cursor: 'pointer',
+                          textDecoration: 'underline',
+                          color: 'inherit',
+                        }}
+                      >
+                        {cat.category}
+                        {index < product.category.length - 1 && ', '}
+                      </span>
+                  ))}
+                </Box>
+
+                <Typography
+                  sx={{
+                    mt: 4,
+                    fontSize: { xs: '12px', sm: '14px' },
+                  }}
+                >
                   Size:
                 </Typography>
 
@@ -438,15 +480,15 @@ export default function ProductDetailClient({ product, relatedProducts = [] }: P
                           height: img.height,
                           alt: img.alt
                         })),
-                        category: {
-                          id: relatedProduct.category.id,
-                          category: relatedProduct.category.category,
+                        category: relatedProduct.category.map((category) => ({
+                          id: category.id,
+                          category: category.category,
                           image: relatedProduct.images[0],
                           createdAt: '',
                           updatedAt: '',
                           publishedAt: '',
                           revisedAt: ''
-                        },
+                        })),
                         createdAt: '',
                         updatedAt: '',
                         publishedAt: '',

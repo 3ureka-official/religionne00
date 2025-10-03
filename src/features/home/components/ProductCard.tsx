@@ -19,12 +19,15 @@ const ProductCard = ({ product, categories }: ProductCardProps) => {
 
 
   // サイズ選択処理
-  const handleCategoryClick = (e: React.MouseEvent) => {
+  const handleCategoryClick = (e: React.MouseEvent, category: string) => {
     e.preventDefault()
     e.stopPropagation()
 
-    const matchedCategory = categories?.find((cat) => cat.category === product.category.category);
-    router.push(`/category/${matchedCategory?.id}`)
+    const matchedCategory = categories?.find(cat => cat.category === category)
+
+    if (matchedCategory) {
+      router.push(`/category/${matchedCategory.id}`)
+    }
   }
 
   return (
@@ -105,22 +108,28 @@ const ProductCard = ({ product, categories }: ProductCardProps) => {
           <Box sx={{ 
             display: 'flex', 
             flexDirection: 'row', 
-            gap: 0.2, 
+            gap: 0.5, 
             alignItems: 'center', 
             mb: 0.5,
             mt: 0.5,
             fontSize: { xs: '11px', sm: '12px' },
             fontWeight: 'normal',
           }}>
-            <span
-              onClick={handleCategoryClick}
-              style={{
-                cursor: 'pointer',
-                textDecoration: 'underline',
-              }}
-            >
-              {product.category.category} 
-            </span>
+            {product.category.map((cat, index) => (
+              <span
+                key={cat.id}
+                onClick={(e) => handleCategoryClick(e, cat.category || '')}
+                style={{
+                  cursor: 'pointer',
+                  textDecoration: 'underline',
+                  color: 'inherit',
+                }}
+              >
+                {cat.category}
+                {index < product.category.length - 1 && ', '}
+              </span>
+          ))}
+
           </Box>
           
           <Typography

@@ -99,13 +99,12 @@ export const ProductDetailModal = ({
                         position: 'relative',
                         width: 64,
                         height: 64,
-                        border: selectedImageIndex === idx ? '2px solid #1976d2' : '1px solid #eee',
+                        border: selectedImageIndex === idx ? '1px solid black' : '1px solid #fff',
                         borderRadius: 1,
                         overflow: 'hidden',
                         flex: '0 0 64px',
                         cursor: 'pointer',
-                        boxShadow: selectedImageIndex === idx ? '0 0 0 2px #90caf9' : 'none',
-                        transition: 'border 0.2s, box-shadow 0.2s',
+                        transition: 'border 0.2s',
                       }}
                       onClick={() => setSelectedImageIndex(idx)}
                     >
@@ -194,7 +193,7 @@ export const ProductDetailModal = ({
               {/* カテゴリ */}
               <Box sx={{ mb: 1 }}>
                 <Typography  variant="body2" color="text.secondary">カテゴリ</Typography>
-                <Typography variant="body1">{product.category}</Typography>
+                <Typography variant="body1">{product.category.map((cat) => cat).join(', ')}</Typography>
               </Box>
 
               {/* 出品日 */}

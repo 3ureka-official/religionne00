@@ -140,7 +140,7 @@ export default function AdminProductsPage() {
       }
       
       // カテゴリーフィルター
-      if (selectedCategory && product.category !== selectedCategory) {
+      if (selectedCategory && !product.category.some(cat => cat === selectedCategory)) {
         return false;
       }
       

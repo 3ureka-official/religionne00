@@ -25,9 +25,9 @@ export interface Product {
   id?: string;
   name: string;
   description: string;
-  link: string;
+  link?: string;
   price: number; // 文字列許容をやめ、数値に統一
-  category: string;
+  category: string[];
   images: string[];
   createdAt?: Date | null;
   updatedAt?: Date | null;
@@ -146,7 +146,7 @@ export const getProductsByCategory = async (category: string): Promise<Product[]
   try {
     const q = query(
       collection(db, PRODUCTS_COLLECTION),
-      where('category', '==', category),
+      where('category', 'array-contains', category),
       where('isPublished', '==', true),
       orderBy('createdAt', 'desc')
     );

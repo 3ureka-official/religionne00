@@ -50,7 +50,7 @@ export type MicroCMSProduct = {
   stripe_price_id: string;
   images: MicroCMSImage[];
   description: string;
-  category: MicroCMSCategory;
+  category: MicroCMSCategory[];
   sizes: MicroCMSSize[];
 };
 

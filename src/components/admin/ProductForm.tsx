@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useForm, Controller, useFieldArray } from 'react-hook-form'
 import { yupResolver } from '@hookform/resolvers/yup'
-import { Box, Typography, Button, TextField, FormControl, Select, MenuItem, Divider, IconButton, CircularProgress, Alert } from '@mui/material'
+import { Box, Typography, Button, TextField, FormControl, Select, MenuItem, Divider, IconButton, CircularProgress, Alert, Chip, InputLabel, OutlinedInput } from '@mui/material'
 import ArrowBackIcon from '@mui/icons-material/ArrowBack'
 import CloseIcon from '@mui/icons-material/Close'
 import AddIcon from '@mui/icons-material/Add'
@@ -45,7 +45,7 @@ export default function ProductForm({ mode, initialData, onSubmit, title, submit
       description: '',
       link: '',
       price: 0,
-      category: '',
+      category: [], // 空の配列
       isPublished: false,
       sizeInventories: [{ size: '', stock: 0 }],
     }
@@ -79,7 +79,10 @@ export default function ProductForm({ mode, initialData, onSubmit, title, submit
       setValue('description', initialData.description || '')
       setValue('link', initialData.link || '')
       setValue('price', initialData.price || 0)
-      setValue('category', initialData.category || '')
+      // カテゴリーを配列に変換
+      setValue('category', Array.isArray(initialData.category) 
+        ? initialData.category 
+        : initialData.category ? [initialData.category] : [])
       setValue('isPublished', initialData.isPublished || false)
       
       // 画像プレビューを設定
@@ -343,9 +346,33 @@ export default function ProductForm({ mode, initialData, onSubmit, title, submit
             control={control}
             render={({ field }) => (
               <FormControl fullWidth error={!!errors.category}>
+                <InputLabel id="category-select-label">カテゴリーを選択</InputLabel>
                 <Select
                   {...field}
-                  displayEmpty
+                  labelId="category-select-label"
+                  multiple
+                  value={Array.isArray(field.value) ? field.value : field.value ? [field.value] : []}
+                  onChange={(e) => {
+                    const value = e.target.value
+                    field.onChange(typeof value === 'string' ? value.split(',') : value)
+                  }}
+                  input={<OutlinedInput label="カテゴリーを選択" />}
+                  renderValue={(selected) => (
+                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                      {(selected as string[]).map((value) => (
+                        <Chip 
+                          key={value} 
+                          label={value} 
+                          size="small"
+                          sx={{
+                            bgcolor: '#eee',
+                            color: '#000',
+                            fontWeight: 'medium',
+                          }}
+                        />
+                      ))}
+                    </Box>
+                  )}
                   size="small"
                   sx={{
                     fontSize: '14px',
@@ -361,11 +388,12 @@ export default function ProductForm({ mode, initialData, onSubmit, title, submit
                       borderWidth: 1
                     }
                   }}
-                  renderValue={(selected) => {
-                    if (!selected) {
-                      return <Typography sx={{ color: 'text.secondary', fontSize: '14px' }}>カテゴリーを選択してください</Typography>;
-                    }
-                    return selected;
+                  MenuProps={{
+                    PaperProps: {
+                      style: {
+                        maxHeight: 300,
+                      },
+                    },
                   }}
                 >
                   {loadingCategories ? (

@@ -149,7 +149,7 @@ export const ProductTable = ({
                 {product.name}
               </TableCell>
               <TableCell>¥{Number(product.price).toLocaleString()}</TableCell>
-              <TableCell>{product.category}</TableCell>
+              <TableCell>{Array.isArray(product.category) ? product.category.join(', ') : product.category}</TableCell>
               <TableCell>{formatTimestamp(product.createdAt)}</TableCell>
               <TableCell sx={{ color: product.sizeInventories?.reduce((acc, curr) => acc + curr.stock, 0) === 0 ? 'red' : 'black' }}>{product.sizeInventories?.reduce((acc, curr) => acc + curr.stock, 0) === 0 ? '在庫切れ' : product.sizeInventories?.reduce((acc, curr) => acc + curr.stock, 0)}</TableCell>
               <TableCell>
