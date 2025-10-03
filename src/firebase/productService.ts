@@ -97,7 +97,6 @@ export const getProduct = async (id: string): Promise<Product | null> => {
         updatedAt: data.updatedAt?.toDate?.() || null,
       } as Product;
     } else {
-      console.log('Product not found:', id);
       return null;
     }
   } catch (error: unknown) {

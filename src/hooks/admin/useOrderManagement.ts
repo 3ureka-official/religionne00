@@ -90,7 +90,6 @@ export const useOrderManagement = ({
     try {
       // ステータスを配送済みに更新
       await updateOrderStatus(originalOrderId, 'shipped');
-      console.log(`Original order ${originalOrderId} status updated to 'shipped' in orders collection.`);
 
       // 配送完了メール送信（失敗してもステータス更新は継続）
       try {
@@ -99,7 +98,6 @@ export const useOrderManagement = ({
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ orderId: originalOrderId })
         });
-        console.log(`Shipping notification email sent for order ${originalOrderId}`);
       } catch (emailError) {
         console.error('Shipping email sending failed:', emailError);
         // メール送信失敗はユーザーには通知しない（ログのみ）

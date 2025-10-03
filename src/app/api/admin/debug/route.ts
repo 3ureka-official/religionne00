@@ -19,8 +19,6 @@ export async function GET() {
     passwordPrefix: process.env.ADMIN_PASSWORD?.substring(0, 3) + '***',
     timestamp: new Date().toISOString(),
   }
-
-  console.log('🔍 Admin Debug Info:', debugInfo)
   
   return NextResponse.json(debugInfo)
 }

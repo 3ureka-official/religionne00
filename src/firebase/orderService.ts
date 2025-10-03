@@ -206,7 +206,6 @@ export const getOrderById = async (orderId: string): Promise<Order | null> => {
       // 必要に応じて orderSnap.data() の内容を Order 型に適合させる処理を追加
       return { id: orderSnap.id, ...orderSnap.data() } as Order;
     } else {
-      console.log(`No order found with ID: ${orderId}`);
       return null;
     }
   } catch (error) {
@@ -235,7 +234,6 @@ export const updateOrderStatus = async (orderId: string, newStatus: string): Pro
     }
     
     await updateDoc(orderRef, updateData);
-    console.log(`Order status updated for ID: ${orderId} to ${newStatus}`);
   } catch (error) {
     console.error(`Error updating order status for ID (${orderId}):`, error);
     throw error;

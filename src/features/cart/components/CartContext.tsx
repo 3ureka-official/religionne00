@@ -129,7 +129,6 @@ export function CartProvider({ children }: CartProviderProps) {
         return updatedItems
       } else {
         // 新しいアイテムを追加
-        console.log(item);
         return [...prevItems, item]
       }
     })

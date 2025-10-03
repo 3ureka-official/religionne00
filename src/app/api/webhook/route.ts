@@ -42,13 +42,10 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  console.log('Webhook Event Received:', event.type, event.id);
-
   try {
     switch (event.type) {
       case "payment_intent.succeeded": {
         const paymentIntent = event.data.object as Stripe.PaymentIntent;
-        console.log('PaymentIntent Succeeded:', paymentIntent.id);
         
         try {
           const sessions = await stripe.checkout.sessions.list({
@@ -63,14 +60,12 @@ export async function POST(req: NextRequest) {
             
             // 決済成功時に初めて注文を作成
             const orderId = await addOrder(orderData, 'processing');
-            console.log(`Order ${orderId} created and confirmed as processing`);
 
             try {
               await Promise.all([
                 sendOrderConfirmationEmail({ orderData, orderId }),
                 sendAdminNotificationEmail({ orderData, orderId })
               ]);
-              console.log('Order confirmation emails sent successfully');
             } catch (emailError) {
               console.error('Email sending failed:', emailError);
             }
@@ -88,7 +83,6 @@ export async function POST(req: NextRequest) {
       }
 
       default:
-        console.log('Webhook event type not explicitly handled:', event.type);
         break;
     }
 

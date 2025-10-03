@@ -15,7 +15,7 @@ const enhanceFirebaseStorageUrl = (url: string): string => {
 // FirebaseのProductをMicroCMSProduct形式に変換するadapter
 export const convertToMicroCMSFormat = (product: Product): MicroCMSProduct => {
   const categoryValue = Array.isArray(product.category) ? product.category : [product.category]
-  console.log(categoryValue)
+
   return {
     id: product.id || '',
     name: product.name,

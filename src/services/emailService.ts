@@ -29,22 +29,8 @@ const getAdminEmail = () => {
   }
 };
 
-// 環境情報をログ出力
-const logEnvironmentInfo = () => {
-  console.log('Email Service Environment Info:', {
-    NODE_ENV: process.env.NODE_ENV,
-    VERCEL_ENV: process.env.VERCEL_ENV,
-    fromEmail: getFromEmail(),
-    adminEmail: getAdminEmail(),
-    hasResendKey: !!process.env.RESEND_API_KEY,
-  });
-};
-
 export const sendOrderConfirmationEmail = async ({ orderData, orderId }: EmailData) => {
   try {
-    logEnvironmentInfo();
-    console.log(`Attempting to send email to: ${orderData.email} for order: ${orderId}`);
-    
     const { data, error } = await resend.emails.send({
       from: getFromEmail(),
       to: orderData.email,
@@ -61,13 +47,6 @@ export const sendOrderConfirmationEmail = async ({ orderData, orderId }: EmailDa
       });
       throw error;
     }
-
-    console.log('Email sent successfully:', {
-      orderId,
-      email: orderData.email,
-      messageId: data?.id,
-      timestamp: new Date().toISOString(),
-    });
 
     return data;
   } catch (error) {
@@ -95,7 +74,6 @@ export const sendAdminNotificationEmail = async ({ orderData, orderId }: EmailDa
       throw error;
     }
 
-    console.log('Admin notification email sent:', data?.id);
     return data;
   } catch (error) {
     console.error('Failed to send admin notification email:', error);
@@ -106,8 +84,6 @@ export const sendAdminNotificationEmail = async ({ orderData, orderId }: EmailDa
 // 配送完了通知メール送信
 export const sendShippingNotificationEmail = async ({ orderData, orderId }: EmailData) => {
   try {
-    console.log(`Attempting to send shipping notification to: ${orderData.email} for order: ${orderId}`);
-    
     const { data, error } = await resend.emails.send({
       from: getFromEmail(),
       to: orderData.email,
@@ -125,12 +101,6 @@ export const sendShippingNotificationEmail = async ({ orderData, orderId }: Emai
       throw error;
     }
 
-    console.log('Shipping notification email sent successfully:', {
-      orderId,
-      email: orderData.email,
-      messageId: data?.id,
-      timestamp: new Date().toISOString(),
-    });
 
     return data;
   } catch (error) {
