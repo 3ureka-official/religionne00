@@ -2,6 +2,8 @@ import { Dialog, DialogTitle, DialogContent, DialogActions, Button, Box, Typogra
 import Image from 'next/image';
 import { Product, SizeInventory } from '@/firebase/productService'; // Product型とSizeInventory型をインポート
 import { Timestamp, FieldValue } from 'firebase/firestore'; // Timestamp型とFieldValue型をインポート
+import { useState } from 'react';
+import { SalesDetailDialog } from '@/features/admin/components/SalesDetailDialog';
 
 // Firebase Timestampの型定義 (page.tsxからコピー)
 interface FirebaseTimestamp {
@@ -27,9 +29,12 @@ export const ProductDetailModal = ({
   setSelectedImageIndex,
   onEditProduct
 }: ProductDetailModalProps) => {
+  const [salesDialogOpen, setSalesDialogOpen] = useState(false);
+
   if (!product) return null;
 
   return (
+    <>
     <Dialog 
       open={open} 
       onClose={onClose} 
@@ -227,27 +232,44 @@ export const ProductDetailModal = ({
           </Box>
         )}
       </DialogContent>
-      <DialogActions sx={{ borderTop: '1px solid #e0e0e0', p: { xs: 2, sm: 3 } }}>
+      <DialogActions sx={{ borderTop: '1px solid #e0e0e0', p: { xs: 2, sm: 3 }, justifyContent: 'space-between' }}>
         <Button onClick={onClose} sx={{ width: 150, borderRadius: 0, color: '#006AFF', border: '1px solid #006AFF' }}>
           閉じる
         </Button>
-        {onEditProduct && product.id && (
+        <Box sx={{ display: 'flex', gap: 2 }}>
           <Button 
-            onClick={() => onEditProduct(product.id)}
-            sx={{ 
-              bgcolor: '#006AFF',
-              color: 'white',
-              borderRadius: 0,
-              width: 150,
-              '&:hover': {
-                bgcolor: '#006ADD'
-              }
-            }}
+            variant="outlined"
+            onClick={() => setSalesDialogOpen(true)}
+            sx={{ borderRadius: 0 }}
           >
-            編集する
+            売上詳細を見る
           </Button>
-        )}
+          {onEditProduct && product.id && (
+            <Button 
+              onClick={() => onEditProduct(product.id)}
+              sx={{ 
+                bgcolor: '#006AFF',
+                color: 'white',
+                borderRadius: 0,
+                width: 150,
+                '&:hover': {
+                  bgcolor: '#006ADD'
+                }
+              }}
+            >
+              編集する
+            </Button>
+          )}
+        </Box>
       </DialogActions>
     </Dialog>
+
+    <SalesDetailDialog
+      open={salesDialogOpen}
+      onClose={() => setSalesDialogOpen(false)}
+      title={product.name}
+      productId={product.id}
+    />
+    </>
   );
 }; 
