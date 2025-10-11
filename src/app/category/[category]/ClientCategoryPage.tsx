@@ -48,10 +48,10 @@ export default function ClientCategoryPage({
               }}
             >
               <Link href="/" passHref style={{ color: 'inherit', textDecoration: 'none' }}>
-                home
+                Home
               </Link>
               <Link href="/category" passHref style={{ color: 'inherit', textDecoration: 'none' }}>
-                store
+                Store
               </Link>
               <Typography color="text.primary" sx={{ fontSize: 'inherit', fontWeight: 'bold' }}>
                 {displayCategory}
