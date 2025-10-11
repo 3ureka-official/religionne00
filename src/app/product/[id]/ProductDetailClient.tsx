@@ -12,6 +12,7 @@ import { useCart } from '@/features/cart/components/CartContext';
 import ProductCard from '@/features/home/components/ProductCard';
 import { formatPrice } from '@/utils/formatters';
 import { useRouter } from 'next/navigation';
+import { MicroCMSCategory } from '@/lib/microcms';
 
 interface ProductImage {
   id: number;
@@ -57,10 +58,7 @@ interface ProductDetailClientProps {
       category: string;
     }[];
   }>;
-  categories: {
-    id: string;
-    category: string;
-  }[];
+  categories: MicroCMSCategory[];
 }
 
 export default function ProductDetailClient({ product, relatedProducts = [], categories }: ProductDetailClientProps) {
@@ -495,7 +493,9 @@ export default function ProductDetailClient({ product, relatedProducts = [], cat
                         revisedAt: '',
                         description: '',
                         sizes: []
-                      }} />
+                      }}
+                      categories={categories}
+                    />
                     </Box>
                   ))}
                 </Box>

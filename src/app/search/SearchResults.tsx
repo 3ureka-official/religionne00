@@ -9,13 +9,15 @@ import { ThemeProvider } from '@mui/material/styles';
 import theme from '@/styles/theme';
 import { Product } from '@/firebase/productService';
 import { convertToMicroCMSFormat } from '@/lib/adapters';
+import { MicroCMSCategory } from '@/lib/microcms';
 
 interface SearchResultsProps {
   query: string;
   products: Product[];
+  categories: MicroCMSCategory[];
 }
 
-export default function SearchResults({ query, products }: SearchResultsProps) {
+export default function SearchResults({ query, products, categories }: SearchResultsProps) {
   const displayTitle = query ? `"${query}"の検索結果` : '検索結果';
   
   // Firebase ProductをMicroCMSProduct形式に変換
@@ -85,7 +87,7 @@ export default function SearchResults({ query, products }: SearchResultsProps) {
             }}>
               {convertedProducts.map((product) => (
                 <Box key={product.id}>
-                  <ProductCard product={product} />
+                  <ProductCard product={product} categories={categories} />
                 </Box>
               ))}
             </Box>
