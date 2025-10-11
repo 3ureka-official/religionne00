@@ -66,7 +66,7 @@ export default function AdminLayout({
       path: '/admin/orders',
       badge: preparingOrdersCount
     },
-    { text: '売上管理', icon: <AssessmentIcon />, path: '/admin/sales' },
+    { text: '売上情報', icon: <AssessmentIcon />, path: '/admin/sales' },
   ]
 
   // ログアウト処理
