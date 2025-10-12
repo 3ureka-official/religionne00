@@ -1,11 +1,12 @@
-import { Dialog, DialogTitle, DialogContent, DialogActions, Button, Typography } from '@mui/material';
+import { Dialog, DialogTitle, DialogContent, DialogActions, Button, Typography, CircularProgress } from '@mui/material';
 import { Order } from '@/firebase/orderService';
 
 export interface ShippingConfirmDialogProps {
   open: boolean;
   onClose: () => void;
-  onConfirm: () => void;
+  onConfirm: (e: React.MouseEvent<HTMLButtonElement>) => void;
   productToShip: Order | null;
+  isProcessing?: boolean;
 }
 
 export const ShippingConfirmDialog = ({
@@ -13,9 +14,10 @@ export const ShippingConfirmDialog = ({
   onClose,
   onConfirm,
   productToShip,
+  isProcessing = false,
 }: ShippingConfirmDialogProps) => {
   return (
-    <Dialog open={open} onClose={onClose} maxWidth="xs">
+    <Dialog open={open} onClose={isProcessing ? undefined : onClose} maxWidth="xs">
       <DialogTitle>配送済みに変更</DialogTitle>
       <DialogContent>
         <Typography>
@@ -26,22 +28,38 @@ export const ShippingConfirmDialog = ({
         </Typography>
       </DialogContent>
       <DialogActions>
-        <Button onClick={onClose} sx={{ color: 'text.primary' }}>
+        <Button 
+          onClick={onClose} 
+          sx={{ color: 'text.primary' }}
+          disabled={isProcessing}
+        >
           キャンセル
         </Button>
         <Button
-          onClick={onConfirm}
+          onClick={(e) => onConfirm(e)}
           sx={{ 
             bgcolor: '#006AFF',
             color: 'white',
             borderRadius: 0,
             '&:hover': {
               bgcolor: '#006ADD'
+            },
+            '&:disabled': {
+              bgcolor: '#ccc',
+              color: '#666'
             }
           }}
+          disabled={isProcessing}
           autoFocus
         >
-          配送済みにする
+          {isProcessing ? (
+            <>
+              <CircularProgress size={20} sx={{ mr: 1, color: 'white' }} />
+              処理中...
+            </>
+          ) : (
+            '配送済みにする'
+          )}
         </Button>
       </DialogActions>
     </Dialog>

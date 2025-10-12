@@ -61,7 +61,8 @@ export default function AdminOrdersPage() {
       displayOrders,
       displayShipped,
       loadingOrders,
-      errorOrders
+      errorOrders,
+      isProcessingShipping
     },
     {
       handleMarkAsShipped
@@ -168,8 +169,16 @@ export default function AdminOrdersPage() {
       <ShippingConfirmDialog
         open={shippingConfirmOpen}
         onClose={closeShippingConfirm}
-        onConfirm={() => productToShip && handleMarkAsShipped(productToShip, closeShippingConfirm)}
+        onConfirm={(e) => {
+          e.preventDefault()
+          e.stopPropagation()
+
+          if(productToShip) {
+            handleMarkAsShipped(productToShip, closeShippingConfirm)
+          }
+        }}
         productToShip={productToShip}
+        isProcessing={isProcessingShipping}
       />
     </Box>
   )

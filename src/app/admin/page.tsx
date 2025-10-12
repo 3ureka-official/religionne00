@@ -72,7 +72,8 @@ export default function AdminProductsPage() {
   const [
     {
       loadingOrders,
-      errorOrders
+      errorOrders,
+      isProcessingShipping
     },
     {
       handleMarkAsShipped
@@ -420,8 +421,16 @@ export default function AdminProductsPage() {
       <ShippingConfirmDialog
         open={shippingConfirmOpen} // UIフックの状態
         onClose={closeShippingConfirm} // UIフックのアクション
-        onConfirm={() => productToShip && handleMarkAsShipped(productToShip, closeShippingConfirm)} // フックの関数を使用
+        onConfirm={(e: React.MouseEvent<HTMLButtonElement>) => {
+          e.preventDefault()
+          e.stopPropagation()
+
+          if(productToShip) {
+            handleMarkAsShipped(productToShip, closeShippingConfirm)
+          }
+        }} // フックの関数を使用
         productToShip={productToShip} // UIフックの状態
+        isProcessing={isProcessingShipping} // 処理中フラグ
       />
     </Box>
   )

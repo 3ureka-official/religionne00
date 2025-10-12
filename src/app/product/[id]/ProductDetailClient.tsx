@@ -63,7 +63,7 @@ interface ProductDetailClientProps {
 
 export default function ProductDetailClient({ product, relatedProducts = [], categories }: ProductDetailClientProps) {
   const [selectedImage, setSelectedImage] = useState<ProductImage>(product.images[0]);
-  const [selectedSize, setSelectedSize] = useState<string | null>(null);
+  const [selectedSize, setSelectedSize] = useState<string | null>(product.sizeInventories.length == 1 ? product.sizeInventories[0].size : null);
   const [showAlert, setShowAlert] = useState(false);
   const [alertMessage, setAlertMessage] = useState('');
   const [alertSeverity, setAlertSeverity] = useState<'success' | 'error'>('success');
