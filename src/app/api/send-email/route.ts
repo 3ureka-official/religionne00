@@ -6,8 +6,6 @@ export async function POST(request: NextRequest) {
   try {
     const { orderData, orderId }: { orderData: OrderData; orderId: string } = await request.json();
     
-    console.log('Email API called for order:', orderId);
-    
     // メール送信（並行処理）
     const emailPromises = [
       sendOrderConfirmationEmail({ orderData, orderId }),

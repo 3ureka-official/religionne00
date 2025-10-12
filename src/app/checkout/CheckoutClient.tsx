@@ -110,7 +110,7 @@ export default function CheckoutClientPage({ settings }: { settings: MicroCMSSet
       if (data.prefecture && data.address) {
         const islandModule = await import('@/const/island');
         const addressType = islandModule.getAddressType(data.prefecture, data.address);
-        console.log(addressType);
+
         islandStatus = addressType === islandModule.AddressType.DOMESTIC_ISLAND;
       }
     } catch (error) {

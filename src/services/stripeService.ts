@@ -50,7 +50,6 @@ try {
     } as unknown as Stripe;
   } else {
     stripe = new Stripe(stripeKey);
-    console.log('✅ Stripeが正常に初期化されました');
   }
 } catch (error) {
   console.error('❌ Stripeの初期化に失敗しました:', error);

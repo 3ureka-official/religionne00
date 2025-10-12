@@ -51,13 +51,12 @@ export const ShippedProductTable = ({ shippedOrders, onDetail }: ShippedProductT
           <TableCell>商品数</TableCell>
           <TableCell>合計金額</TableCell>
           <TableCell>支払方法</TableCell>
-          <TableCell align="center">アクション</TableCell>
         </TableRow>
       </TableHead>
       <TableBody>
         {shippedOrders.length > 0 ? (
           shippedOrders.map(order => (
-            <TableRow key={order.id} sx={{ '&:hover': { bgcolor: '#f9f9f9' } }}>
+            <TableRow onClick={() => onDetail(order)} key={order.id} sx={{ '&:hover': { bgcolor: '#f9f9f9' }, cursor: 'pointer', height: '60px' }}>
               <TableCell>{order?.id || '不明'}</TableCell>
               <TableCell>{order?.customer || '不明'}</TableCell>
               <TableCell>{order?.email || '不明'}</TableCell>
@@ -66,11 +65,6 @@ export const ShippedProductTable = ({ shippedOrders, onDetail }: ShippedProductT
               <TableCell>{order?.items && Array.isArray(order.items) ? order.items.length : 0}点</TableCell>
               <TableCell>¥{order?.total ? Number(order.total).toLocaleString() : 0}</TableCell>
               <TableCell>{order.paymentMethod === 'stripe_credit_card' ? 'クレジットカード' : order.paymentMethod === 'cod' ? '代引き' : 'PayPay'}</TableCell>
-              <TableCell align="center">
-                <Box sx={{ display: 'flex', gap: 1, justifyContent: 'center' }}>
-                  <Button variant="outlined" size="small" onClick={() => onDetail(order)} sx={{ borderColor: 'black', color: 'black', borderRadius: 0, fontSize: '0.7rem', minWidth: 'auto', '&:hover': { borderColor: 'black', bgcolor: 'rgba(0, 0, 0, 0.04)' } }}>詳細</Button>
-                </Box>
-              </TableCell>
             </TableRow>
           ))
         ) : (

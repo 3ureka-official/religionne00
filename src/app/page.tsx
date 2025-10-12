@@ -3,7 +3,7 @@ import ThemeProviderWrapper from '@/components/ThemeProviderWrapper'
 import Header from '@/components/Header'
 import Footer from '@/components/Footer'
 import FeatureSection from '@/features/home/components/FeatureSection'
-import { fetchSettings } from '@/lib/microcms'
+import { fetchCategories, fetchSettings } from '@/lib/microcms'
 import { getAllProducts } from '@/firebase/productService'
 import { convertToMicroCMSFormat } from '@/lib/adapters'
 
@@ -19,8 +19,11 @@ export default async function Home() {
   const products = firebaseProducts.map(convertToMicroCMSFormat)
   
   // isRecommendedがtrueの商品をピックアップ商品として設定
-  const recommendedProduct = firebaseProducts.find(product => product.isRecommended === true)
-  const pickUpProduct = recommendedProduct ? convertToMicroCMSFormat(recommendedProduct) : null
+  const recommendedProducts = firebaseProducts.filter(product => product.isRecommended === true)
+  const pickUpProducts = recommendedProducts.map(product => convertToMicroCMSFormat(product))
+
+
+  const categories = await fetchCategories();
   
 
   return (
@@ -38,8 +41,8 @@ export default async function Home() {
           <FeatureSection 
             products={products} 
             settings={settings}
-            pickUpProduct={pickUpProduct}
-            initialPage={1}
+            pickUpProducts={pickUpProducts}
+            categories={categories}
           />
         </Container>
         <Footer />

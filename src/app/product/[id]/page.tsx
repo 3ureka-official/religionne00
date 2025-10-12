@@ -2,6 +2,7 @@ import ProductDetailClient from './ProductDetailClient';
 import { getProduct, getProductsByCategory } from '@/firebase/productService';
 import { convertToProductDetailFormat, convertToMicroCMSFormat } from '@/lib/adapters';
 import { notFound } from 'next/navigation';
+import { fetchCategories } from '@/lib/microcms';
 
 export default async function Page({ params }: { params: Promise<{ id: string }> }) {
   const id = (await params).id;
@@ -12,15 +13,27 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
   if (!firebaseProduct) {
     notFound();
   }
+
+  const categories = await fetchCategories();
   
   // 商品詳細用のフォーマットに変換
   const transformedProduct = convertToProductDetailFormat(firebaseProduct);
-
-  // 同じカテゴリの関連商品をFirebaseから取得
-  const firebaseRelatedProducts = await getProductsByCategory(firebaseProduct.category);
+  
+  // 各カテゴリーの商品を取得して結合
+  const relatedProductsPromises = firebaseProduct.category.map(category => {
+    return getProductsByCategory(category);
+  });
+  
+  const relatedProductsArrays = await Promise.all(relatedProductsPromises);
+  const allRelatedProducts = relatedProductsArrays.flat();
+  
+  // 重複を削除（同じIDの商品は1つだけ）
+  const uniqueRelatedProducts = Array.from(
+    new Map(allRelatedProducts.map(product => [product.id, product])).values()
+  );
   
   // Firebase ProductをMicroCMSProduct形式に変換
-  const relatedProducts = firebaseRelatedProducts.map(convertToMicroCMSFormat);
+  const relatedProducts = uniqueRelatedProducts.map(convertToMicroCMSFormat);
   
   // 現在の商品を除外し、最大4件に制限
   const filteredRelatedProducts = relatedProducts
@@ -36,11 +49,11 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
         height: image.height ?? 0,
         alt: image.alt ?? ''
       })),
-      category: {
-        id: product.category.id,
-        category: product.category.category
-      }
+      category: product.category.map((category: {id: string, category: string}) => ({
+        id: category.id,
+        category: category.category
+      })),
     }));
 
-  return <ProductDetailClient product={transformedProduct} relatedProducts={filteredRelatedProducts} />;
+  return <ProductDetailClient product={transformedProduct} relatedProducts={filteredRelatedProducts} categories={categories} />;
 }

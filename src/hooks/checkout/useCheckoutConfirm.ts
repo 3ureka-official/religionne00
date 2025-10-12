@@ -155,7 +155,6 @@ const handleStripeCheckout = async (
     
     // 1. まず注文をFirebaseに作成
     const orderId = await addOrder(orderData, 'pending')
-    console.log('注文作成完了:', orderId)
     
     // 2. Stripe Checkout Sessionを作成
     const stripe = await import('@stripe/stripe-js').then(m => 

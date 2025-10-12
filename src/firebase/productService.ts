@@ -18,7 +18,6 @@ import {
 import { ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
 import { db, storage } from './config';
 import { createStripeProductWithPrice } from '@/services/stripeService';
-import { Timestamp } from 'firebase/firestore';
 
 
 // 商品の型定義
@@ -26,8 +25,9 @@ export interface Product {
   id?: string;
   name: string;
   description: string;
+  link?: string;
   price: number; // 文字列許容をやめ、数値に統一
-  category: string;
+  category: string[];
   images: string[];
   createdAt?: Date | null;
   updatedAt?: Date | null;
@@ -97,7 +97,6 @@ export const getProduct = async (id: string): Promise<Product | null> => {
         updatedAt: data.updatedAt?.toDate?.() || null,
       } as Product;
     } else {
-      console.log('Product not found:', id);
       return null;
     }
   } catch (error: unknown) {
@@ -146,7 +145,7 @@ export const getProductsByCategory = async (category: string): Promise<Product[]
   try {
     const q = query(
       collection(db, PRODUCTS_COLLECTION),
-      where('category', '==', category),
+      where('category', 'array-contains', category),
       where('isPublished', '==', true),
       orderBy('createdAt', 'desc')
     );
@@ -184,9 +183,8 @@ export const searchProducts = async (keyword: string): Promise<Product[]> => {
     const filteredProducts = products.filter(product => {
       const nameMatch = product.name.toLowerCase().includes(searchKeyword);
       const descriptionMatch = product.description.toLowerCase().includes(searchKeyword);
-      const categoryMatch = product.category.toLowerCase().includes(searchKeyword);
       
-      return nameMatch || descriptionMatch || categoryMatch;
+      return nameMatch || descriptionMatch;
     });
 
     // 関連度でソート（名前に含まれるものを優先）

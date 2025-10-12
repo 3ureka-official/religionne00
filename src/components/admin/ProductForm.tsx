@@ -1,28 +1,26 @@
 'use client'
 
-import { useState, useRef, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { Box, Typography, Button, TextField, FormControl, Select, MenuItem, Divider, IconButton, CircularProgress, Alert } from '@mui/material'
+import { useForm, Controller, useFieldArray } from 'react-hook-form'
+import { yupResolver } from '@hookform/resolvers/yup'
+import { Box, Typography, Button, TextField, FormControl, Select, MenuItem, Divider, IconButton, CircularProgress, Alert, Chip, InputLabel, OutlinedInput } from '@mui/material'
 import ArrowBackIcon from '@mui/icons-material/ArrowBack'
-import AddPhotoAlternateIcon from '@mui/icons-material/AddPhotoAlternate'
 import CloseIcon from '@mui/icons-material/Close'
 import AddIcon from '@mui/icons-material/Add'
-import { Product, uploadProductImage, deleteProductImage } from '@/firebase/productService'
+import { Product } from '@/firebase/productService'
 import { fetchCategories } from '@/lib/microcms'
 import { MicroCMSCategory } from '@/lib/microcms'
-
-// サイズごとの在庫を管理するインターフェース
-export interface SizeInventory {
-  size: string;
-  stock: string | number;
-}
+import { productSchema, ProductFormData, sizeInventorySchema } from '@/schemas/productSchema'
+import * as yup from 'yup'
+import ImageUploader from './ImageUploader'
 
 export interface ProductFormProps {
   mode: 'new' | 'edit';
   initialData?: Product;
   onSubmit: (data: {
     formData: Omit<Product, 'id' | 'images'>;
-    sizeInventories: SizeInventory[];
+    sizeInventories: yup.InferType<typeof sizeInventorySchema>[];
     uploadingImages: File[];
     imagesToDelete?: string[];
   }) => Promise<void>;
@@ -32,26 +30,39 @@ export interface ProductFormProps {
 
 export default function ProductForm({ mode, initialData, onSubmit, title, submitButtonText }: ProductFormProps) {
   const router = useRouter()
-  const fileInputRef = useRef<HTMLInputElement>(null)
+  
+  // React Hook Form の設定
+  const { 
+    control, 
+    handleSubmit: handleFormSubmit, 
+    setValue, 
+    watch, 
+    formState: { errors } 
+  } = useForm<ProductFormData>({
+    resolver: yupResolver(productSchema),
+    defaultValues: {
+      name: '',
+      description: '',
+      link: '',
+      price: 0,
+      category: [], // 空の配列
+      isPublished: false,
+      sizeInventories: [{ size: '', stock: 0 }],
+    }
+  })
+
+  // サイズと在庫のフィールド配列管理
+  const { fields, append, remove } = useFieldArray({
+    control,
+    name: 'sizeInventories',
+  })
+
+  // フォームの値を監視
+  const formValues = watch()
   
   // カテゴリーの状態
   const [categories, setCategories] = useState<MicroCMSCategory[]>([])
   const [loadingCategories, setLoadingCategories] = useState<boolean>(true)
-  
-  // サイズごとの在庫管理
-  const [sizeInventories, setSizeInventories] = useState<SizeInventory[]>([
-    { size: '', stock: '' }
-  ])
-  
-  // フォームの状態
-  const [formData, setFormData] = useState<Omit<Product, 'id' | 'sizes'>>({
-    name: '',
-    description: '',
-    price: 0,
-    category: '',
-    images: [],
-    isPublished: false
-  })
   
   // UI状態
   const [loading, setLoading] = useState(false)
@@ -64,7 +75,15 @@ export default function ProductForm({ mode, initialData, onSubmit, title, submit
   // 初期データの設定（編集モードの場合）
   useEffect(() => {
     if (mode === 'edit' && initialData) {
-      setFormData(initialData)
+      setValue('name', initialData.name || '')
+      setValue('description', initialData.description || '')
+      setValue('link', initialData.link || '')
+      setValue('price', initialData.price || 0)
+      // カテゴリーを配列に変換
+      setValue('category', Array.isArray(initialData.category) 
+        ? initialData.category 
+        : initialData.category ? [initialData.category] : [])
+      setValue('isPublished', initialData.isPublished || false)
       
       // 画像プレビューを設定
       if (initialData.images && initialData.images.length > 0) {
@@ -73,14 +92,13 @@ export default function ProductForm({ mode, initialData, onSubmit, title, submit
       
       // サイズ在庫情報を設定
       if (initialData.sizeInventories && initialData.sizeInventories.length > 0) {
-        const inventories = initialData.sizeInventories.map((item) => ({
+        setValue('sizeInventories', initialData.sizeInventories.map((item) => ({
           size: item.size,
           stock: item.stock
-        }));
-        setSizeInventories(inventories);
+        })))
       }
     }
-  }, [mode, initialData])
+  }, [mode, initialData, setValue])
   
   // カテゴリーデータの取得
   useEffect(() => {
@@ -101,115 +119,62 @@ export default function ProductForm({ mode, initialData, onSubmit, title, submit
     getCategoriesData()
   }, [])
   
-  // テキストフィールドの変更ハンドラ
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target
-    
-    // 数値フィールドの処理
-    if (name === 'price') {
-      setFormData(prev => ({ ...prev, [name]: Number(value) }))
-    } else {
-      setFormData(prev => ({ ...prev, [name]: value }))
-    }
-  }
-  
-  // セレクトボックスの変更ハンドラ
-  const handleSelectChange = (e: React.ChangeEvent<Omit<HTMLInputElement, "value"> & { value: string; }> | (Event & { target: { value: string; name: string; }; })) => {
-    setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }))
-  }
-  
-  // サイズと在庫の変更ハンドラ
-  const handleInventoryChange = (id: string, field: 'size' | 'stock', value: string | number) => {
-    setSizeInventories(prev => 
-      prev.map((item, index) => 
-        index === Number(id) 
-          ? { ...item, [field]: value } 
-          : item
-      )
-    )
-  }
-  
   // サイズと在庫の追加
   const handleAddInventory = () => {
-    setSizeInventories(prev => [...prev, { size: '', stock: '' }])
+    append({ size: '', stock: 0 })
+  }
+
+  const handleImagesChange = (newFiles: File[]) => {
+    const newPreviews = newFiles.map(file => URL.createObjectURL(file))
+    setUploadingImages(prev => [...prev, ...newFiles])
+    setImagesPreviews(prev => [...prev, ...newPreviews])
   }
   
-  // サイズと在庫の削除
-  const handleRemoveInventory = (id: string) => {
-    if (sizeInventories.length > 1) {
-      setSizeInventories(prev => prev.filter((_, index) => index !== Number(id)))
-    }
-  }
-  
-  // 画像のアップロード処理
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files.length > 0) {
-      // 最大15枚まで
-      const newFiles = Array.from(e.target.files).slice(0, 15 - imagesPreviews.length)
-      
-      // プレビュー用のURL生成
-      const newPreviews = newFiles.map(file => URL.createObjectURL(file))
-      
-      setUploadingImages(prev => [...prev, ...newFiles])
-      setImagesPreviews(prev => [...prev, ...newPreviews])
-    }
-  }
-  
-  // 画像の削除
-  const handleRemoveImage = (index: number) => {
+  // 画像削除のハンドラ
+  const handleImageRemove = (index: number) => {
     if (mode === 'new') {
-      // 新規作成の場合：単純に削除
       URL.revokeObjectURL(imagesPreviews[index])
       setUploadingImages(prev => prev.filter((_, i) => i !== index))
       setImagesPreviews(prev => prev.filter((_, i) => i !== index))
     } else {
-      // 編集の場合：既存画像と新規画像を区別
-      const imageIndexInAll = index - (formData.images?.length || 0) + imagesToDelete.length
+      const imageIndexInAll = index - (initialData?.images?.length || 0) + imagesToDelete.length
       if (imageIndexInAll >= 0) {
-        // 新しくアップロードしようとしていた画像を削除
         URL.revokeObjectURL(imagesPreviews[index])
         setUploadingImages(prev => prev.filter((_, i) => i !== imageIndexInAll))
         setImagesPreviews(prev => prev.filter((_, i) => i !== index))
       } else {
-        // 既存の画像を削除対象に追加
-        const imageUrl = (formData.images || [])[index + imagesToDelete.length]
+        const imageUrl = (initialData?.images || [])[index + imagesToDelete.length]
         setImagesToDelete(prev => [...prev, imageUrl])
         setImagesPreviews(prev => prev.filter((_, i) => i !== index))
       }
     }
   }
   
-  // アップロードボタンのクリック
-  const handleUploadClick = () => {
-    if (fileInputRef.current) {
-      fileInputRef.current.click()
-    }
-  }
-  
   // フォーム送信処理
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    
-    // バリデーション
-    if (!formData.name || !formData.category || !formData.price) {
-      setError('商品名、カテゴリ、価格は必須です')
-      return
-    }
-    
+  const onFormSubmit = async (data: ProductFormData) => {
     try {
       setLoading(true)
       setError(null)
       
+      const formDataToSubmit = {
+        name: data.name,
+        description: data.description || '',
+        link: data.link || '',
+        price: data.price,
+        category: data.category,
+        images: initialData?.images || [],
+        isPublished: data.isPublished,
+      }
+      
       await onSubmit({
-        formData,
-        sizeInventories,
+        formData: formDataToSubmit,
+        sizeInventories: data.sizeInventories || [],
         uploadingImages,
         imagesToDelete: mode === 'edit' ? imagesToDelete : undefined
       })
       
       setSuccess(mode === 'new' ? '商品が正常に追加されました' : '商品が正常に更新されました')
       
-      // 一覧ページに戻る
       setTimeout(() => {
         router.push('/admin/')
       }, 1500)
@@ -262,337 +227,386 @@ export default function ProductForm({ mode, initialData, onSubmit, title, submit
       )}
       
       {/* 商品フォーム */}
-      <form onSubmit={handleSubmit}>
+      <form onSubmit={handleFormSubmit(onFormSubmit)}>
         {/* 出品画像 */}
-        <Box sx={{ mb: 5 }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-            <Typography variant="subtitle1" sx={{ fontWeight: 'bold', mr: 1 }}>
+        <Box sx={{ mb: 2 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+            <Typography variant="subtitle1" sx={{ fontWeight: 'bold', mr: 1, fontSize: '14px' }}>
               出品画像
             </Typography>
             <Typography variant="body2" color="text.secondary">
               （最大15枚）
             </Typography>
           </Box>
-          
-          <Box sx={{ mb: 2 }}>
-            <input
-              type="file"
-              accept="image/*"
-              multiple
-              style={{ display: 'none' }}
-              ref={fileInputRef}
-              onChange={handleFileChange}
-            />
-            
-            {/* 画像プレビュー */}
-            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, mb: 3 }}>
-              {imagesPreviews.map((preview, index) => (
-                <Box
-                  key={index}
-                  sx={{
-                    position: 'relative',
-                    width: 120,
-                    height: 120,
-                    border: '1px solid #ddd',
-                    borderRadius: 1,
-                    overflow: 'hidden',
-                  }}
-                >
-                  <Box
-                    component="img"
-                    src={preview}
-                    sx={{
-                      width: '100%',
-                      height: '100%',
-                      objectFit: 'cover',
-                    }}
-                  />
-                  <IconButton
-                    size="small"
-                    onClick={() => handleRemoveImage(index)}
-                    sx={{
-                      position: 'absolute',
-                      top: 5,
-                      right: 5,
-                      bgcolor: 'rgba(0, 0, 0, 0.34)',
-                      color: 'white',
-                      p: 0.5,
-                      '&:hover': {
-                        bgcolor: 'rgba(0, 0, 0, 0.54)',
-                      }
-                    }}
-                  >
-                    <CloseIcon fontSize="small" />
-                  </IconButton>
-                </Box>
-              ))}
-              
-              {/* 画像追加ボタン */}
-              <Box
-                onClick={handleUploadClick}
-                sx={{
-                  width: 120,
-                  height: 120,
-                  border: '1px solid #aaa',
-                  borderRadius: 1,
-                  display: 'flex',
-                  flexDirection: 'column',
-                  justifyContent: 'center',
-                  alignItems: 'center',
-                  cursor: 'pointer',
-                  '&:hover': {
-                    borderColor: '#007AFF',
-                    color: '#007AFF',
-                  }
-                }}
-              >
-                <AddPhotoAlternateIcon sx={{ fontSize: 32, mb: 1 }} />
-                <Typography sx={{ fontSize: 14, fontWeight: 'bold', color: '#007AFF' }}>
-                  画像を選択する
-                </Typography>
-              </Box>
-            </Box>
-          </Box>
+
+          <ImageUploader
+            images={imagesPreviews}
+            onImagesChange={handleImagesChange}
+            onImageRemove={handleImageRemove}
+            maxImages={15}
+          />
         </Box>
         
-        <Divider sx={{ mb: 5 }} />
-        
         {/* 商品名 */}
-        <Box sx={{ mb: 5 }}>
-          <Typography variant="subtitle1" sx={{ fontWeight: 'bold', mb: 2 }}>
+        <Box sx={{ mb: 2 }}>
+          <Typography variant="subtitle1" sx={{ fontWeight: 'bold', mb: 1, fontSize: '14px' }}>
             商品名
           </Typography>
-          <TextField
+          <Controller
             name="name"
-            value={formData.name}
-            onChange={handleInputChange}
-            fullWidth
-            required
-            placeholder="商品名"
-            InputProps={{
-              endAdornment: (
-                <Typography variant="caption" sx={{ color: 'text.primary', whiteSpace: 'nowrap', fontSize: '12px' }}>
-                  {formData.name?.length || 0} / 40
-                </Typography>
-              ),
-            }}
-            inputProps={{ maxLength: 40 }}
-            sx={{
-              '& .MuiOutlinedInput-root': {
-                borderRadius: 1,
-                '& fieldset': {
-                  borderColor: '#aaa'
-                },
-                '&:hover fieldset': {
-                  borderColor: '#000'
-                },
-                '&.Mui-focused fieldset': {
-                  borderColor: '#000',
-                  borderWidth: 1
-                }
-              }
-            }}
+            control={control}
+            render={({ field }) => (
+              <TextField
+                {...field}
+                fullWidth
+                placeholder="商品名"
+                error={!!errors.name}
+                helperText={errors.name?.message}
+                size="small"
+                InputProps={{
+                  inputProps: { maxLength: 40 },
+                  endAdornment: (
+                    <Typography variant="caption" sx={{ color: 'text.primary', whiteSpace: 'nowrap', fontSize: '12px' }}>
+                      {field.value?.length || 0}/40
+                    </Typography>
+                  ),
+                }}
+                sx={{
+                  fontSize: '14px',
+                  '& .MuiOutlinedInput-root': {
+                    borderRadius: 1,
+                    '& fieldset': {
+                      borderColor: '#aaa'
+                    },
+                    '&:hover fieldset': {
+                      borderColor: '#000'
+                    },
+                    '&.Mui-focused fieldset': {
+                      borderColor: '#000',
+                      borderWidth: 1
+                    }
+                  }
+                }}
+              />
+            )}
           />
         </Box>
         
         {/* 販売価格 */}
-        <Box sx={{ mb: 5 }}>
-          <Typography variant="subtitle1" sx={{ fontWeight: 'bold', mb: 2 }}>
+        <Box sx={{ mb: 2 }}>
+          <Typography variant="subtitle1" sx={{ fontWeight: 'bold', mb: 1, fontSize: '14px' }}>
             販売価格
           </Typography>
-          <TextField
+          <Controller
             name="price"
-            type="number"
-            value={formData.price}
-            onChange={handleInputChange}
-            InputProps={{
-              startAdornment: (
-                <Typography sx={{ mr: 1 }}>¥</Typography>
-              ),
-              inputProps: { min: 0 }
-            }}
-            fullWidth
-            required
-            placeholder="0"
-            sx={{
-              '& .MuiOutlinedInput-root': {
-                borderRadius: 1,
-                '& fieldset': {
-                  borderColor: '#aaa'
-                },
-                '&:hover fieldset': {
-                  borderColor: '#000'
-                },
-                '&.Mui-focused fieldset': {
-                  borderColor: '#000',
-                  borderWidth: 1
-                }
-              }
-            }}
+            control={control}
+            render={({ field }) => (
+              <TextField
+                {...field}
+                type="number"
+                fullWidth
+                placeholder="0"
+                error={!!errors.price}
+                helperText={errors.price?.message}
+                size="small"
+                InputProps={{
+                  startAdornment: (
+                    <Typography sx={{ mr: 1 }}>¥</Typography>
+                  ),
+                  inputProps: { min: 0 }
+                }}
+                sx={{
+                  fontSize: '14px',
+                  '& .MuiOutlinedInput-root': {
+                    borderRadius: 1,
+                    '& fieldset': {
+                      borderColor: '#aaa'
+                    },
+                    '&:hover fieldset': {
+                      borderColor: '#000'
+                    },
+                    '&.Mui-focused fieldset': {
+                      borderColor: '#000',
+                      borderWidth: 1
+                    }
+                  }
+                }}
+              />
+            )}
           />
         </Box>
         
         {/* カテゴリー */}
-        <Box sx={{ mb: 5 }}>
-          <Typography variant="subtitle1" sx={{ fontWeight: 'bold', mb: 2 }}>
+        <Box sx={{ mb: 2 }}>
+          <Typography variant="subtitle1" sx={{ fontWeight: 'bold', mb: 1, fontSize: '14px' }}>
             カテゴリー
           </Typography>
-          <FormControl fullWidth>
-            <Select
-              name="category"
-              value={formData.category}
-              onChange={handleSelectChange}
-              displayEmpty
-              sx={{
-                borderRadius: 1,
-                '& .MuiOutlinedInput-notchedOutline': {
-                  borderColor: '#aaa'
-                },
-                '&:hover .MuiOutlinedInput-notchedOutline': {
-                  borderColor: '#000'
-                },
-                '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                  borderColor: '#000',
-                  borderWidth: 1
-                }
-              }}
-              renderValue={(selected) => {
-                if (!selected) {
-                  return <Typography sx={{ color: 'text.secondary', fontWeight: 'bold' }}>カテゴリー</Typography>;
-                }
-                return selected;
-              }}
-            >
-              {loadingCategories ? (
-                <MenuItem disabled>
-                  <Typography>読み込み中...</Typography>
-                </MenuItem>
-              ) : (
-                categories.map(category => (
-                  <MenuItem key={category.id} value={category.category}>
-                    {category.category}
-                  </MenuItem>
-                ))
-              )}
-            </Select>
-          </FormControl>
-        </Box>
-        
-        {/* 商品説明 */}
-        <Box sx={{ mb: 5 }}>
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-            <Typography variant="subtitle1" sx={{ fontWeight: 'bold' }}>
-              商品説明
-            </Typography>
-            <Typography variant="caption" sx={{ color: 'text.primary', whiteSpace: 'nowrap', fontSize: '12px' }}>
-              {formData.description?.length || 0} / 1000
-            </Typography>
-          </Box>
-          <TextField
-            name="description"
-            value={formData.description}
-            onChange={handleInputChange}
-            fullWidth
-            multiline
-            rows={8}
-            placeholder="商品の説明を入力してください"
-            inputProps={{ maxLength: 1000 }}
-            sx={{
-              '& .MuiOutlinedInput-root': {
-                borderRadius: 1,
-                '& fieldset': {
-                  borderColor: '#aaa'
-                },
-                '&:hover fieldset': {
-                  borderColor: '#000'
-                },
-                '&.Mui-focused fieldset': {
-                  borderColor: '#000',
-                  borderWidth: 1
-                }
-              }
-            }}
+          <Controller
+            name="category"
+            control={control}
+            render={({ field }) => (
+              <FormControl fullWidth error={!!errors.category}>
+                <InputLabel id="category-select-label">カテゴリーを選択</InputLabel>
+                <Select
+                  {...field}
+                  labelId="category-select-label"
+                  multiple
+                  value={Array.isArray(field.value) ? field.value : field.value ? [field.value] : []}
+                  onChange={(e) => {
+                    const value = e.target.value
+                    field.onChange(typeof value === 'string' ? value.split(',') : value)
+                  }}
+                  input={<OutlinedInput label="カテゴリーを選択" />}
+                  renderValue={(selected) => (
+                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                      {(selected as string[]).map((value) => (
+                        <Chip 
+                          key={value} 
+                          label={value} 
+                          size="small"
+                          sx={{
+                            bgcolor: '#eee',
+                            color: '#000',
+                            fontWeight: 'medium',
+                          }}
+                        />
+                      ))}
+                    </Box>
+                  )}
+                  size="small"
+                  sx={{
+                    fontSize: '14px',
+                    borderRadius: 1,
+                    '& .MuiOutlinedInput-notchedOutline': {
+                      borderColor: '#aaa'
+                    },
+                    '&:hover .MuiOutlinedInput-notchedOutline': {
+                      borderColor: '#000'
+                    },
+                    '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                      borderColor: '#000',
+                      borderWidth: 1
+                    }
+                  }}
+                  MenuProps={{
+                    PaperProps: {
+                      style: {
+                        maxHeight: 300,
+                      },
+                    },
+                  }}
+                >
+                  {loadingCategories ? (
+                    <MenuItem disabled>
+                      <Typography>読み込み中...</Typography>
+                    </MenuItem>
+                  ) : (
+                    categories.map(category => (
+                      <MenuItem key={category.id} value={category.category}>
+                        {category.category}
+                      </MenuItem>
+                    ))
+                  )}
+                </Select>
+                {errors.category && (
+                  <Typography variant="caption" color="error" sx={{ mt: 0.5, ml: 1.75 }}>
+                    {errors.category.message}
+                  </Typography>
+                )}
+              </FormControl>
+            )}
           />
         </Box>
         
-        <Divider sx={{ mb: 5 }} />
+        {/* 商品説明 */}
+        <Box sx={{ mb: 2 }}>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
+            <Typography variant="subtitle1" sx={{ fontWeight: 'bold', fontSize: '14px' }}>
+              商品説明
+            </Typography>
+            <Typography variant="caption" sx={{ color: 'text.primary', whiteSpace: 'nowrap', fontSize: '12px' }}>
+              {formValues.description?.length || 0}/1000
+            </Typography>
+          </Box>
+          <Controller
+            name="description"
+            control={control}
+            render={({ field }) => (
+              <TextField
+                {...field}
+                fullWidth
+                multiline
+                minRows={5}
+                placeholder="商品の説明を入力してください"
+                error={!!errors.description}
+                helperText={errors.description?.message}
+                inputProps={{ maxLength: 1000 }}
+                size="small"
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    borderRadius: 1,
+                    '& fieldset': {
+                      borderColor: '#aaa'
+                    },
+                    '&:hover fieldset': {
+                      borderColor: '#000'
+                    },
+                    '&.Mui-focused fieldset': {
+                      borderColor: '#000',
+                      borderWidth: 1
+                    }
+                  }
+                }}
+              />
+            )}
+          />
+        </Box>
+
+        {/* リンク */}
+        <Box sx={{ mb: 2 }}>
+          <Typography variant="subtitle1" sx={{ fontWeight: 'bold', mb: 1, fontSize: '14px' }}>
+            リンク
+          </Typography>
+          <Controller
+            name="link"
+            control={control}
+            render={({ field }) => (
+              <TextField
+                {...field}
+                fullWidth
+                placeholder="https://example.com"
+                error={!!errors.link}
+                helperText={errors.link?.message}
+                size="small"
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    borderRadius: 1,
+                    '& fieldset': {
+                      borderColor: '#aaa'
+                    },
+                    '&:hover fieldset': {
+                      borderColor: '#000'
+                    },
+                    '&.Mui-focused fieldset': {
+                      borderColor: '#000',
+                      borderWidth: 1
+                    }
+                  }
+                }}
+              />
+            )}
+          />
+        </Box>
         
         {/* サイズと在庫 */}
-        <Box sx={{ mb: 5 }}>
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-            <Typography variant="subtitle1" sx={{ fontWeight: 'bold' }}>
+        <Box sx={{ mb: 2 }}>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
+            <Typography variant="subtitle1" sx={{ fontWeight: 'bold', fontSize: '14px' }}>
               サイズと在庫
             </Typography>
             <Button 
               startIcon={<AddIcon />} 
               onClick={handleAddInventory}
+              type="button"
+              variant="outlined"
               sx={{ 
                 color: '#007AFF',
+                borderRadius: 1,
+                borderColor: '#007AFF',
+                alignItems: 'center',
                 '&:hover': { bgcolor: 'rgba(0, 122, 255, 0.08)' }
               }}
             >
-              サイズを追加
+              <Typography sx={{ fontSize: '14px' }}>
+                サイズを追加
+              </Typography>
             </Button>
           </Box>
           
-          {sizeInventories.map((item, index) => (
+          {/* サイズ配列のエラーメッセージ */}
+          {errors.sizeInventories && typeof errors.sizeInventories.message === 'string' && (
+            <Alert severity="error" sx={{ mb: 2 }}>
+              {errors.sizeInventories.message}
+            </Alert>
+          )}
+          
+          {fields.map((field, index) => (
             <Box 
-              key={index} 
+              key={field.id}
               sx={{ 
                 display: 'flex', 
                 gap: 2, 
                 mb: 2,
-                alignItems: 'center'
+                alignItems: 'flex-start'
               }}
             >
-              <TextField
-                placeholder="サイズ"
-                value={item.size}
-                onChange={(e) => handleInventoryChange(String(index), 'size', e.target.value)}
-                sx={{ 
-                  flexBasis: '60%',
-                  '& .MuiOutlinedInput-root': {
-                    borderRadius: 1,
-                    '& fieldset': {
-                      borderColor: '#aaa'
-                    },
-                    '&:hover fieldset': {
-                      borderColor: '#000'
-                    },
-                    '&.Mui-focused fieldset': {
-                      borderColor: '#000',
-                      borderWidth: 1
-                    }
-                  }
-                }}
+              <Controller
+                name={`sizeInventories.${index}.size`}
+                control={control}
+                render={({ field }) => (
+                  <TextField
+                    {...field}
+                    placeholder="サイズ"
+                    error={!!errors.sizeInventories?.[index]?.size}
+                    helperText={errors.sizeInventories?.[index]?.size?.message}
+                    size="small"
+                    sx={{ 
+                      flexBasis: '60%',
+                      fontSize: '14px',
+                      '& .MuiOutlinedInput-root': {
+                        borderRadius: 1,
+                        '& fieldset': {
+                          borderColor: '#aaa'
+                        },
+                        '&:hover fieldset': {
+                          borderColor: '#000'
+                        },
+                        '&.Mui-focused fieldset': {
+                          borderColor: '#000',
+                          borderWidth: 1
+                        }
+                      }
+                    }}
+                  />
+                )}
               />
-              <TextField
-                type="number"
-                placeholder="在庫数"
-                value={item.stock}
-                onChange={(e) => handleInventoryChange(String(index), 'stock', e.target.value)}
-                InputProps={{ inputProps: { min: 0 } }}
-                sx={{ 
-                  flexBasis: '30%',
-                  '& .MuiOutlinedInput-root': {
-                    borderRadius: 1,
-                    '& fieldset': {
-                      borderColor: '#aaa'
-                    },
-                    '&:hover fieldset': {
-                      borderColor: '#000'
-                    },
-                    '&.Mui-focused fieldset': {
-                      borderColor: '#000',
-                      borderWidth: 1
-                    }
-                  }
-                }}
+              <Controller
+                name={`sizeInventories.${index}.stock`}
+                control={control}
+                render={({ field }) => (
+                  <TextField
+                    {...field}
+                    type="number"
+                    placeholder="在庫数"
+                    error={!!errors.sizeInventories?.[index]?.stock}
+                    helperText={errors.sizeInventories?.[index]?.stock?.message}
+                    size="small"
+                    InputProps={{ inputProps: { min: 1 } }}
+                    sx={{ 
+                      flexBasis: '30%',
+                      fontSize: '14px',
+                      '& .MuiOutlinedInput-root': {
+                        borderRadius: 1,
+                        '& fieldset': {
+                          borderColor: '#aaa'
+                        },
+                        '&:hover fieldset': {
+                          borderColor: '#000'
+                        },
+                        '&.Mui-focused fieldset': {
+                          borderColor: '#000',
+                          borderWidth: 1
+                        }
+                      }
+                    }}
+                  />
+                )}
               />
-              {sizeInventories.length > 1 && (
+              {fields.length > 1 && (
                 <IconButton 
-                  onClick={() => handleRemoveInventory(String(index))}
-                  sx={{ color: 'error.main' }}
+                  onClick={() => remove(index)}
+                  type="button"
+                  sx={{ color: 'error.main', mt: 0.5 }}
                 >
                   <CloseIcon />
                 </IconButton>
@@ -600,21 +614,23 @@ export default function ProductForm({ mode, initialData, onSubmit, title, submit
             </Box>
           ))}
         </Box>
+
+        <Divider sx={{ mt: 3 }} />
         
         {/* 送信ボタン */}
-        <Box sx={{ display: 'flex', justifyContent: 'center', gap: 2, mt: 6 }}>
+        <Box sx={{ display: 'flex', justifyContent: 'center', gap: 2, mt: 2 }}>
           <Button
             variant="outlined"
             onClick={handleBack}
+            type="button"
             sx={{
-              minWidth: 120,
-              py: 1.5,
-              borderColor: 'black',
-              color: 'black',
+              minWidth: 150,
+              borderColor: '#007AFF',
+              color: '#007AFF',
               borderRadius: 1,
               fontWeight: 'bold',
               '&:hover': {
-                borderColor: 'black',
+                borderColor: '#007AFF',
                 bgcolor: 'rgba(0, 0, 0, 0.04)'
               }
             }}
@@ -626,15 +642,14 @@ export default function ProductForm({ mode, initialData, onSubmit, title, submit
             variant="contained"
             disabled={loading}
             sx={{
-              minWidth: 120,
-              py: 1.5,
-              bgcolor: 'black',
+              minWidth: 150,
+              bgcolor: '#006AFF',
               color: 'white',
               borderRadius: 1,
               fontWeight: 'bold',
               '&:hover': {
-                bgcolor: 'rgba(0, 0, 0, 0.8)'
-              }
+                bgcolor: '#006ADD'
+              },
             }}
           >
             {loading ? (

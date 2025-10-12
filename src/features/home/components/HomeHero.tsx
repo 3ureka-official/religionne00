@@ -1,66 +1,256 @@
 'use client'
 
 import { Box } from '@mui/material'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { MicroCMSImage } from 'microcms-js-sdk'
 import Image from 'next/image'
+import Link from 'next/link'
 import useEmblaCarousel from 'embla-carousel-react'
 import Autoplay from 'embla-carousel-autoplay'
 
-const HomeHero = ({ carouselImages }: { carouselImages: MicroCMSImage[] }) => {
+interface Product {
+  id: string
+  name: string
+  images: MicroCMSImage[]
+}
+
+const HomeHero = ({ 
+  carouselImages, 
+  products 
+}: { 
+  carouselImages: MicroCMSImage[]
+  products: Product[] 
+}) => {
   const [activeSlide, setActiveSlide] = useState(0)
-  const [emblaRef, emblaApi] = useEmblaCarousel({ loop: true }, [Autoplay({ delay: 3000 })])
+  const prevSlideRef = useRef(0)
   
+  const autoplay = useRef(
+    Autoplay({ delay: 4500, stopOnInteraction: false })
+  )
+  
+  const [emblaRef, emblaApi] = useEmblaCarousel(
+    { loop: true, duration: 50 }, 
+    [autoplay.current]
+  )
+  
+  // クライアントサイドでのみランダム商品2つを選択
+  const [randomProducts, setRandomProducts] = useState<Product[]>([])
+  const [isClient, setIsClient] = useState(false)
+
+  // クライアントサイドでマウント時にランダム商品2つを選択
+  useEffect(() => {
+    setIsClient(true)
+    if (products && products.length > 0) {
+      const shuffled = [...products].sort(() => 0.5 - Math.random())
+      setRandomProducts(shuffled.slice(0, 2))
+    }
+  }, [products])
+
   useEffect(() => {
     if (!emblaApi) return
     
     const onSelect = () => {
-      setActiveSlide(emblaApi.selectedScrollSnap())
+      const currentSlide = emblaApi.selectedScrollSnap()
+      setActiveSlide(currentSlide)
+      
+      // 2枚目（index 1）に到達した時のみ商品を変更
+      if (currentSlide === 1 && prevSlideRef.current !== 1) {
+        if (products && products.length > 0) {
+          const shuffled = [...products].sort(() => 0.5 - Math.random())
+          setRandomProducts(shuffled.slice(0, 2))
+        }
+      }
+      
+      prevSlideRef.current = currentSlide
     }
     
     emblaApi.on('select', onSelect)
     return () => {
       emblaApi.off('select', onSelect)
     }
-  }, [emblaApi])
+  }, [emblaApi, products])
   
   const scrollTo = (index: number) => {
-    if (emblaApi) emblaApi.scrollTo(index)
+    if (emblaApi) {
+      emblaApi.scrollTo(index)
+      autoplay.current.play()
+    }
   }
   
-  const carouselContents = carouselImages.map((image: MicroCMSImage, index: number) => (
-    <Box sx={{
-      position: 'relative',
-      width: '100%',
-      aspectRatio: '16/9',
-      display: 'flex',
-      flexDirection: 'column',
-      alignItems: 'center',
-      justifyContent: 'center',
-      overflow: 'hidden',
-      margin: 0,
-      padding: 0,
-    }}
-    key={index}>
-      <Image
-        src={image.url}
-        height={image.height}
-        width={image.width}
-        alt={image.alt ?? `${index + 1} 枚目のカルーセル`}
-        className='w-full h-full object-cover'
-        style={{ 
-          width: '100%', 
-          height: '100%',
-          objectFit: 'cover',
-          objectPosition: 'center',
-          display: 'block'
+  // カルーセルコンテンツの作成
+  const carouselContents = []
+  
+  // 1枚目: 最初のカルーセル画像
+  if (carouselImages[0]) {
+    carouselContents.push(
+      <Box
+        sx={{
+          position: 'relative',
+          width: '100%',
+          aspectRatio: '16/9',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          overflow: 'hidden',
+          margin: 0,
+          padding: 0,
         }}
+        key="carousel-0"
+      >
+        <Image
+          src={carouselImages[0].url}
+          height={carouselImages[0].height}
+          width={carouselImages[0].width}
+          alt={carouselImages[0].alt ?? '1枚目のカルーセル'}
+          className='w-full h-full object-cover'
+          style={{ 
+            width: '100%', 
+            height: '100%',
+            objectFit: 'cover',
+            objectPosition: 'center',
+            display: 'block'
+          }}
+          priority
+        />
+      </Box>
+    )
+  }
+  
+  // 2枚目: ランダムな商品2つを横並び（クライアントサイドでのみ表示）
+  if (isClient && randomProducts.length > 0) {
+    carouselContents.push(
+      <Box
+        sx={{
+          position: 'relative',
+          width: '100%',
+          aspectRatio: '16/9',
+          bgcolor: '#000000',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: 0,
+          padding: 0,
+          margin: 0,
+        }}
+        key="products-random"
+      >
+        {randomProducts.map((product) => (
+          <Link 
+            href={`/product/${product.id}`} 
+            key={product.id}
+            style={{ 
+              textDecoration: 'none', 
+              color: 'inherit',
+              height: '100%',
+              flex: 1,
+              maxWidth: '50%',
+            }}
+          >
+            <Box
+              sx={{
+                position: 'relative',
+                height: '100%',
+                width: '100%',
+                cursor: 'pointer',
+                transition: 'opacity 0.3s ease',
+                '&:hover': {
+                  opacity: 0.9,
+                }
+              }}
+            >
+              <Image
+                src={product.images[0].url}
+                fill
+                alt={product.name}
+                style={{ 
+                  objectFit: 'cover',
+                  objectPosition: 'center',
+                }}
+              />
+              
+              {/* 商品情報オーバーレイ */}
+              <Box
+                sx={{
+                  position: 'absolute',
+                  bottom: 0,
+                  left: 0,
+                  right: 0,
+                  bgcolor: 'rgba(0, 0, 0, 0.7)',
+                  color: 'white',
+                  p: { xs: 1, sm: 2 },
+                  backdropFilter: 'blur(4px)',
+                }}
+              >
+                <Box sx={{ fontSize: { xs: '8px', sm: '10px' }, mb: 0.25, opacity: 0.8 }}>
+                  Featured
+                </Box>
+                <Box sx={{ 
+                  fontSize: { xs: '12px', sm: '14px' }, 
+                  fontWeight: 'bold',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap',
+                }}>
+                  {product.name}
+                </Box>
+              </Box>
+            </Box>
+          </Link>
+        ))}
+      </Box>
+    )
+  } else if (!isClient) {
+    carouselContents.push(
+      <Box
+        sx={{
+          position: 'relative',
+          width: '100%',
+          aspectRatio: '16/9',
+          bgcolor: '#000000',
+        }}
+        key="product-placeholder"
       />
-    </Box>
-  ))
+    )
+  }
+  
+  // 3枚目以降: 残りのカルーセル画像
+  carouselImages.slice(1).forEach((image: MicroCMSImage, index: number) => {
+    carouselContents.push(
+      <Box
+        sx={{
+          position: 'relative',
+          width: '100%',
+          aspectRatio: '16/9',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          overflow: 'hidden',
+          margin: 0,
+          padding: 0,
+        }}
+        key={`carousel-${index + 1}`}
+      >
+        <Image
+          src={image.url}
+          height={image.height}
+          width={image.width}
+          alt={image.alt ?? `${index + 2}枚目のカルーセル`}
+          className='w-full h-full object-cover'
+          style={{ 
+            width: '100%', 
+            height: '100%',
+            objectFit: 'cover',
+            objectPosition: 'center',
+            display: 'block'
+          }}
+        />
+      </Box>
+    )
+  })
   
   useEffect(() => {
-    // スタイルを直接追加してemblaの余白をなくす
     const emblaElements = document.querySelectorAll('.embla, .embla__container, .embla__slide');
     emblaElements.forEach(el => {
       if (el instanceof HTMLElement) {
@@ -103,7 +293,7 @@ const HomeHero = ({ carouselImages }: { carouselImages: MicroCMSImage[] }) => {
             zIndex: 2
           }}
         >
-          {carouselImages.map((_, index) => (
+          {carouselContents.map((_, index) => (
             <Box 
               key={index}
               sx={{

@@ -42,6 +42,7 @@ export default async function CategoryPage({ params }: { params: Promise<{ categ
       displayCategory={displayCategory}
       products={products}
       categoryDescription={categoryDescription}
+      categories={categories}
     />
   );
 }

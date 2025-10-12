@@ -7,18 +7,20 @@ import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { ThemeProvider } from '@mui/material/styles';
 import theme from '@/styles/theme';
-import { MicroCMSProduct } from '@/lib/microcms';
+import { MicroCMSCategory, MicroCMSProduct } from '@/lib/microcms';
 
 interface ClientCategoryPageProps {
   displayCategory: string;
   products: MicroCMSProduct[];
   categoryDescription: string;
+  categories: MicroCMSCategory[];
 }
 
 export default function ClientCategoryPage({
   displayCategory,
   products,
   categoryDescription,
+  categories,
 }: ClientCategoryPageProps) {
   return (
     <ThemeProvider theme={theme}>
@@ -46,10 +48,10 @@ export default function ClientCategoryPage({
               }}
             >
               <Link href="/" passHref style={{ color: 'inherit', textDecoration: 'none' }}>
-                home
+                Home
               </Link>
               <Link href="/category" passHref style={{ color: 'inherit', textDecoration: 'none' }}>
-                store
+                Store
               </Link>
               <Typography color="text.primary" sx={{ fontSize: 'inherit', fontWeight: 'bold' }}>
                 {displayCategory}
@@ -96,7 +98,7 @@ export default function ClientCategoryPage({
           }}>
             {products.map((product) => (
               <Box key={product.id}>
-                <ProductCard product={product} />
+                <ProductCard product={product} categories={categories} />
               </Box>
             ))}
           </Box>

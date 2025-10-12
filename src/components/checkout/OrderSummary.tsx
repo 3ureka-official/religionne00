@@ -1,7 +1,7 @@
 import { Box, Typography, Paper, Divider } from '@mui/material'
 import Image from 'next/image'
 import { CheckoutOrderItem } from '@/types/checkout'
-
+import { formatPrice } from '@/utils/formatters';
 interface OrderSummaryProps {
   items: CheckoutOrderItem[]
 }
@@ -53,7 +53,7 @@ export default function OrderSummary({ items }: OrderSummaryProps) {
                   </Typography>
                 </Box>
                 <Typography sx={{ fontSize: '14px', mt: 1, fontWeight: 'medium' }}>
-                  ¥{(Number(item.price || 0) * item.quantity).toLocaleString()}
+                  ¥{formatPrice(Number(item.price || 0) * item.quantity)}
                 </Typography>
               </Box>
             </Box>

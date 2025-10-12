@@ -12,8 +12,6 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       );
     }
-
-    console.log('Shipping email API called for order:', orderId);
     
     // Firebaseから注文情報を取得
     const order = await getOrderById(orderId);

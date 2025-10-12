@@ -1,4 +1,4 @@
-import { Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Chip, IconButton, Box, Typography } from '@mui/material';
+import { Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Chip, IconButton, Box, Typography, TableSortLabel } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import VisibilityIcon from '@mui/icons-material/Visibility';
@@ -55,9 +55,21 @@ interface ProductTableProps {
   onTogglePublish: (product: Product) => void;
   onToggleRecommended: (product: Product) => void;
   onDetail: (product: Product) => void;
+  sortOrder: 'asc' | 'desc'; // 追加
+  onSortChange: () => void; // 追加
 }
 
-export const ProductTable = ({ products, selectedImageIndex, onEdit, onDelete, onTogglePublish, onToggleRecommended, onDetail }: ProductTableProps) => (
+export const ProductTable = ({ 
+  products, 
+  selectedImageIndex, 
+  onEdit, 
+  onDelete, 
+  onTogglePublish, 
+  onToggleRecommended, 
+  onDetail,
+  sortOrder, // 追加
+  onSortChange // 追加
+}: ProductTableProps) => (
   <TableContainer component={Paper} sx={{ mb: 3, borderRadius: 0, border: '1px solid #e0e0e0', boxShadow: 'none' }}>
     <Table>
       <TableHead>
@@ -66,7 +78,30 @@ export const ProductTable = ({ products, selectedImageIndex, onEdit, onDelete, o
           <TableCell>商品名</TableCell>
           <TableCell>価格</TableCell>
           <TableCell>カテゴリ</TableCell>
-          <TableCell>出品日</TableCell>
+          <TableCell>
+            <TableSortLabel
+              active={true}
+              direction={sortOrder}
+              onClick={onSortChange}
+              sx={{
+                '&:hover': {
+                  color: 'text.primary',
+                },
+                '&.MuiTableSortLabel-root': {
+                  color: 'text.primary',
+                },
+                '&.MuiTableSortLabel-root.Mui-active': {
+                  color: 'text.primary',
+                },
+                '& .MuiTableSortLabel-icon': {
+                  color: 'text.primary !important',
+                }
+              }}
+            >
+              出品日
+            </TableSortLabel>
+          </TableCell>
+          <TableCell>在庫</TableCell>
           <TableCell>ステータス</TableCell>
           <TableCell>おすすめ</TableCell>
           <TableCell align="center">アクション</TableCell>
@@ -114,8 +149,9 @@ export const ProductTable = ({ products, selectedImageIndex, onEdit, onDelete, o
                 {product.name}
               </TableCell>
               <TableCell>¥{Number(product.price).toLocaleString()}</TableCell>
-              <TableCell>{product.category}</TableCell>
+              <TableCell>{Array.isArray(product.category) ? product.category.join(', ') : product.category}</TableCell>
               <TableCell>{formatTimestamp(product.createdAt)}</TableCell>
+              <TableCell sx={{ color: product.sizeInventories?.reduce((acc, curr) => acc + curr.stock, 0) === 0 ? 'red' : 'black' }}>{product.sizeInventories?.reduce((acc, curr) => acc + curr.stock, 0) === 0 ? '在庫切れ' : product.sizeInventories?.reduce((acc, curr) => acc + curr.stock, 0)}</TableCell>
               <TableCell>
                 <Chip
                   label={product.isPublished ? '公開中' : '非公開'}

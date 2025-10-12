@@ -1,34 +1,33 @@
 'use client'
 
-import { Box, Typography, Paper, useMediaQuery, useTheme } from '@mui/material'
-import { useState } from 'react'
+import { Box, Typography, Paper, useMediaQuery, useTheme, Chip, Divider } from '@mui/material'
 import Link from 'next/link'
 import Image from 'next/image'
-import { MicroCMSProduct } from '@/lib/microcms'
-
+import { MicroCMSCategory, MicroCMSProduct } from '@/lib/microcms'
+import { formatPrice } from '@/utils/formatters'
+import { useRouter } from 'next/navigation'
 // 商品コンポーネント
 interface ProductCardProps {
   product: MicroCMSProduct;
-  featured?: boolean;
-  displaySize?: boolean;
+  categories?: MicroCMSCategory[];
 }
 
-const ProductCard = ({ product, featured = false, displaySize = false }: ProductCardProps) => {
+const ProductCard = ({ product, categories }: ProductCardProps) => {
   const theme = useTheme()
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'))
-  const [selectedSize, setSelectedSize] = useState<string | null>(null)
+  const router = useRouter()
 
-  // サイズが一つだけあるかチェック
-  const hasSingleSize = product.sizes && product.sizes.length === 1
-  // 複数サイズがあるかチェック
-  const hasMultipleSizes = product.sizes && product.sizes.length > 1
-  
-  // 単一サイズの取得
-  const singleSize = hasSingleSize ? product.sizes[0].size : null
 
   // サイズ選択処理
-  const handleSizeSelect = (size: string) => {
-    setSelectedSize(size === selectedSize ? null : size)
+  const handleCategoryClick = (e: React.MouseEvent, category: string) => {
+    e.preventDefault()
+    e.stopPropagation()
+
+    const matchedCategory = categories?.find(cat => cat.category === category)
+
+    if (matchedCategory) {
+      router.push(`/category/${matchedCategory.id}`)
+    }
   }
 
   return (
@@ -36,7 +35,7 @@ const ProductCard = ({ product, featured = false, displaySize = false }: Product
       <Paper
         elevation={0}
         sx={{
-          overflow: 'hidden',
+          // overflow: 'hidden',
           border: 'none',
           height: '100%',
           width: '100%',
@@ -52,24 +51,12 @@ const ProductCard = ({ product, featured = false, displaySize = false }: Product
           }
         }}
       >
-        {featured && (
-          <Typography
-            sx={{
-              p: { xs: 0.5, sm: 1 },
-              fontSize: { xs: '18px', sm: '28px' },
-              fontWeight: 'normal',
-              textAlign: 'center',
-            }}
-          >
-            pick up!!!
-          </Typography>
-        )}
         <Box
           sx={{
             bgcolor: '#D9D9D9',
             pt: '100%',
             position: 'relative',
-            flex: featured ? '1 0 auto' : 'none',
+            flex: '1 0 auto',
             aspectRatio: '1/1',
           }}
         >
@@ -81,7 +68,7 @@ const ProductCard = ({ product, featured = false, displaySize = false }: Product
               width={product.images[0].width || 1000}
               className="object-cover absolute top-0 left-0 w-full h-full"
               quality={90}
-              priority={featured}
+              priority={true}
               sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
             />
           ) : (
@@ -100,10 +87,10 @@ const ProductCard = ({ product, featured = false, displaySize = false }: Product
             </Box>
           )}
         </Box>
-        <Box sx={{ p: isMobile ? 0.2 : 1 }}>
+        <Box sx={{ pt: 1, pb: {xs: 0.5, sm: 1} }}>
           <Typography
             sx={{
-              fontSize: { xs: '9px', sm: featured ? '20px' : '14px' },
+              fontSize: { xs: '14px', sm: '16px' },
               fontWeight: 'normal',
               mb: 0.2,
               overflow: 'hidden',
@@ -117,66 +104,48 @@ const ProductCard = ({ product, featured = false, displaySize = false }: Product
           >
             {product.name}
           </Typography>
+
+          <Box sx={{ 
+            display: 'flex', 
+            flexDirection: 'row', 
+            gap: 0.5, 
+            alignItems: 'center', 
+            mb: 0.5,
+            mt: 0.5,
+            fontSize: { xs: '11px', sm: '12px' },
+            fontWeight: 'normal',
+          }}>
+            {product.category.map((cat, index) => (
+              <span
+                key={cat.id}
+                onClick={(e) => handleCategoryClick(e, cat.category || '')}
+                style={{
+                  cursor: 'pointer',
+                  textDecoration: 'underline',
+                  color: 'inherit',
+                }}
+              >
+                {cat.category}
+                {index < product.category.length - 1 && ', '}
+              </span>
+          ))}
+
+          </Box>
+          
           <Typography
             sx={{
-              fontSize: { xs: '9px', sm: featured ? '20px' : '14px' },
-              fontWeight: 'normal',
-              mb: hasSingleSize || hasMultipleSizes ? 0.5 : 0
+              fontSize: { xs: '14px', sm: '16px' },
+              fontFamily: 'Helvetica',
+              mb: 0.5,
+              mt: 0.5,
+              fontWeight: 'bold',
             }}
           >
-            ¥ {product.stripe_price_id}
+            {formatPrice(Number(product.stripe_price_id))}
           </Typography>
-          
-          {/* サイズ表示 */}
-          {displaySize && hasSingleSize && (
-            <Typography
-              sx={{
-                fontSize: { xs: '8px', sm: featured ? '16px' : '12px' },
-                color: 'text.secondary',
-              }}
-            >
-              サイズ: {singleSize}
-            </Typography>
-          )}
-          
-          {/* 複数サイズボタン */}
-          {displaySize && hasMultipleSizes && (
-            <Box sx={{ 
-              display: 'flex', 
-              flexWrap: 'wrap', 
-              gap: 0.5, 
-              mt: 0.5 
-            }}>
-              {product.sizes.map((item) => (
-                <Box
-                  key={item.size}
-                  onClick={(e) => {
-                    e.preventDefault();
-                    handleSizeSelect(item.size);
-                  }}
-                  sx={{
-                    border: '1px solid rgba(0, 0, 0, 0.3)',
-                    borderRadius: '2px',
-                    px: { xs: 0.5, sm: 1 },
-                    py: { xs: 0.1, sm: 0.2 },
-                    fontSize: { xs: '7px', sm: featured ? '14px' : '10px' },
-                    cursor: 'pointer',
-                    bgcolor: selectedSize === item.size ? 'rgba(0, 0, 0, 0.8)' : 'transparent',
-                    color: selectedSize === item.size ? 'white' : 'black',
-                    '&:hover': {
-                      bgcolor: selectedSize === item.size ? 'rgba(0, 0, 0, 0.8)' : 'rgba(0, 0, 0, 0.05)',
-                    },
-                    minWidth: { xs: '18px', sm: '30px' },
-                    textAlign: 'center',
-                    whiteSpace: 'nowrap',
-                  }}
-                >
-                  {item.size}
-                </Box>
-              ))}
-            </Box>
-          )}
         </Box>
+
+        <Divider sx={{ bgcolor: 'black', borderWidth: '0.9px' }} />
       </Paper>
     </Link>
   )

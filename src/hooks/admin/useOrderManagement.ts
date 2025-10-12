@@ -17,6 +17,7 @@ export interface OrderManagementState {
   displayShipped: Order[];
   loadingOrders: boolean;
   errorOrders: string | null;
+  isProcessingShipping: boolean;
 }
 
 export interface OrderManagementActions {
@@ -34,6 +35,7 @@ export const useOrderManagement = ({
   const [shippedOrders, setShippedOrders] = useState<Order[]>([]);
   const [loadingOrders, setLoadingOrders] = useState(true);
   const [errorOrders, setErrorOrders] = useState<string | null>(null);
+  const [isProcessingShipping, setIsProcessingShipping] = useState(false);
 
   const fetchOrdersAndShippedProducts = async () => {
     try {
@@ -80,6 +82,11 @@ export const useOrderManagement = ({
   }, [shippedOrders, searchTerm, page, rowsPerPage, tabValue]);
 
   const handleMarkAsShipped = async (order: Order, callback?: () => void) => {
+    // 既に処理中の場合は何もしない
+    if (isProcessingShipping) {
+      return;
+    }
+
     const originalOrderId = order.id;
     if (!originalOrderId) {
       console.error('Error: ID is missing in order');
@@ -88,9 +95,10 @@ export const useOrderManagement = ({
     }
 
     try {
+      setIsProcessingShipping(true);
+
       // ステータスを配送済みに更新
       await updateOrderStatus(originalOrderId, 'shipped');
-      console.log(`Original order ${originalOrderId} status updated to 'shipped' in orders collection.`);
 
       // 配送完了メール送信（失敗してもステータス更新は継続）
       try {
@@ -99,7 +107,6 @@ export const useOrderManagement = ({
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ orderId: originalOrderId })
         });
-        console.log(`Shipping notification email sent for order ${originalOrderId}`);
       } catch (emailError) {
         console.error('Shipping email sending failed:', emailError);
         // メール送信失敗はユーザーには通知しない（ログのみ）
@@ -122,6 +129,8 @@ export const useOrderManagement = ({
       console.error('配送ステータスの更新に失敗しました:', err);
       setErrorOrders('配送ステータスの更新に失敗しました: ' + (err instanceof Error ? err.message : String(err)));
       if (callback) callback();
+    } finally {
+      setIsProcessingShipping(false);
     }
   };
 
@@ -132,6 +141,7 @@ export const useOrderManagement = ({
     displayShipped,
     loadingOrders,
     errorOrders,
+    isProcessingShipping,
   };
 
   const actions: OrderManagementActions = {

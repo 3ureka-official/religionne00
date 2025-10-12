@@ -1,6 +1,6 @@
 'use client';
 
-import { Box, Container, Typography, Button, Breadcrumbs, Snackbar, Alert } from '@mui/material';
+import { Box, Container, Typography, Button, Breadcrumbs, Snackbar, Alert, Divider } from '@mui/material';
 import Link from 'next/link';
 import Image from 'next/image';
 import React, { useState } from 'react';
@@ -10,6 +10,9 @@ import { ThemeProvider } from '@mui/material/styles';
 import theme from '@/styles/theme';
 import { useCart } from '@/features/cart/components/CartContext';
 import ProductCard from '@/features/home/components/ProductCard';
+import { formatPrice } from '@/utils/formatters';
+import { useRouter } from 'next/navigation';
+import { MicroCMSCategory } from '@/lib/microcms';
 
 interface ProductImage {
   id: number;
@@ -26,7 +29,7 @@ interface ProductSize {
 
 interface ProductCategory {
   id: string;
-  name: string;
+  category: string;
 }
 
 interface ProductDetailClientProps {
@@ -36,8 +39,9 @@ interface ProductDetailClientProps {
     stripe_price_id: string;
     images: ProductImage[];
     description: string;
-    category: ProductCategory;
+    category: ProductCategory[];
     sizeInventories: ProductSize[];
+    link?: string;
   };
   relatedProducts?: Array<{
     id: string;
@@ -52,16 +56,29 @@ interface ProductDetailClientProps {
     category: {
       id: string;
       category: string;
-    };
+    }[];
   }>;
+  categories: MicroCMSCategory[];
 }
 
-export default function ProductDetailClient({ product, relatedProducts = [] }: ProductDetailClientProps) {
+export default function ProductDetailClient({ product, relatedProducts = [], categories }: ProductDetailClientProps) {
   const [selectedImage, setSelectedImage] = useState<ProductImage>(product.images[0]);
-  const [selectedSize, setSelectedSize] = useState<string | null>(null);
+  const [selectedSize, setSelectedSize] = useState<string | null>(product.sizeInventories.length == 1 ? product.sizeInventories[0].size : null);
   const [showAlert, setShowAlert] = useState(false);
   const [alertMessage, setAlertMessage] = useState('');
   const [alertSeverity, setAlertSeverity] = useState<'success' | 'error'>('success');
+  const router = useRouter();
+
+  const handleCategoryClick = (e: React.MouseEvent, category: string) => {
+    e.preventDefault()
+    e.stopPropagation()
+
+    const matchedCategory = categories?.find(cat => cat.category === category)
+
+    if (matchedCategory) {
+      router.push(`/category/${matchedCategory.id}`)
+    }
+  }
 
   const { addItem } = useCart();
 
@@ -109,6 +126,8 @@ export default function ProductDetailClient({ product, relatedProducts = [] }: P
     setShowAlert(false);
   };
 
+  const isSoldOut = product.sizeInventories.every(size => size.stock === 0);
+
   return (
     <ThemeProvider theme={theme}>
       <Box
@@ -135,13 +154,13 @@ export default function ProductDetailClient({ product, relatedProducts = [] }: P
               }}
             >
               <Link href="/" passHref style={{ color: 'inherit', textDecoration: 'none' }}>
-                home
+                Home
               </Link>
               <Link href="/category" passHref style={{ color: 'inherit', textDecoration: 'none' }}>
-                store
+                Store
               </Link>
-              <Link href={`/category/${product.category.id}`} passHref style={{ color: 'inherit', textDecoration: 'none' }}>
-                {product.category.name}
+              <Link href={`/category/${product.category[0]?.id || ''}`} passHref style={{ color: 'inherit', textDecoration: 'none' }}>
+                {product.category[0]?.category || ''}
               </Link>
               <Typography color="text.primary" sx={{ fontSize: 'inherit', fontWeight: 'bold' }}>
                 {product.name}
@@ -151,7 +170,7 @@ export default function ProductDetailClient({ product, relatedProducts = [] }: P
 
           <Box sx={{ display: 'flex', flexDirection: { xs: 'column', md: 'row' }, flexWrap: { md: 'wrap' }, mx: -2 }}>
             {/* 商品画像セクション */}
-            <Box sx={{ width: { xs: '100%', md: '58.333%' }, px: 2 }}>
+            <Box sx={{ width: { xs: '100%', md: '46%' }, px: 2 }}>
               <Box sx={{ mb: 2 }}>
                 <Box
                   sx={{
@@ -159,7 +178,6 @@ export default function ProductDetailClient({ product, relatedProducts = [] }: P
                     pt: '100%',
                     position: 'relative',
                     bgcolor: '#D9D9D9',
-                    border: '1px solid rgba(0, 0, 0, 0.3)',
                   }}
                 >
                   <Box
@@ -183,7 +201,7 @@ export default function ProductDetailClient({ product, relatedProducts = [] }: P
                       style={{ aspectRatio: '1/1' }}
                       quality={95}
                       priority={true}
-                      sizes="(max-width: 768px) 100vw, (max-width: 1200px) 60vw, 50vw"
+                      sizes="(max-width: 680px) 100vw, (max-width: 1200px) 60vw, 50vw"
                     />
                   </Box>
                 </Box>
@@ -195,7 +213,7 @@ export default function ProductDetailClient({ product, relatedProducts = [] }: P
                   <Box
                     key={image.id}
                     sx={{
-                      width: '25%',
+                      width: '16.667%',
                       px: 0.5,
                       mb: 1,
                     }}
@@ -243,12 +261,12 @@ export default function ProductDetailClient({ product, relatedProducts = [] }: P
             </Box>
 
             {/* 商品詳細セクション */}
-            <Box sx={{ width: { xs: '100%', md: '41.667%' }, px: 2, mt: { xs: 4, md: 0 } }}>
+            <Box sx={{ width: { xs: '100%', md: '53%' }, px: {xs: 2, md: 6}, mt: { xs: 4, md: 0 } }}>
               <Box sx={{ position: 'relative' }}>
                 <Typography
                   variant="h1"
                   sx={{
-                    fontSize: { xs: '18px', sm: '20px' },
+                    fontSize: { xs: '22px', sm: '24px' },
                     fontWeight: 'normal',
                     mb: 1,
                   }}
@@ -256,26 +274,87 @@ export default function ProductDetailClient({ product, relatedProducts = [] }: P
                   {product.name}
                 </Typography>
 
-                <Typography
-                  sx={{
-                    fontSize: { xs: '14px', sm: '16px' },
-                    mb: 3,
-                  }}
-                >
-                  ¥ {product.stripe_price_id} (tax in)
-                </Typography>
+                <Box sx={{ mt: 3, display: 'flex', flexDirection: 'row', gap: 1, alignItems: 'center' }}>
+                  <Typography
+                    variant='body1'
+                    fontFamily='Helvetica'
+                    sx={{
+                      fontSize: { xs: '18px', sm: '20px' },
+                      fontWeight: 'bold',
+                    }}
+                  >
+                    {formatPrice(Number(product.stripe_price_id))}
+                  </Typography>
+
+                  <Typography
+                    variant="body2"
+                    sx={{
+                      fontSize: { xs: '12px', sm: '14px' }, color: 'black'
+                    }}
+                  >
+                    {`(税込)`}
+                  </Typography>
+                </Box>
+
+                {isSoldOut && (
+                  <Typography
+                    sx={{
+                      fontSize: { xs: '14px', sm: '16px' },
+                      color: '#F73644',
+                      fontWeight: "light",
+                    }}
+                  >
+                    SOLD&nbsp;OUT
+                  </Typography>
+                )}
 
                 <Typography
                   sx={{
-                    fontSize: { xs: '14px', sm: '16px' },
-                    mb: 1,
+                    mt: 4,
+                    fontSize: { xs: '12px', sm: '14px' },
                   }}
                 >
-                  size:
+                  Category:
+                </Typography>
+
+                <Box sx={{ display: 'flex', flexDirection: 'row', gap: 1, alignItems: 'center', 
+                          fontSize: { xs: '12px', sm: '14px' } }}>
+                    {product.category.map((cat, index) => (
+                      <span
+                        key={cat.id}
+                        onClick={(e) => handleCategoryClick(e, cat.category || '')} 
+                        style={{
+                          cursor: 'pointer',
+                          textDecoration: 'underline',
+                          color: 'inherit',
+                        }}
+                      >
+                        {cat.category}
+                        {index < product.category.length - 1 && ', '}
+                      </span>
+                  ))}
+                </Box>
+
+                <Typography
+                  sx={{
+                    mt: 4,
+                    fontSize: { xs: '12px', sm: '14px' },
+                  }}
+                >
+                  Size:
                 </Typography>
 
                 <Box sx={{ display: 'flex', gap: 1, mb: 3, flexWrap: 'wrap' }}>
-                  {product.sizeInventories && product.sizeInventories.map((item) => (
+                  {product.sizeInventories.length === 1 ? (
+                    <Typography
+                      sx={{
+                        fontSize: { xs: '12px', sm: '14px' },
+                        mb: 1,
+                      }}
+                    >
+                      {product.sizeInventories[0].size}
+                    </Typography>
+                    ) : (product.sizeInventories && product.sizeInventories.map((item) => (
                     <Box
                       key={item.size}
                       sx={{
@@ -283,52 +362,70 @@ export default function ProductDetailClient({ product, relatedProducts = [] }: P
                         px: 2,
                         py: 0.5,
                         fontSize: { xs: '12px', sm: '14px' },
-                        cursor: 'pointer',
-                        bgcolor: selectedSize === item.size ? 'rgba(0, 0, 0, 0.8)' : 'transparent',
-                        color: selectedSize === item.size ? 'white' : 'black',
+                        cursor: (item.stock === 0) ? 'unset' : 'pointer',
+                        bgcolor: (item.stock === 0) ? 'rgba(0, 0, 0, 0.1)' : selectedSize === item.size ? 'rgba(0, 0, 0, 0.8)' : 'transparent',
+                        color: (item.stock === 0) ? 'rgba(0, 0, 0, 0.5)' : selectedSize === item.size ? 'white' : 'black',
                         '&:hover': {
-                          bgcolor: selectedSize === item.size ? 'rgba(0, 0, 0, 0.8)' : 'rgba(0, 0, 0, 0.05)',
+                          bgcolor: (item.stock === 0) ? 'rgba(0, 0, 0, 0.1)' : selectedSize === item.size ? 'rgba(0, 0, 0, 0.8)' : 'rgba(0, 0, 0, 0.05)',
                         },
                       }}
-                      onClick={() => handleSizeSelect(item.size)}
+                      onClick={() =>
+                        item.stock > 0 && handleSizeSelect(item.size)
+                      }
                     >
                       {item.size}
                     </Box>
-                  ))}
+                  )))}
                 </Box>
 
                 {/* モバイルビューでは商品説明がカートボタンより上に表示される順序を変更 */}
                 <Box sx={{ display: { xs: 'flex', md: 'block' }, flexDirection: 'column' }}>
-                  <Box sx={{ order: { xs: 2, md: 1 } }}>
+                  <Box sx={{ order: { xs: 2, md: 1 }, mb: { xs: 2, md: 4 }, }}>
                     <Typography
                       sx={{
-                        fontSize: { xs: '14px', sm: '16px' },
-                        mb: 1,
+                        fontSize: { xs: '12px', sm: '14px' },
                       }}
                     >
-                      商品説明:
+                      Details:
                     </Typography>
 
                     <Typography
                       sx={{
-                        fontSize: { xs: '14px', sm: '16px' },
-                        mb: { xs: 2, md: 4 },
+                        fontSize: { xs: '12px', sm: '14px' },
                         lineHeight: 1.6,
                       }}
                     >
                       {product.description}
                     </Typography>
+
+                    {product.link && (
+                      <Link href={product.link} target="_blank" rel="noopener noreferrer">
+                        <Typography
+                          sx={{
+                            mt: 1,
+                            fontSize: { xs: '12px', sm: '14px' },
+                            color: '#006AFF',
+                            textDecoration: 'underline',
+                            '&:hover': {
+                              color: '#006ADD',
+                            },
+                          }}
+                        >
+                          Look Book
+                        </Typography>
+                      </Link>
+                    )}
                   </Box>
 
                   <Box sx={{ order: { xs: 1, md: 2 }, mb: { xs: 3, md: 0 } }}>
-                    <Box sx={{ my: 1, width: '100%', height: '1px', bgcolor: 'black' }} />
+                    <Box sx={{ my: 1, width: '100%', height: '0.9px', bgcolor: 'black' }} />
 
                     <Button
                       variant="contained"
                       fullWidth
                       sx={{
-                        bgcolor: 'black',
-                        color: 'white',
+                        bgcolor: isSoldOut ? '#aaa !important' : 'black',
+                        color: isSoldOut ? 'white !important' : 'white',
                         borderRadius: 0,
                         py: 1.5,
                         mt: 1.5,
@@ -337,9 +434,10 @@ export default function ProductDetailClient({ product, relatedProducts = [] }: P
                           bgcolor: 'rgba(0, 0, 0, 0.8)',
                         },
                       }}
+                      disabled={isSoldOut}
                       onClick={handleAddToCart}
                     >
-                      Add to cart
+                      {isSoldOut ? 'Out of Stock' : 'Add to cart'}
                     </Button>
                   </Box>
                 </Box>
@@ -352,15 +450,16 @@ export default function ProductDetailClient({ product, relatedProducts = [] }: P
                 <Typography 
                   variant="h2" 
                   sx={{ 
-                    fontSize: { xs: '16px', sm: '18px' }, 
-                    mb: 3, 
-                    fontWeight: 'normal',
-                    borderBottom: '1px solid black',
-                    pb: 1
+                    fontSize: { xs: '18px', sm: '20px' }, 
+                    mb: 1.5, 
+                    fontWeight: 'bold',
                   }}
                 >
-                  関連商品
+                  Related Items
                 </Typography>
+
+                <Divider sx={{ bgcolor: 'black', borderWidth: '0.9px', mb: 2 }} />
+
                 <Box sx={{ 
                   display: 'grid', 
                   gridTemplateColumns: { xs: 'repeat(3, 1fr)', md: 'repeat(4, 1fr)' },
@@ -379,22 +478,24 @@ export default function ProductDetailClient({ product, relatedProducts = [] }: P
                           height: img.height,
                           alt: img.alt
                         })),
-                        category: {
-                          id: relatedProduct.category.id,
-                          category: relatedProduct.category.category,
+                        category: relatedProduct.category.map((category) => ({
+                          id: category.id,
+                          category: category.category,
                           image: relatedProduct.images[0],
                           createdAt: '',
                           updatedAt: '',
                           publishedAt: '',
                           revisedAt: ''
-                        },
+                        })),
                         createdAt: '',
                         updatedAt: '',
                         publishedAt: '',
                         revisedAt: '',
                         description: '',
                         sizes: []
-                      }} />
+                      }}
+                      categories={categories}
+                    />
                     </Box>
                   ))}
                 </Box>

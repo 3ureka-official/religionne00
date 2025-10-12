@@ -1,7 +1,7 @@
 import React from 'react';
 import { Box, Typography, Divider, Paper } from '@mui/material';
 import { CheckoutPricing } from '@/types/checkout';
-
+import { formatPrice } from '@/utils/formatters';
 interface PricingBreakdownProps {
   pricing: CheckoutPricing;
 }
@@ -18,7 +18,7 @@ export default function PricingBreakdown({ pricing }: PricingBreakdownProps) {
             小計
           </Typography>
           <Typography variant="body2">
-            ¥{pricing.subtotal.toLocaleString()}
+            {formatPrice(pricing.subtotal)}
           </Typography>
         </Box>
         <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
@@ -26,7 +26,7 @@ export default function PricingBreakdown({ pricing }: PricingBreakdownProps) {
             送料
           </Typography>
           <Typography variant="body2">
-            ¥{pricing.shippingFee.toLocaleString()}
+            {formatPrice(pricing.shippingFee)}
           </Typography>
         </Box>
         <Divider sx={{ my: 1 }} />
@@ -35,7 +35,7 @@ export default function PricingBreakdown({ pricing }: PricingBreakdownProps) {
             合計
           </Typography>
           <Typography variant="body2" fontWeight="bold">
-            ¥{pricing.total.toLocaleString()}
+            {formatPrice(pricing.total)}
           </Typography>
         </Box>
         <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>

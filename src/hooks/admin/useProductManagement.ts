@@ -60,7 +60,7 @@ export const useProductManagement = ({
       filtered = filtered.filter(product => product.name && product.name.toLowerCase().includes(searchTerm.toLowerCase()));
     }
     if (selectedCategory) {
-      filtered = filtered.filter(product => product.category === selectedCategory);
+      filtered = filtered.filter(product => product.category.some(cat => cat === selectedCategory));
     }
     return filtered.slice((page - 1) * rowsPerPage, page * rowsPerPage);
   }, [products, searchTerm, selectedCategory, page, rowsPerPage, tabValue]);
