@@ -1,56 +1,43 @@
-import { Resend } from 'resend';
+import nodemailer from 'nodemailer';
 import { OrderData } from '@/types/Storage';
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+// Nodemailer transporter設定（Gmail使用）
+const transporter = nodemailer.createTransport({
+  service: 'gmail',
+  auth: {
+    user: process.env.ADMIN_EMAIL,
+    pass: process.env.GMAIL_APP_PASSWORD,
+  },
+});
 
 interface EmailData {
   orderData: OrderData;
   orderId: string;
 }
 
-// 環境に応じた送信者アドレスを取得
+// 環境に応じた送信者情報を取得
 const getFromEmail = () => {
-  // 本番環境（NODE_ENV=production または VERCEL_ENV=production）
-  if (process.env.NODE_ENV === 'production' || process.env.VERCEL_ENV === 'production') {
-    return process.env.FROM_EMAIL || 'noreply@yourdomain.com';
-  } else {
-    // 開発・プレビュー環境ではResendのテスト用アドレスを使用
-    return 'onboarding@resend.dev';
-  }
+  return process.env.ADMIN_EMAIL;
 };
 
+// 本番環境
 const getAdminEmail = () => {
-  // 本番環境
-  if (process.env.NODE_ENV === 'production' || process.env.VERCEL_ENV === 'production') {
-    return process.env.ADMIN_EMAIL || 'admin@yourdomain.com';
-  } else {
-    // 開発・プレビュー環境では開発者のメールアドレスを使用
-    return process.env.DEV_ADMIN_EMAIL || 'your-email@gmail.com';
-  }
+  return process.env.ADMIN_EMAIL
 };
 
+// 注文確認メール送信
 export const sendOrderConfirmationEmail = async ({ orderData, orderId }: EmailData) => {
   try {
-    const { data, error } = await resend.emails.send({
-      from: getFromEmail(),
+    const info = await transporter.sendMail({
+      from: `"注文確認" <${getFromEmail()}>`,
       to: orderData.email,
       subject: `ご注文確認 - 注文番号: ${orderId}`,
       html: generateOrderEmailHTML(orderData, orderId),
     });
 
-    if (error) {
-      console.error('Email sending failed:', {
-        orderId,
-        email: orderData.email,
-        error: error.message,
-        timestamp: new Date().toISOString(),
-      });
-      throw error;
-    }
-
-    return data;
+    return info;
   } catch (error) {
-    console.error('Detailed email error:', {
+    console.error('注文確認メール送信失敗:', {
       orderId,
       email: orderData.email,
       error: error instanceof Error ? error.message : 'Unknown error',
@@ -60,23 +47,23 @@ export const sendOrderConfirmationEmail = async ({ orderData, orderId }: EmailDa
   }
 };
 
+// 管理者通知メール送信
 export const sendAdminNotificationEmail = async ({ orderData, orderId }: EmailData) => {
   try {
-    const { data, error } = await resend.emails.send({
-      from: getFromEmail(),
+    const info = await transporter.sendMail({
+      from: `"新規注文通知" <${getFromEmail()}>`,
       to: getAdminEmail(),
-      subject: `新しい注文 - 注文番号: ${orderId}`,
+      subject: `【新規注文】注文番号: ${orderId}`,
       html: generateAdminEmailHTML(orderData, orderId),
     });
 
-    if (error) {
-      console.error('Admin notification email error:', error);
-      throw error;
-    }
-
-    return data;
+    return info;
   } catch (error) {
-    console.error('Failed to send admin notification email:', error);
+    console.error('管理者通知メール送信失敗:', {
+      orderId,
+      error: error instanceof Error ? error.message : 'Unknown error',
+      timestamp: new Date().toISOString(),
+    });
     throw error;
   }
 };
@@ -84,27 +71,16 @@ export const sendAdminNotificationEmail = async ({ orderData, orderId }: EmailDa
 // 配送完了通知メール送信
 export const sendShippingNotificationEmail = async ({ orderData, orderId }: EmailData) => {
   try {
-    const { data, error } = await resend.emails.send({
-      from: getFromEmail(),
+    const info = await transporter.sendMail({
+      from: `"発送通知" <${getFromEmail()}>`,
       to: orderData.email,
       subject: `商品を発送いたしました - 注文番号: ${orderId}`,
       html: generateShippingEmailHTML(orderData, orderId),
     });
 
-    if (error) {
-      console.error('Shipping notification email failed:', {
-        orderId,
-        email: orderData.email,
-        error: error.message,
-        timestamp: new Date().toISOString(),
-      });
-      throw error;
-    }
-
-
-    return data;
+    return info;
   } catch (error) {
-    console.error('Detailed shipping email error:', {
+    console.error('発送完了メール送信失敗:', {
       orderId,
       email: orderData.email,
       error: error instanceof Error ? error.message : 'Unknown error',
@@ -114,6 +90,7 @@ export const sendShippingNotificationEmail = async ({ orderData, orderId }: Emai
   }
 };
 
+// 注文確認メールのHTMLを生成
 const generateOrderEmailHTML = (orderData: OrderData, orderId: string) => {
   return `
     <!DOCTYPE html>
@@ -198,7 +175,7 @@ const generateOrderEmailHTML = (orderData: OrderData, orderId: string) => {
         <div style="background-color: #e3f2fd; padding: 20px; border-radius: 8px; border-left: 4px solid #2196f3;">
           <p style="margin: 0; color: #1565c0; font-size: 13px;">
             商品の発送準備が整い次第、改めて発送メールをお送りいたします。<br>
-            ご質問がございましたら、${process.env.FROM_EMAIL || 'noreply@yourdomain.com'}までお問い合わせください。
+            ご質問がございましたら、${getFromEmail()}までお問い合わせください。
           </p>
         </div>
       </div>
@@ -207,6 +184,7 @@ const generateOrderEmailHTML = (orderData: OrderData, orderId: string) => {
   `;
 };
 
+// 管理者通知メールのHTMLを生成
 const generateAdminEmailHTML = (orderData: OrderData, orderId: string) => {
   return `
     <!DOCTYPE html>
@@ -325,14 +303,14 @@ const generateShippingEmailHTML = (orderData: OrderData, orderId: string) => {
         <div style="background-color: white; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
           <h3 style="color: #2c3e50; margin-bottom: 15px; font-size: 14px;">お届け先</h3>
           <div style="background-color: #f8f9fa; padding: 15px; border-radius: 4px;">
-            <p style="margin: 0;">〒${orderData.address.postalCode}</p>
-            <p style="margin: 5px 0 0 0;">${orderData.address.prefecture}${orderData.address.city}${orderData.address.line1}</p>
-            ${orderData.address.line2 ? `<p style="margin: 5px 0 0 0;">${orderData.address.line2}</p>` : ''}
+            <p style="margin: 0; font-size: 13px;">〒${orderData.address.postalCode}</p>
+            <p style="margin: 5px 0 0 0; font-size: 13px;">${orderData.address.prefecture}${orderData.address.city}${orderData.address.line1}</p>
+            ${orderData.address.line2 ? `<p style="margin: 5px 0 0 0; font-size: 13px;">${orderData.address.line2}</p>` : ''}
           </div>
         </div>
         
-        <div style="padding: 20px; border-radius: 8px;">
-          <p style="margin: 0; font-size: 14px;">
+        <div style="background-color: #e8f5e9; padding: 20px; border-radius: 8px; border-left: 4px solid #4caf50;">
+          <p style="margin: 0; color: #2e7d32; font-size: 13px;">
             <strong>商品を発送しました。</strong><br>
             ${orderData.paymentMethod === 'cod' ? 'お支払いは商品到着時に配達員にお渡しください。<br>' : ''}
             ご不明な点がございましたら、${getFromEmail()}までお問い合わせください。
