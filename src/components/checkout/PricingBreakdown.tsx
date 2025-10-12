@@ -18,7 +18,7 @@ export default function PricingBreakdown({ pricing }: PricingBreakdownProps) {
             小計
           </Typography>
           <Typography variant="body2">
-            ¥{formatPrice(pricing.subtotal)}
+            {formatPrice(pricing.subtotal)}
           </Typography>
         </Box>
         <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
@@ -26,7 +26,7 @@ export default function PricingBreakdown({ pricing }: PricingBreakdownProps) {
             送料
           </Typography>
           <Typography variant="body2">
-            ¥{formatPrice(pricing.shippingFee)}
+            {formatPrice(pricing.shippingFee)}
           </Typography>
         </Box>
         <Divider sx={{ my: 1 }} />
@@ -35,7 +35,7 @@ export default function PricingBreakdown({ pricing }: PricingBreakdownProps) {
             合計
           </Typography>
           <Typography variant="body2" fontWeight="bold">
-            ¥{formatPrice(pricing.total)}
+            {formatPrice(pricing.total)}
           </Typography>
         </Box>
         <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
