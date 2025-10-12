@@ -1,64 +1,39 @@
 'use client'
 
-import { Box, Container, Typography, TextField, Button, Paper, IconButton, InputAdornment } from '@mui/material'
+import { Box, Container, Typography, Button, Paper, CircularProgress } from '@mui/material'
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { ThemeProvider } from '@mui/material/styles'
 import theme from '@/styles/theme'
-import VisibilityIcon from '@mui/icons-material/Visibility'
-import VisibilityOffIcon from '@mui/icons-material/VisibilityOff'
+import Image from 'next/image'
+import { signInWithGoogle } from '@/services/authService'
+import { useAuth } from '@/contexts/AuthContext'
 
 export default function AdminLoginPage() {
   const router = useRouter()
-  const [formData, setFormData] = useState({
-    username: '',
-    password: ''
-  })
+  const { user, loading: authLoading, isAuthenticated } = useAuth()
   const [error, setError] = useState('')
   const [isLoading, setIsLoading] = useState(false)
-  const [showPassword, setShowPassword] = useState(false)
 
   // すでにログインしている場合はダッシュボードにリダイレクト
   useEffect(() => {
-    const adminAuth = sessionStorage.getItem('adminAuth')
-    if (adminAuth && adminAuth === 'true') {
-      router.push('/admin/products')
+    if (!authLoading && isAuthenticated) {
+      router.push('/admin')
     }
-  }, [router])
+  }, [authLoading, isAuthenticated, router])
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }))
-  }
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
+  const handleGoogleSignIn = async () => {
     setIsLoading(true)
     setError('')
     
     try {
-      // APIエンドポイントで認証を行う
-      const response = await fetch('/api/admin/auth', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          username: formData.username,
-          password: formData.password
-        })
-      })
+      const result = await signInWithGoogle()
 
-      const result = await response.json()
-
-      if (response.ok && result.success) {
-      sessionStorage.setItem('adminAuth', 'true')
-      router.push('/admin')
-    } else {
-        setError(result.message || 'ユーザー名またはパスワードが正しくありません')
+      if (result.success && result.user) {
+        // 認証成功 - AuthContextが自動的にリダイレクトを処理
+        router.push('/admin')
+      } else {
+        setError(result.error || '認証に失敗しました')
       }
     } catch (error) {
       console.error('ログインエラー:', error)
@@ -66,6 +41,25 @@ export default function AdminLoginPage() {
     } finally {
       setIsLoading(false)
     }
+  }
+
+  // 認証状態のローディング中
+  if (authLoading) {
+    return (
+      <ThemeProvider theme={theme}>
+        <Box
+          sx={{
+            minHeight: '100vh',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            bgcolor: '#f5f5f5',
+          }}
+        >
+          <CircularProgress />
+        </Box>
+      </ThemeProvider>
+    )
   }
 
   return (
@@ -93,6 +87,9 @@ export default function AdminLoginPage() {
               <Typography variant="h5" component="h1" sx={{ fontWeight: 'bold', mb: 1 }}>
                 管理者ログイン
               </Typography>
+              <Typography variant="body2" color="text.secondary" sx={{ mt: 2 }}>
+                Googleアカウントでログインしてください
+              </Typography>
             </Box>
             
             {error && (
@@ -100,82 +97,49 @@ export default function AdminLoginPage() {
                 bgcolor: '#ffebee', 
                 color: '#c62828', 
                 p: 2, 
-                mb: 3,
-                fontSize: '0.875rem'
+                mb: 2,
+                fontSize: '0.875rem',
+                borderRadius: 1
               }}>
                 {error}
               </Box>
             )}
             
-            <form onSubmit={handleSubmit}>
-              <TextField
-                label="ユーザー名"
-                name="username"
-                fullWidth
-                margin="normal"
-                variant="outlined"
-                value={formData.username}
-                onChange={handleChange}
-                required
-                disabled={isLoading}
-                sx={{ mb: 1 }}
-                size="small"
-              />
-              <TextField
-                label="パスワード"
-                name="password"
-                type={showPassword ? 'text' : 'password'}
-                fullWidth
-                margin="normal"
-                variant="outlined"
-                value={formData.password}
-                onChange={handleChange}
-                required
-                disabled={isLoading}
-                size="small"
-                InputProps={{
-                  endAdornment: (
-                    <InputAdornment position="end">
-                      <IconButton
-                        aria-label="パスワードの表示を切り替え"
-                        onClick={() => setShowPassword(!showPassword)}
-                        onMouseDown={(e) => e.preventDefault()}
-                        edge="end"
-                        disabled={isLoading}
-                      >
-                        {showPassword ? <VisibilityOffIcon /> : <VisibilityIcon />}
-                      </IconButton>
-                    </InputAdornment>
-                  ),
-                }}
-                sx={{ mb: 3 }}
-              />
-              <Button
-                type="submit"
-                fullWidth
-                variant="contained"
-                disabled={isLoading}
-                sx={{
-                  bgcolor: 'black',
-                  color: 'white',
-                  borderRadius: 0,
-                  py: 1.5,
-                  '&:hover': {
-                    bgcolor: 'rgba(0, 0, 0, 0.8)'
-                  },
-                  '&:disabled': {
-                    bgcolor: 'rgba(0, 0, 0, 0.3)'
-                  }
-                }}
-              >
-                {isLoading ? 'ログイン中...' : 'ログイン'}
-              </Button>
-            </form>
-            
-
+            <Button
+              fullWidth
+              variant="contained"
+              disabled={isLoading}
+              onClick={handleGoogleSignIn}
+              startIcon={isLoading ? <CircularProgress size={20} /> : <GoogleIcon />}
+              sx={{
+                bgcolor: 'white',
+                color: '#333',
+                border: '1px solid #ddd',
+                borderRadius: 2,
+                py: 1.5,
+                textTransform: 'none',
+                fontSize: '1rem',
+                '&:hover': {
+                  bgcolor: '#DDD',
+                  border: '1px solid #ccc',
+                },
+                '&:disabled': {
+                  bgcolor: 'white',
+                  color: '#999'
+                }
+              }}
+            >
+              {isLoading ? 'ログイン中...' : 'Googleでログイン'}
+            </Button>
           </Paper>
         </Container>
       </Box>
     </ThemeProvider>
   )
 } 
+
+function GoogleIcon() {
+  return (
+      <Image src="/images/google-icon.svg" width={20} height={20} alt="google_img" />
+  );
+}

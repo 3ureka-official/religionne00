@@ -1,6 +1,6 @@
 'use client'
 
-import { Box, Typography, Drawer, List, ListItem, ListItemButton, ListItemIcon, ListItemText, Divider, Badge } from '@mui/material'
+import { Box, Typography, Drawer, List, ListItem, ListItemButton, ListItemIcon, ListItemText, Badge, CircularProgress } from '@mui/material'
 import { ThemeProvider } from '@mui/material/styles'
 import theme from '@/styles/theme'
 import { useState, useEffect } from 'react'
@@ -12,18 +12,23 @@ import LogoutIcon from '@mui/icons-material/Logout'
 import AssessmentIcon from '@mui/icons-material/Assessment'
 import { getOrdersByStatus } from '@/firebase/orderService'
 import { LogoutConfirmDialog } from '@/components/admin/LogoutConfirmDialog'
+import { AuthProvider, useAuth } from '@/contexts/AuthContext'
+import { signOut } from '@/services/authService'
 
-// 管理者ページのレイアウト
-export default function AdminLayout({
-  children,
-}: {
-  children: React.ReactNode
-}) {
+// 内部コンポーネント
+function AdminLayoutContent({ children }: { children: React.ReactNode }) {
   const router = useRouter()
   const pathname = usePathname()
-  const [isLoggedIn, setIsLoggedIn] = useState(false)
+  const { user, loading, isAuthenticated } = useAuth()
   const [preparingOrdersCount, setPreparingOrdersCount] = useState(0)
   const [logoutDialogOpen, setLogoutDialogOpen] = useState(false)
+
+  // 認証チェックとリダイレクト
+  useEffect(() => {
+    if (!loading && !isAuthenticated && pathname !== '/admin/login') {
+      router.push('/admin/login')
+    }
+  }, [loading, isAuthenticated, pathname, router])
 
   // 配送準備中の注文数を取得
   useEffect(() => {
@@ -37,25 +42,13 @@ export default function AdminLayout({
       }
     }
 
-    if (isLoggedIn) {
+    if (isAuthenticated) {
       fetchPreparingOrders()
       // 30秒ごとに更新
       const interval = setInterval(fetchPreparingOrders, 30000)
       return () => clearInterval(interval)
     }
-  }, [isLoggedIn])
-
-  // 管理者認証チェック（簡易版）
-  useEffect(() => {
-    const adminAuth = sessionStorage.getItem('adminAuth')
-    if (adminAuth && adminAuth === 'true') {
-      setIsLoggedIn(true)
-    } else {
-      if (pathname !== '/admin/login') {
-        router.push('/admin/login')
-      }
-    }
-  }, [router, pathname])
+  }, [isAuthenticated])
 
   // サイドメニュー項目
   const menuItems = [
@@ -70,14 +63,34 @@ export default function AdminLayout({
   ]
 
   // ログアウト処理
-  const handleLogout = () => {
-    sessionStorage.removeItem('adminAuth')
-    setIsLoggedIn(false)
-    setLogoutDialogOpen(false)
-    router.push('/admin/login')
+  const handleLogout = async () => {
+    try {
+      await signOut()
+      setLogoutDialogOpen(false)
+      router.push('/admin/login')
+    } catch (error) {
+      console.error('ログアウトエラー:', error)
+    }
   }
 
-  if (pathname === '/admin/login' || !isLoggedIn) {
+  // ローディング中
+  if (loading) {
+    return (
+      <Box
+        sx={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          minHeight: '100vh',
+        }}
+      >
+        <CircularProgress />
+      </Box>
+    )
+  }
+
+  // ログインページまたは未認証
+  if (pathname === '/admin/login' || !isAuthenticated) {
     return <>{children}</>
   }
 
@@ -185,5 +198,18 @@ export default function AdminLayout({
         />
       </Box>
     </ThemeProvider>
+  )
+}
+
+// 管理者ページのレイアウト
+export default function AdminLayout({
+  children,
+}: {
+  children: React.ReactNode
+}) {
+  return (
+    <AuthProvider>
+      <AdminLayoutContent>{children}</AdminLayoutContent>
+    </AuthProvider>
   )
 } 
