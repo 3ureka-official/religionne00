@@ -64,7 +64,12 @@ export const ShippedProductTable = ({ shippedOrders, onDetail }: ShippedProductT
               <TableCell>{formatTimestamp(order?.shippedDate)}</TableCell>
               <TableCell>{order?.items && Array.isArray(order.items) ? order.items.length : 0}点</TableCell>
               <TableCell>¥{order?.total ? Number(order.total).toLocaleString() : 0}</TableCell>
-              <TableCell>{order.paymentMethod === 'stripe_credit_card' ? 'クレジットカード' : order.paymentMethod === 'cod' ? '代引き' : 'PayPay'}</TableCell>
+              <TableCell>
+                {order.paymentMethod === 'credit' ? 'クレジットカード' : 
+                order.paymentMethod === 'cod' ? '代引き' : 
+                order.paymentMethod === 'paypay' ? 'PayPay' :
+                'その他'}
+              </TableCell>
             </TableRow>
           ))
         ) : (

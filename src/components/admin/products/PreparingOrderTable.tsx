@@ -69,7 +69,12 @@ export const PreparingOrderTable = ({ orders, onDetail, onShippingConfirm }: Pre
                 <TableCell>{formatTimestamp(order?.createdAt)}</TableCell>
                 <TableCell>{order?.items && Array.isArray(order.items) ? order.items.length : 0}点</TableCell>
                 <TableCell>¥{order?.total ? Number(order.total).toLocaleString() : 0}</TableCell>
-                <TableCell>{'paymentMethod' in order && order.paymentMethod === 'credit' ? 'クレジットカード' : order.paymentMethod === 'cod' ? '代引き' : 'その他'}</TableCell>
+                <TableCell>
+                  {'paymentMethod' in order && order.paymentMethod === 'credit' ? 'クレジットカード' : 
+                  order.paymentMethod === 'cod' ? '代引き' : 
+                  order.paymentMethod === 'paypay' ? 'PayPay' :
+                  'その他'}
+                </TableCell>
                 <TableCell align="center">
                   <IconButton size="small" onClick={(e) => { e.stopPropagation(); onShippingConfirm(order)}} sx={{ color: 'text.primary' }} title="配送済みにする">
                     <LocalShippingIcon fontSize="small" />
