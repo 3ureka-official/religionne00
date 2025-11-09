@@ -2,6 +2,8 @@ import { Dialog, DialogTitle, DialogContent, DialogActions, Button, Box, Typogra
 import Image from 'next/image';
 import { Order, OrderItem } from '@/firebase/orderService'; // Order型とOrderItem型をインポート
 import { Timestamp, FieldValue } from 'firebase/firestore'; // Timestamp型とFieldValue型をインポート
+import { RefundConfirmDialog } from './RefundConfirmDialog';
+import { useState } from 'react';
 
 // Firebase Timestampの型定義 (page.tsxからコピー)
 interface FirebaseTimestamp {
@@ -44,6 +46,8 @@ export interface OrderDetailModalProps {
   order: Order | null;
   tabValue: number; // 1: 配送準備中, 2: 配送済み
   onShippingConfirm?: (order: Order) => void;
+  onRefund?: (orderId: string, amount?: number) => Promise<void>;
+  isProcessingRefund?: boolean;
 }
 
 export const OrderDetailModal = ({
@@ -51,9 +55,30 @@ export const OrderDetailModal = ({
   onClose,
   order,
   tabValue,
-  onShippingConfirm
+  onShippingConfirm,
+  onRefund,
+  isProcessingRefund = false
 }: OrderDetailModalProps) => {
+  const [refundDialogOpen, setRefundDialogOpen] = useState(false);
+
   if (!order) return null;
+
+  // Stripe決済かどうかを判定
+  const isStripePayment = order.paymentMethod === 'credit' || order.paymentMethod === 'paypay';
+  // 返金可能かどうかを判定（Stripe決済で、まだ返金されていない場合）
+  const canRefund = isStripePayment && order.status !== 'refunded' && !order.refundedAmount;
+
+  const handleRefundClick = () => {
+    setRefundDialogOpen(true);
+  };
+
+  const handleRefundConfirm = async (amount?: number) => {
+    if (onRefund && order.id) {
+      await onRefund(order.id, amount);
+      setRefundDialogOpen(false);
+      onClose();
+    }
+  };
 
   // モーダルタイトルを取得
   const getModalTitle = () => {
@@ -216,15 +241,45 @@ export const OrderDetailModal = ({
                     order.paymentMethod === 'paypay' ? 'PayPay' : 'その他'}
                   </Typography>
                 </Box>
+                {order.status === 'refunded' && order.refundedAmount && (
+                  <Box>
+                    <Typography variant="body2" color="text.secondary">返金情報</Typography>
+                    <Typography variant="body1" color="error">
+                      返金済み（¥{order.refundedAmount.toLocaleString()}）
+                    </Typography>
+                    {order.refundedAt && (
+                      <Typography variant="body2" color="text.secondary">
+                        返金日: {formatTimestamp(order.refundedAt)}
+                      </Typography>
+                    )}
+                  </Box>
+                )}
               </Box>
             </Box>
           </Box>
         )}
       </DialogContent>
-      <DialogActions sx={{ borderTop: '1px solid #e0e0e0', p: { xs: 2, sm: 3 } }}>
+      <DialogActions sx={{ borderTop: '1px solid #e0e0e0', p: { xs: 2, sm: 3 }, gap: 1 }}>
         <Button onClick={onClose} sx={{ width: 150, borderRadius: 0, color: '#006AFF', border: '1px solid #006AFF' }}>
           閉じる
         </Button>
+        {canRefund && onRefund && (
+          <Button 
+            variant="contained"
+            onClick={handleRefundClick}
+            sx={{ 
+              bgcolor: '#d32f2f',
+              color: 'white',
+              borderRadius: 0,
+              width: 150,
+              '&:hover': {
+                bgcolor: '#b71c1c'
+              }
+            }}
+          >
+            返金する
+          </Button>
+        )}
         {tabValue === 1 && onShippingConfirm && (
           <Button 
             variant="contained"
@@ -245,8 +300,15 @@ export const OrderDetailModal = ({
             配送済みにする
           </Button>
         )}
-        
       </DialogActions>
+      
+      <RefundConfirmDialog
+        open={refundDialogOpen}
+        onClose={() => setRefundDialogOpen(false)}
+        onConfirm={handleRefundConfirm}
+        order={order}
+        isProcessing={isProcessingRefund}
+      />
     </Dialog>
   );
 }; 
