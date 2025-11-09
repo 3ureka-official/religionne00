@@ -1,7 +1,7 @@
 // app/api/webhook/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import Stripe from "stripe";
-import { getOrderById, updateOrderStatus } from '@/firebase/orderService';
+import { getOrderById, updateOrderStatus, updateOrderPaymentIntentId } from '@/firebase/orderService';
 import { sendAdminNotificationEmail, sendOrderConfirmationEmail } from "@/services/emailService";
 
 export const runtime = "nodejs";
@@ -63,6 +63,9 @@ export async function POST(req: NextRequest) {
             const order = await getOrderById(orderId);
             
             if (order) {
+              // PaymentIntent IDを保存
+              await updateOrderPaymentIntentId(orderId, paymentIntent.id);
+              
               // 注文ステータスを'processing'に更新
               await updateOrderStatus(orderId, 'processing');
               
