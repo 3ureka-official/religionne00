@@ -41,7 +41,8 @@ export const useOrderManagement = ({
     try {
       setLoadingOrders(true);
       const ordersData = await getAllOrders();
-      const processingOrdersData = ordersData.filter(order => order.status === 'processing' || order.status === 'pending');
+      // pendingステータスは決済待ちなので除外（決済完了後はprocessingに更新される）
+      const processingOrdersData = ordersData.filter(order => order.status === 'processing');
       setPreparingOrders(processingOrdersData);
 
       const shippedData = await getOrdersByStatus('shipped');
