@@ -13,16 +13,20 @@ interface UseOrderManagementProps {
 export interface OrderManagementState {
   preparingOrders: Order[];
   shippedOrders: Order[];
+  refundedOrders: Order[];
   displayOrders: Order[];
   displayShipped: Order[];
+  displayRefunded: Order[];
   loadingOrders: boolean;
   errorOrders: string | null;
   isProcessingShipping: boolean;
+  isProcessingRefund: boolean;
 }
 
 export interface OrderManagementActions {
   fetchOrdersAndShippedProducts: () => Promise<void>;
   handleMarkAsShipped: (order: Order, callback?: () => void) => Promise<void>;
+  handleRefund: (orderId: string, amount?: number) => Promise<void>;
 }
 
 export const useOrderManagement = ({
@@ -33,19 +37,26 @@ export const useOrderManagement = ({
 }: UseOrderManagementProps): [OrderManagementState, OrderManagementActions] => {
   const [preparingOrders, setPreparingOrders] = useState<Order[]>([]);
   const [shippedOrders, setShippedOrders] = useState<Order[]>([]);
+  const [refundedOrders, setRefundedOrders] = useState<Order[]>([]);
   const [loadingOrders, setLoadingOrders] = useState(true);
   const [errorOrders, setErrorOrders] = useState<string | null>(null);
   const [isProcessingShipping, setIsProcessingShipping] = useState(false);
+  const [isProcessingRefund, setIsProcessingRefund] = useState(false);
 
   const fetchOrdersAndShippedProducts = async () => {
     try {
       setLoadingOrders(true);
       const ordersData = await getAllOrders();
-      const processingOrdersData = ordersData.filter(order => order.status === 'processing' || order.status === 'pending');
+      // pendingステータスは決済待ちなので除外（決済完了後はprocessingに更新される）
+      const processingOrdersData = ordersData.filter(order => order.status === 'processing');
       setPreparingOrders(processingOrdersData);
 
       const shippedData = await getOrdersByStatus('shipped');
       setShippedOrders(shippedData);
+
+      const refundedData = await getOrdersByStatus('refunded');
+      setRefundedOrders(refundedData);
+      
       setErrorOrders(null);
     } catch (err) {
       console.error('注文データまたは配送済み商品の取得に失敗しました:', err);
@@ -80,6 +91,19 @@ export const useOrderManagement = ({
     }
     return filtered.slice((page - 1) * rowsPerPage, page * rowsPerPage);
   }, [shippedOrders, searchTerm, page, rowsPerPage, tabValue]);
+
+  const displayRefunded = useMemo(() => {
+    if (tabValue !== 3) return [];
+    let filtered = [...refundedOrders];
+    if (searchTerm) {
+      filtered = filtered.filter(order =>
+        (order.customer && order.customer.toLowerCase().includes(searchTerm.toLowerCase())) ||
+        (order.email && order.email.toLowerCase().includes(searchTerm.toLowerCase())) ||
+        (order.items && order.items.some((item: OrderItem) => item.name && item.name.toLowerCase().includes(searchTerm.toLowerCase())))
+      );
+    }
+    return filtered.slice((page - 1) * rowsPerPage, page * rowsPerPage);
+  }, [refundedOrders, searchTerm, page, rowsPerPage, tabValue]);
 
   const handleMarkAsShipped = async (order: Order, callback?: () => void) => {
     // 既に処理中の場合は何もしない
@@ -134,19 +158,61 @@ export const useOrderManagement = ({
     }
   };
 
+  const handleRefund = async (orderId: string, amount?: number) => {
+    // 既に処理中の場合は何もしない
+    if (isProcessingRefund) {
+      return;
+    }
+
+    try {
+      setIsProcessingRefund(true);
+      setErrorOrders(null);
+
+      // 返金APIを呼び出し
+      const response = await fetch('/api/refund', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ orderId, amount })
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || '返金処理に失敗しました');
+      }
+
+      // 注文リストを再取得
+      await fetchOrdersAndShippedProducts();
+
+      alert(`返金が完了しました。返金額: ¥${data.refundAmount.toLocaleString()}`);
+
+    } catch (err) {
+      console.error('返金処理に失敗しました:', err);
+      const errorMessage = err instanceof Error ? err.message : '返金処理に失敗しました';
+      setErrorOrders(errorMessage);
+      alert(errorMessage);
+    } finally {
+      setIsProcessingRefund(false);
+    }
+  };
+
   const state: OrderManagementState = {
     preparingOrders,
     shippedOrders,
+    refundedOrders,
     displayOrders,
     displayShipped,
+    displayRefunded,
     loadingOrders,
     errorOrders,
     isProcessingShipping,
+    isProcessingRefund,
   };
 
   const actions: OrderManagementActions = {
     fetchOrdersAndShippedProducts,
     handleMarkAsShipped,
+    handleRefund,
   };
 
   return [state, actions];

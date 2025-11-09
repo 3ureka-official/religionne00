@@ -14,6 +14,7 @@ import { MicroCMSSettings } from '@/lib/microcms'
 import styles from '@/styles/prose'
 import { OrderInfo, PaymentInfo } from '@/types/Storage'
 import Image from 'next/image'
+import { formatPrice } from '@/utils/formatters'
 
 export default function OrderCompleteClient({settings}: {settings: MicroCMSSettings}) {
   const router = useRouter()
@@ -170,6 +171,7 @@ export default function OrderCompleteClient({settings}: {settings: MicroCMSSetti
                     <Typography variant="body1">
                       {orderInfo.paymentMethod === 'cod' ? '代引き' : 
                       orderInfo.paymentMethod === 'credit' ? 'クレジットカード' : 
+                      orderInfo.paymentMethod === 'paypay' ? 'PayPay' :
                       'その他'}
                     </Typography>
                   </Box>
@@ -189,7 +191,7 @@ export default function OrderCompleteClient({settings}: {settings: MicroCMSSetti
                       <Typography sx={{ mb: 1, fontSize: { xs: '13px', sm: '14px' } }}>{item.name}</Typography>
                       <Typography sx={{ mb: 1, fontSize: { xs: '13px', sm: '14px' } }}>{item.size}</Typography>
                       <Typography sx={{ mb: 1, fontSize: { xs: '13px', sm: '14px' } }}>{item.quantity}個</Typography> 
-                      <Typography sx={{ mb: 1, fontSize: { xs: '13px', sm: '14px' } }}>{Number(item.price) * item.quantity}円</Typography>
+                      <Typography sx={{ mb: 1, fontSize: { xs: '13px', sm: '14px' } }}>{formatPrice(Number(item.price) * item.quantity)}</Typography>
                     </Box>
                   ))}
                 </Box>

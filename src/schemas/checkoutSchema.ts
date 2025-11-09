@@ -53,7 +53,7 @@ export const checkoutSchema = yup.object().shape({
   paymentMethod: yup
     .string()
     .required("支払い方法を選択してください")
-    .oneOf(["credit", "cod"], "有効な支払い方法を選択してください"),
+    .oneOf(["credit", "cod", "paypay"], "有効な支払い方法を選択してください"),
 });
 
 export type ProductDetailFormData = yup.InferType<typeof productDetailSchema>;

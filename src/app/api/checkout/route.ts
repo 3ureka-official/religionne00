@@ -7,10 +7,21 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
 
 export async function POST(request: Request) {
   try {
-    const { items, email, shippingFee, orderId } = await request.json()
+    const { items, email, shippingFee, orderId, paymentMethod } = await request.json()
+    
+    // payment_method_typesを動的に設定
+    const paymentMethodTypes: Stripe.Checkout.SessionCreateParams.PaymentMethodType[] = []
+    if (paymentMethod === 'credit') {
+      paymentMethodTypes.push('card')
+    } else if (paymentMethod === 'paypay') {
+      paymentMethodTypes.push('paypay' as Stripe.Checkout.SessionCreateParams.PaymentMethodType)
+    } else {
+      // デフォルトはカード
+      paymentMethodTypes.push('card')
+    }
     
     const session = await stripe.checkout.sessions.create({
-      payment_method_types: ['card'],
+      payment_method_types: paymentMethodTypes,
       line_items: items.map((item: any) => ({
         price_data: {
           currency: 'jpy',
@@ -30,7 +41,7 @@ export async function POST(request: Request) {
       customer_email: email,
       success_url: `${process.env.NEXT_PUBLIC_APP_URL}/checkout/complete`,
       cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/checkout/confirm`,
-      metadata: { orderId },
+      metadata: { orderId, paymentMethod: paymentMethod || 'credit' },
     })
 
     return NextResponse.json({ sessionId: session.id })

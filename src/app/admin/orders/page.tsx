@@ -5,6 +5,7 @@ import { useState } from 'react'
 import { Order } from '@/firebase/orderService'
 import { PreparingOrderTable } from '@/components/admin/products/PreparingOrderTable'
 import { ShippedProductTable } from '@/components/admin/products/ShippedProductTable'
+import { RefundedOrderTable } from '@/components/admin/products/RefundedOrderTable'
 import { OrderDetailModal } from '@/components/admin/products/OrderDetailModal'
 import { ShippingConfirmDialog } from '@/components/admin/products/ShippingConfirmDialog'
 import { useAdminPageUI } from '@/hooks/admin/useAdminPageUI'
@@ -53,25 +54,29 @@ export default function AdminOrdersPage() {
     }
   ] = useAdminPageUI()
 
-  // 注文管理フックを使用（tabValueを1または2に設定）
+  // 注文管理フックを使用（tabValueを1、2、3に設定）
   const [
     {
       preparingOrders,
       shippedOrders,
+      refundedOrders,
       displayOrders,
       displayShipped,
+      displayRefunded,
       loadingOrders,
       errorOrders,
-      isProcessingShipping
+      isProcessingShipping,
+      isProcessingRefund
     },
     {
-      handleMarkAsShipped
+      handleMarkAsShipped,
+      handleRefund
     }
   ] = useOrderManagement({
     searchTerm: '',
     page,
     rowsPerPage,
-    tabValue: tabValue + 1 // 0 → 1（配送準備中）, 1 → 2（配送済み）
+    tabValue: tabValue + 1 // 0 → 1（配送準備中）, 1 → 2（配送済み）, 2 → 3（返金済み）
   })
 
   const handleTabChange = (_event: React.SyntheticEvent, newValue: number) => {
@@ -102,6 +107,10 @@ export default function AdminOrdersPage() {
             label={`配送済み  (${shippedOrders.length})`}
             sx={{ textTransform: 'none', fontWeight: tabValue === 1 ? 'bold' : 'normal' }} 
           />
+          <Tab 
+            label={`返金済み  (${refundedOrders.length})`}
+            sx={{ textTransform: 'none', fontWeight: tabValue === 2 ? 'bold' : 'normal' }} 
+          />
         </Tabs>
       </Box>
 
@@ -126,6 +135,13 @@ export default function AdminOrdersPage() {
           <TabPanel value={tabValue} index={1}>
             <ShippedProductTable
               shippedOrders={displayShipped}
+              onDetail={openShippedOrderDetail}
+            />
+          </TabPanel>
+          
+          <TabPanel value={tabValue} index={2}>
+            <RefundedOrderTable
+              refundedOrders={displayRefunded}
               onDetail={openShippedOrderDetail}
             />
           </TabPanel>
@@ -154,6 +170,18 @@ export default function AdminOrdersPage() {
               />
             </Box>
           )}
+          
+          {tabValue === 2 && refundedOrders.length > 0 && (
+            <Box sx={{ display: 'flex', justifyContent: 'center' }}>
+              <Pagination
+                count={Math.ceil(refundedOrders.length / rowsPerPage)}
+                page={page}
+                onChange={handlePageChange}
+                color="standard"
+                shape="rounded"
+              />
+            </Box>
+          )}
         </>
       )}
 
@@ -162,8 +190,10 @@ export default function AdminOrdersPage() {
         open={detailModalOpen}
         onClose={closeDetailModal}
         order={(tabValue === 0 ? selectedOrder : selectedShipped) as Order}
-        tabValue={tabValue === 0 ? 1 : 2}
+        tabValue={tabValue === 0 ? 1 : tabValue === 1 ? 2 : 3}
         onShippingConfirm={tabValue === 0 ? openShippingConfirm : undefined}
+        onRefund={handleRefund}
+        isProcessingRefund={isProcessingRefund}
       />
 
       <ShippingConfirmDialog

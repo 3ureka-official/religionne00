@@ -53,7 +53,7 @@ export default function OrderSummary({ items }: OrderSummaryProps) {
                   </Typography>
                 </Box>
                 <Typography sx={{ fontSize: '14px', mt: 1, fontWeight: 'medium' }}>
-                  ¥{formatPrice(Number(item.price || 0) * item.quantity)}
+                  {formatPrice(Number(item.price || 0) * item.quantity)}
                 </Typography>
               </Box>
             </Box>

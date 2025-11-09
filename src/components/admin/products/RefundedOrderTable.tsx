@@ -1,4 +1,4 @@
-import { Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Button, Box, Typography } from '@mui/material';
+import { Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography } from '@mui/material';
 import { Order } from '@/firebase/orderService';
 import { Timestamp, FieldValue } from 'firebase/firestore';
 
@@ -17,7 +17,9 @@ const formatTimestamp = (timestamp: Timestamp | FieldValue | null | undefined): 
     return timestamp.toDate().toLocaleDateString('ja-JP', {
       year: 'numeric',
       month: '2-digit',
-      day: '2-digit'
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit'
     });
   }
   
@@ -26,19 +28,21 @@ const formatTimestamp = (timestamp: Timestamp | FieldValue | null | undefined): 
     return (timestamp as unknown as FirebaseTimestamp).toDate().toLocaleDateString('ja-JP', {
       year: 'numeric',
       month: '2-digit',
-      day: '2-digit'
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit'
     });
   }
   
   return '-';
 };
 
-interface ShippedProductTableProps {
-  shippedOrders: Order[];
+interface RefundedOrderTableProps {
+  refundedOrders: Order[];
   onDetail: (order: Order) => void;
 }
 
-export const ShippedProductTable = ({ shippedOrders, onDetail }: ShippedProductTableProps) => (
+export const RefundedOrderTable = ({ refundedOrders, onDetail }: RefundedOrderTableProps) => (
   <TableContainer component={Paper} sx={{ mb: 3, borderRadius: 0, border: '1px solid #e0e0e0', boxShadow: 'none' }}>
     <Table>
       <TableHead>
@@ -47,39 +51,43 @@ export const ShippedProductTable = ({ shippedOrders, onDetail }: ShippedProductT
           <TableCell>顧客名</TableCell>
           <TableCell>メールアドレス</TableCell>
           <TableCell>注文日</TableCell>
-          <TableCell>配送日</TableCell>
+          <TableCell>返金日</TableCell>
           <TableCell>商品数</TableCell>
-          <TableCell>合計金額</TableCell>
+          <TableCell>注文金額</TableCell>
+          <TableCell>返金額</TableCell>
           <TableCell>支払方法</TableCell>
         </TableRow>
       </TableHead>
       <TableBody>
-        {shippedOrders.length > 0 ? (
-          shippedOrders.map(order => (
+        {refundedOrders.length > 0 ? (
+          refundedOrders.map(order => (
             <TableRow onClick={() => onDetail(order)} key={order.id} sx={{ '&:hover': { bgcolor: '#f9f9f9' }, cursor: 'pointer', height: '60px' }}>
               <TableCell>{order?.id || '不明'}</TableCell>
               <TableCell>{order?.customer || '不明'}</TableCell>
               <TableCell>{order?.email || '不明'}</TableCell>
               <TableCell>{formatTimestamp(order?.createdAt)}</TableCell>
-              <TableCell>{formatTimestamp(order?.shippedDate)}</TableCell>
+              <TableCell>{formatTimestamp(order?.refundedAt)}</TableCell>
               <TableCell>{order?.items && Array.isArray(order.items) ? order.items.length : 0}点</TableCell>
               <TableCell>¥{order?.total ? Number(order.total).toLocaleString() : 0}</TableCell>
+              <TableCell sx={{ color: 'error.main', fontWeight: 'bold' }}>
+                ¥{order?.refundedAmount ? Number(order.refundedAmount).toLocaleString() : order?.total ? Number(order.total).toLocaleString() : 0}
+              </TableCell>
               <TableCell>
                 {order.paymentMethod === 'credit' ? 'クレジットカード' : 
-                order.paymentMethod === 'cod' ? '代引き' : 
-                order.paymentMethod === 'paypay' ? 'PayPay' :
-                'その他'}
+                 order.paymentMethod === 'cod' ? '代引き' : 
+                 order.paymentMethod === 'paypay' ? 'PayPay' : 'その他'}
               </TableCell>
             </TableRow>
           ))
         ) : (
           <TableRow>
             <TableCell colSpan={9} align="center" sx={{ py: 4 }}>
-              <Typography color="text.secondary">配送済み商品がありません</Typography>
+              <Typography color="text.secondary">返金済みの注文がありません</Typography>
             </TableCell>
           </TableRow>
         )}
       </TableBody>
     </Table>
   </TableContainer>
-); 
+);
+

@@ -1,7 +1,7 @@
 // app/api/webhook/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import Stripe from "stripe";
-import { addOrder } from '@/firebase/orderService';
+import { getOrderById, updateOrderStatus, updateOrderPaymentIntentId } from '@/firebase/orderService';
 import { sendAdminNotificationEmail, sendOrderConfirmationEmail } from "@/services/emailService";
 
 export const runtime = "nodejs";
@@ -54,26 +54,52 @@ export async function POST(req: NextRequest) {
           });
           
           const session = sessions.data[0];
-          if (session?.metadata?.orderData) {
-            // セッションメタデータから注文データを復元
-            const orderData = JSON.parse(session.metadata.orderData);
+          if (session?.metadata?.orderId) {
+            // セッションメタデータからorderIdを取得
+            const orderId = session.metadata.orderId;
+            const paymentMethod = session.metadata.paymentMethod || 'credit';
             
-            // 決済成功時に初めて注文を作成
-            const orderId = await addOrder(orderData, 'processing');
+            // 既存の注文を取得
+            const order = await getOrderById(orderId);
+            
+            if (order) {
+              // PaymentIntent IDを保存
+              await updateOrderPaymentIntentId(orderId, paymentIntent.id);
+              
+              // 注文ステータスを'processing'に更新
+              await updateOrderStatus(orderId, 'processing');
+              
+              // 注文データを準備（メール送信用）
+              const orderData = {
+                customer: order.customer,
+                email: order.email,
+                phone: order.phone || '',
+                total: order.total,
+                shippingFee: order.shippingFee,
+                items: order.items,
+                address: {
+                  ...order.address,
+                  line2: order.address.line2 || ''
+                },
+                paymentMethod: paymentMethod
+              };
 
-            try {
-              await Promise.all([
-                sendOrderConfirmationEmail({ orderData, orderId }),
-                sendAdminNotificationEmail({ orderData, orderId })
-              ]);
-            } catch (emailError) {
-              console.error('Email sending failed:', emailError);
+              try {
+                await Promise.all([
+                  sendOrderConfirmationEmail({ orderData, orderId }),
+                  sendAdminNotificationEmail({ orderData, orderId })
+                ]);
+              } catch (emailError) {
+                console.error('Email sending failed:', emailError);
+              }
+              
+              return NextResponse.json({
+                received: true,
+                message: 'Payment succeeded, order updated and confirmed'
+              });
+            } else {
+              console.error(`Order not found: ${orderId}`);
             }
-            
-            return NextResponse.json({
-              received: true,
-              message: 'Payment succeeded, order created and confirmed'
-            });
           }
         } catch (error) {
           console.error('Error processing payment_intent.succeeded:', error);
