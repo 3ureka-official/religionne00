@@ -210,7 +210,11 @@ export const OrderDetailModal = ({
                 )}
                 <Box>
                   <Typography variant="body2" color="text.secondary">支払い方法</Typography>
-                  <Typography variant="body1">{order.paymentMethod === 'credit' ? 'クレジットカード' : order.paymentMethod === 'cod' ? '代引き' : 'その他'}</Typography>
+                  <Typography variant="body1">
+                    {order.paymentMethod === 'credit' ? 'クレジットカード' : 
+                    order.paymentMethod === 'cod' ? '代引き' : 
+                    order.paymentMethod === 'paypay' ? 'PayPay' : 'その他'}
+                  </Typography>
                 </Box>
               </Box>
             </Box>

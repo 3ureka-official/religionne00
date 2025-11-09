@@ -166,13 +166,18 @@ export const getTotalSales = async () => {
 };
 
 // 注文を追加
-export const addOrder = async (orderData: Omit<Order, 'id' | 'date' | 'status' | 'createdAt' | 'updatedAt'>, status: string = 'processing') => {
+export const addOrder = async (
+  orderData: Omit<Order, 'id' | 'date' | 'status' | 'createdAt' | 'updatedAt'>, 
+  status: string = 'processing',
+  stripeOrderId: string
+) => {
   try {
     // 注文データを準備
     const newOrder = {
       ...orderData,
       date: serverTimestamp(),
       status: status,
+      stripeOrderId: stripeOrderId,
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp()
     };

@@ -171,6 +171,7 @@ export default function OrderCompleteClient({settings}: {settings: MicroCMSSetti
                     <Typography variant="body1">
                       {orderInfo.paymentMethod === 'cod' ? '代引き' : 
                       orderInfo.paymentMethod === 'credit' ? 'クレジットカード' : 
+                      orderInfo.paymentMethod === 'paypay' ? 'PayPay' :
                       'その他'}
                     </Typography>
                   </Box>
