@@ -24,7 +24,7 @@ export interface Order {
   phone?: string;
   date: Timestamp | null;
   total: number;
-  status: 'pending' | 'processing' | 'shipped' | 'delivered' | 'cancelled';
+  status: 'pending' | 'processing' | 'shipped' | 'delivered' | 'cancelled' | 'refunded';
   items: OrderItem[];
   address: {
     postalCode: string;
@@ -41,6 +41,10 @@ export interface Order {
   shippedDate?: Timestamp | null;
   deliveredDate?: Timestamp | null;
   trackingNumber?: string;
+  // 決済・返金関連の追加フィールド
+  paymentIntentId?: string;
+  refundedAt?: Timestamp | null;
+  refundedAmount?: number;
 }
 
 // 注文アイテムの型定義
@@ -129,6 +133,7 @@ export const getOrderCountsByStatus = async () => {
       shipped: 0,
       delivered: 0,
       cancelled: 0,
+      refunded: 0,
       total: orders.length
     };
     
@@ -241,6 +246,42 @@ export const updateOrderStatus = async (orderId: string, newStatus: string): Pro
     await updateDoc(orderRef, updateData);
   } catch (error) {
     console.error(`Error updating order status for ID (${orderId}):`, error);
+    throw error;
+  }
+};
+
+// PaymentIntent IDを更新する関数
+export const updateOrderPaymentIntentId = async (orderId: string, paymentIntentId: string): Promise<void> => {
+  try {
+    const orderRef = doc(db, 'orders', orderId);
+    await updateDoc(orderRef, {
+      paymentIntentId,
+      updatedAt: serverTimestamp(),
+    });
+  } catch (error) {
+    console.error(`Error updating paymentIntentId for order ID (${orderId}):`, error);
+    throw error;
+  }
+};
+
+// 返金情報を更新する関数
+export const updateOrderRefund = async (
+  orderId: string,
+  refundedAmount: number,
+  status: 'refunded' | 'cancelled' = 'refunded'
+): Promise<void> => {
+  try {
+    const orderRef = doc(db, 'orders', orderId);
+    const updateData: UpdateData<Order> = {
+      status: status as Order['status'],
+      refundedAmount,
+      refundedAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
+    };
+    
+    await updateDoc(orderRef, updateData);
+  } catch (error) {
+    console.error(`Error updating refund info for order ID (${orderId}):`, error);
     throw error;
   }
 };
