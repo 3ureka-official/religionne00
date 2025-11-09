@@ -150,6 +150,9 @@ export default function CheckoutClientPage({ settings }: { settings: MicroCMSSet
       case 'cod':
         apiPaymentMethodType = 'cod';
         break;
+      case 'paypay':
+        apiPaymentMethodType = 'stripe_paypay';
+        break;
       default:
         alert('不明な支払い方法です。');
         return;
@@ -509,6 +512,12 @@ export default function CheckoutClientPage({ settings }: { settings: MicroCMSSet
                           value="credit" 
                           control={<Radio />} 
                           label="クレジットカード" 
+                          sx={{ '& .MuiTypography-root': { fontSize: '14px', fontWeight: 500 } }}
+                        />
+                        <FormControlLabel 
+                          value="paypay" 
+                          control={<Radio />} 
+                          label="PayPay" 
                           sx={{ '& .MuiTypography-root': { fontSize: '14px', fontWeight: 500 } }}
                         />
                         <FormControlLabel 

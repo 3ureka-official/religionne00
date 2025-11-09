@@ -101,7 +101,7 @@ const handleCompleteCodOrder = async (
     }
     
     // 直接Firebaseに保存
-    const orderId = await addOrder(orderData, 'processing')
+    const orderId = await addOrder(orderData, 'processing', '')
 
     try {
       await fetch('/api/send-email', {
@@ -139,6 +139,9 @@ const handleStripeCheckout = async (
     const orderItems = createOrderItems(items)
     const addressInfo = parseAddress(orderInfo.address)
     
+    // paymentMethodを動的に設定（'credit'または'paypay'）
+    const paymentMethod = orderInfo.paymentMethod === 'paypay' ? 'paypay' : 'credit'
+    
     const orderData: OrderData = {
       customer: orderInfo.name,
       email: orderInfo.email,
@@ -150,11 +153,11 @@ const handleStripeCheckout = async (
         postalCode: orderInfo.postalCode,
         ...addressInfo
       },
-      paymentMethod: 'credit'
+      paymentMethod: paymentMethod
     }
     
     // 1. まず注文をFirebaseに作成
-    const orderId = await addOrder(orderData, 'pending')
+    const orderId = await addOrder(orderData, 'pending', '')
     
     // 2. Stripe Checkout Sessionを作成
     const stripe = await import('@stripe/stripe-js').then(m => 
@@ -171,7 +174,8 @@ const handleStripeCheckout = async (
         items: orderItems,
         email: orderInfo.email,
         shippingFee,
-        orderId
+        orderId,
+        paymentMethod: paymentMethod
       })
     })
     
