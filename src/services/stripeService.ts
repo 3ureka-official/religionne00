@@ -1,68 +1,24 @@
 import Stripe from 'stripe';
 
-// Stripeの初期化 - 環境変数チェックとエラーハンドリング強化
-let stripe: Stripe;
+const isServer = typeof window === 'undefined';
+let stripeInstance: Stripe | null = null;
 
-try {
-  const stripeKey = process.env.STRIPE_SECRET_KEY;
-  
-  if (!stripeKey) {
-    console.error('⚠️ STRIPE_SECRET_KEY環境変数が設定されていません。Stripe機能は動作しません。');
-    // ダミーのStripeインスタンスをより安全に作成
-    stripe = {
-      products: {
-        create: () => { 
-          throw new Error('STRIPE_SECRET_KEYが設定されていないため、Stripe APIを使用できません。');
-        },
-        update: () => {
-          throw new Error('STRIPE_SECRET_KEYが設定されていないため、Stripe APIを使用できません。');
-        },
-        retrieve: () => {
-          throw new Error('STRIPE_SECRET_KEYが設定されていないため、Stripe APIを使用できません。');
-        }
-      },
-      prices: {
-        create: () => {
-          throw new Error('STRIPE_SECRET_KEYが設定されていないため、Stripe APIを使用できません。');
-        },
-        update: () => {
-          throw new Error('STRIPE_SECRET_KEYが設定されていないため、Stripe APIを使用できません。');
-        },
-        retrieve: () => {
-          throw new Error('STRIPE_SECRET_KEYが設定されていないため、Stripe APIを使用できません。');
-        }
-      },
-      checkout: {
-        sessions: {
-          create: () => {
-            throw new Error('STRIPE_SECRET_KEYが設定されていないため、Stripe APIを使用できません。');
-          },
-          listLineItems: () => {
-            throw new Error('STRIPE_SECRET_KEYが設定されていないため、Stripe APIを使用できません。');
-          }
-        }
-      },
-      webhooks: {
-        constructEvent: () => {
-          throw new Error('STRIPE_SECRET_KEYが設定されていないため、Stripe APIを使用できません。');
-        }
-      }
-    } as unknown as Stripe;
-  } else {
-    stripe = new Stripe(stripeKey);
+const getStripeInstance = (): Stripe => {
+  if (!isServer) {
+    throw new Error('Stripe SDK is only available on the server.');
   }
-} catch (error) {
-  console.error('❌ Stripeの初期化に失敗しました:', error);
-  // エラー時のフォールバック - 明確なエラーメッセージを投げるモックを作成
-  stripe = {
-    products: {
-      create: () => { 
-        throw new Error('Stripeの初期化に失敗したため、Stripe APIを使用できません。');
-      },
-      // その他のメソッドも同様に定義
+
+  if (!stripeInstance) {
+    const stripeKey = process.env.STRIPE_SECRET_KEY;
+    if (!stripeKey) {
+      throw new Error('STRIPE_SECRET_KEY環境変数が設定されていません。Stripe機能はサーバー側でのみ利用できます。');
     }
-  } as unknown as Stripe;
-}
+
+    stripeInstance = new Stripe(stripeKey);
+  }
+
+  return stripeInstance;
+};
 
 /**
  * Stripe上に商品を作成する
@@ -77,6 +33,7 @@ export const createStripeProduct = async (
   images: string[]
 ): Promise<Stripe.Product> => {
   try {
+    const stripe = getStripeInstance();
     const product = await stripe.products.create({
       name,
       description,
@@ -102,6 +59,7 @@ export const createStripePrice = async (
   unitAmount: number
 ): Promise<Stripe.Price> => {
   try {
+    const stripe = getStripeInstance();
     const price = await stripe.prices.create({
       product: productId,
       unit_amount: unitAmount, // 金額は小数点なしの整数で指定（例: 1000円の場合は1000）
@@ -154,6 +112,7 @@ export const createStripeProductWithPrice = async (
  */
 export const getStripeProduct = async (productId: string): Promise<Stripe.Product> => {
   try {
+    const stripe = getStripeInstance();
     const product = await stripe.products.retrieve(productId);
     return product;
   } catch (error) {
@@ -169,6 +128,7 @@ export const getStripeProduct = async (productId: string): Promise<Stripe.Produc
  */
 export const getStripePrice = async (priceId: string): Promise<Stripe.Price> => {
   try {
+    const stripe = getStripeInstance();
     const price = await stripe.prices.retrieve(priceId);
     return price;
   } catch (error) {
@@ -193,6 +153,7 @@ export const updateStripeProduct = async (
   }>
 ): Promise<Stripe.Product> => {
   try {
+    const stripe = getStripeInstance();
     const product = await stripe.products.update(productId, updateData);
     return product;
   } catch (error) {
@@ -215,6 +176,7 @@ export const updateStripePrice = async (
   newUnitAmount: number
 ): Promise<Stripe.Price> => {
   try {
+    const stripe = getStripeInstance();
     // 1. 古い価格を無効化
     await stripe.prices.update(oldPriceId, {
       active: false,
@@ -265,7 +227,7 @@ export const createCheckoutSession = async (
   id: string
 ): Promise<string> => {
   try {
-
+    const stripe = getStripeInstance();
     // 各アイテムを一時的な商品として登録
     const lineItems = await Promise.all(
       items.map(async (item) => {
