@@ -14,14 +14,18 @@ const getAllowedEmails = (): string[] => {
     console.warn('NEXT_PUBLIC_ADMIN_ALLOWED_EMAILS is not set');
     return [];
   }
-  return allowedEmailsEnv.split(',').map(email => email.trim());
+
+  return allowedEmailsEnv
+    .split(',')
+    .map((email) => email.trim().toLowerCase())
+    .filter((email) => email.length > 0);
 };
 
 // メールアドレスが許可リストに含まれているかチェック
 export const isEmailAllowed = (email: string | null): boolean => {
   if (!email) return false;
   const allowedEmails = getAllowedEmails();
-  return allowedEmails.includes(email);
+  return allowedEmails.includes(email.trim().toLowerCase());
 };
 
 // Googleログイン

@@ -54,13 +54,18 @@ export type MicroCMSProduct = {
   sizes: MicroCMSSize[];
 };
 
-export const microcms = createClient({
-  serviceDomain: process.env.NEXT_PUBLIC_MICROCMS_SERVICE_DOMAIN ?? '',
-  apiKey: process.env.NEXT_PUBLIC_MICROCMS_API_KEY ?? '',
-});
+// サーバー側でのみmicroCMSクライアントを作成
+// このファイルはServer Componentでのみ使用される
+const getMicroCMSClient = () => {
+  return createClient({
+    serviceDomain: process.env.MICROCMS_SERVICE_DOMAIN ?? '',
+    apiKey: process.env.MICROCMS_API_KEY ?? '',
+  });
+};
 
 export const fetchSettings = async (): Promise<MicroCMSSettings> => {
-  const data = await microcms.getObject<MicroCMSSettings>({
+  const client = getMicroCMSClient();
+  const data = await client.getObject<MicroCMSSettings>({
     endpoint: 'settings',
   });
 
@@ -68,28 +73,32 @@ export const fetchSettings = async (): Promise<MicroCMSSettings> => {
 };
 
 export const fetchProducts = async (): Promise<MicroCMSProduct[]> => {
-  const data = await microcms.getAllContents<MicroCMSProduct>({
+  const client = getMicroCMSClient();
+  const data = await client.getAllContents<MicroCMSProduct>({
     endpoint: 'products',
   });
   return data;
 };
 
 export const fetchProductById = async (id: string): Promise<MicroCMSProduct> => {
-  const data = await microcms.getObject<MicroCMSProduct>({
+  const client = getMicroCMSClient();
+  const data = await client.getObject<MicroCMSProduct>({
     endpoint: `products/${id}`,
   });
   return data;
 };
 
 export const fetchCategories = async (): Promise<MicroCMSCategory[]> => {
-  const data = await microcms.getList<MicroCMSCategory>({
+  const client = getMicroCMSClient();
+  const data = await client.getList<MicroCMSCategory>({
     endpoint: 'categories',
   });
   return data.contents;
 };
 
 export const fetchProductsByCategory = async (categoryId: string) => {
-  const data = await microcms.getList<MicroCMSProduct>({
+  const client = getMicroCMSClient();
+  const data = await client.getList<MicroCMSProduct>({
     endpoint: 'products',
     queries: { filters: `category[equals]${categoryId}` },
   });
@@ -97,7 +106,8 @@ export const fetchProductsByCategory = async (categoryId: string) => {
 };
 
 export const searchProducts = async (keyword: string): Promise<MicroCMSProduct[]> => {
-  const data = await microcms.getList<MicroCMSProduct>({
+  const client = getMicroCMSClient();
+  const data = await client.getList<MicroCMSProduct>({
     endpoint: 'products',
     queries: { 
       q: keyword,

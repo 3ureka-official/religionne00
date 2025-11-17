@@ -4,7 +4,7 @@ import Stripe from 'stripe';
 let stripe: Stripe;
 
 try {
-  const stripeKey = process.env.NEXT_PUBLIC_STRIPE_SECRET_KEY;
+  const stripeKey = process.env.STRIPE_SECRET_KEY;
   
   if (!stripeKey) {
     console.error('⚠️ STRIPE_SECRET_KEY環境変数が設定されていません。Stripe機能は動作しません。');

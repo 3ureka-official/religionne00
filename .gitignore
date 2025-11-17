@@ -45,3 +45,7 @@ next-env.d.ts
 
 # firebase auth setup
 /FIREBASE_AUTH_SETUP.md
+
+# firebase service account key
+**/serviceAccountKey.json
+src/firebase/serviceAccountKey.json

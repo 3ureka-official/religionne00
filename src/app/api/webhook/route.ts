@@ -63,34 +63,53 @@ export async function POST(req: NextRequest) {
             const order = await getOrderById(orderId);
             
             if (order) {
+              // 重複実行を防ぐチェック
+              // 1. 既にPaymentIntent IDが保存されている場合はスキップ
+              if (order.paymentIntentId === paymentIntent.id) {
+                return NextResponse.json({
+                  received: true,
+                  message: 'Payment already processed'
+                });
+              }
+              
+              // 2. 既にprocessingステータスでPaymentIntent IDも保存済みの場合はスキップ
+              if (order.status === 'processing' && order.paymentIntentId) {
+                return NextResponse.json({
+                  received: true,
+                  message: 'Order already processed'
+                });
+              }
+              
               // PaymentIntent IDを保存
               await updateOrderPaymentIntentId(orderId, paymentIntent.id);
               
-              // 注文ステータスを'processing'に更新
-              await updateOrderStatus(orderId, 'processing');
-              
-              // 注文データを準備（メール送信用）
-              const orderData = {
-                customer: order.customer,
-                email: order.email,
-                phone: order.phone || '',
-                total: order.total,
-                shippingFee: order.shippingFee,
-                items: order.items,
-                address: {
-                  ...order.address,
-                  line2: order.address.line2 || ''
-                },
-                paymentMethod: paymentMethod
-              };
+              // 注文ステータスを'processing'に更新（既にprocessingの場合はスキップ）
+              if (order.status !== 'processing') {
+                await updateOrderStatus(orderId, 'processing');
+                
+                // メール送信は初回のprocessing更新時のみ実行
+                const orderData = {
+                  customer: order.customer,
+                  email: order.email,
+                  phone: order.phone || '',
+                  total: order.total,
+                  shippingFee: order.shippingFee,
+                  items: order.items,
+                  address: {
+                    ...order.address,
+                    line2: order.address.line2 || ''
+                  },
+                  paymentMethod: paymentMethod
+                };
 
-              try {
-                await Promise.all([
-                  sendOrderConfirmationEmail({ orderData, orderId }),
-                  sendAdminNotificationEmail({ orderData, orderId })
-                ]);
-              } catch (emailError) {
-                console.error('Email sending failed:', emailError);
+                try {
+                  await Promise.all([
+                    sendOrderConfirmationEmail({ orderData, orderId }),
+                    sendAdminNotificationEmail({ orderData, orderId })
+                  ]);
+                } catch (emailError) {
+                  console.error('Email sending failed:', emailError);
+                }
               }
               
               return NextResponse.json({

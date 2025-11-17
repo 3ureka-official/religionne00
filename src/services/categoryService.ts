@@ -1,11 +1,14 @@
 // microcms-js-sdkをインポート
 import { createClient } from "microcms-js-sdk";
 
-// 環境変数から取得するように設定
-const client = createClient({
-  serviceDomain: process.env.NEXT_PUBLIC_MICROCMS_SERVICE_DOMAIN || "",
-  apiKey: process.env.NEXT_PUBLIC_MICROCMS_API_KEY || "",
-});
+// サーバー側でのみmicroCMSクライアントを作成
+// このファイルはServer Componentでのみ使用される
+const getMicroCMSClient = () => {
+  return createClient({
+    serviceDomain: process.env.MICROCMS_SERVICE_DOMAIN || "",
+    apiKey: process.env.MICROCMS_API_KEY || "",
+  });
+};
 
 // カテゴリの型定義
 export interface Category {
@@ -16,6 +19,7 @@ export interface Category {
 // すべてのカテゴリーを取得
 export const getAllCategories = async (): Promise<Category[]> => {
   try {
+    const client = getMicroCMSClient();
     const response = await client.get({
       endpoint: "categories", // エンドポイント名（CMS側の設定による）
       queries: { limit: 100 }, // 取得上限

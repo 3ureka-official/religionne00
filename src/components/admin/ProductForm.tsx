@@ -9,7 +9,6 @@ import ArrowBackIcon from '@mui/icons-material/ArrowBack'
 import CloseIcon from '@mui/icons-material/Close'
 import AddIcon from '@mui/icons-material/Add'
 import { Product } from '@/firebase/productService'
-import { fetchCategories } from '@/lib/microcms'
 import { MicroCMSCategory } from '@/lib/microcms'
 import { productSchema, ProductFormData, sizeInventorySchema } from '@/schemas/productSchema'
 import * as yup from 'yup'
@@ -105,9 +104,13 @@ export default function ProductForm({ mode, initialData, onSubmit, title, submit
     const getCategoriesData = async () => {
       try {
         setLoadingCategories(true)
-        const data = await fetchCategories()
-        if (data.length > 0) {
-          setCategories(data)
+        const response = await fetch('/api/categories')
+        if (!response.ok) {
+          throw new Error('カテゴリーの取得に失敗しました')
+        }
+        const result = await response.json()
+        if (result.categories && result.categories.length > 0) {
+          setCategories(result.categories)
         }
       } catch (err) {
         console.error('カテゴリーの取得に失敗しました:', err)
