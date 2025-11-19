@@ -27,18 +27,33 @@ export async function POST(request: Request) {
       )
     }
     
-    // Stripe決済でない場合は返金不可
-    if (order.paymentMethod !== 'credit' && order.paymentMethod !== 'paypay') {
-      return NextResponse.json(
-        { error: 'この決済方法は返金に対応していません' },
-        { status: 400 }
-      )
-    }
-    
     // 既に返金済みの場合は返金不可
     if (order.status === 'refunded' || order.refundedAmount) {
       return NextResponse.json(
         { error: 'この注文は既に返金済みです' },
+        { status: 400 }
+      )
+    }
+    
+    // 返金額を決定（amountが指定されていない場合は全額返金）
+    const refundAmount = amount ? Math.min(amount, order.total) : order.total
+    
+    // 代引き決済の場合はStripe APIを呼ばずに直接返金処理
+    if (order.paymentMethod === 'cod') {
+      // 返金情報を注文データに保存
+      await updateOrderRefund(orderId, refundAmount, 'refunded')
+      
+      return NextResponse.json({
+        success: true,
+        refundAmount,
+        message: '返金が完了しました（代引き決済）'
+      })
+    }
+    
+    // Stripe決済（credit、paypay）の場合
+    if (order.paymentMethod !== 'credit' && order.paymentMethod !== 'paypay') {
+      return NextResponse.json(
+        { error: 'この決済方法は返金に対応していません' },
         { status: 400 }
       )
     }
@@ -50,9 +65,6 @@ export async function POST(request: Request) {
         { status: 400 }
       )
     }
-    
-    // 返金額を決定（amountが指定されていない場合は全額返金）
-    const refundAmount = amount ? Math.min(amount, order.total) : order.total
     
     // Stripeで返金を実行
     const refund = await stripe.refunds.create({

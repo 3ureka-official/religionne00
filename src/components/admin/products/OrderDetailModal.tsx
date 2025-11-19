@@ -65,8 +65,8 @@ export const OrderDetailModal = ({
 
   // Stripe決済かどうかを判定
   const isStripePayment = order.paymentMethod === 'credit' || order.paymentMethod === 'paypay';
-  // 返金可能かどうかを判定（Stripe決済で、まだ返金されていない場合）
-  const canRefund = isStripePayment && order.status !== 'refunded' && !order.refundedAmount;
+  // 返金可能かどうかを判定（Stripe決済または代引き決済で、まだ返金されていない場合）
+  const canRefund = (isStripePayment || order.paymentMethod === 'cod') && order.status !== 'refunded' && !order.refundedAmount;
 
   const handleRefundClick = () => {
     setRefundDialogOpen(true);
