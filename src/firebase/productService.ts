@@ -5,7 +5,6 @@ import {
   getDoc, 
   getDocs, 
   updateDoc, 
-  deleteDoc, 
   query, 
   where, 
   orderBy,
@@ -31,6 +30,7 @@ export interface Product {
   images: string[];
   createdAt?: Date | null;
   updatedAt?: Date | null;
+  deletedAt?: Date | null; // ソフトデリート用
   isPublished: boolean;
   isRecommended?: boolean; // おすすめ商品かどうか
   condition?: string;
@@ -82,7 +82,7 @@ export const addProduct = async (product: Omit<Product, 'id'>): Promise<Product 
   }
 };
 
-// 商品を取得（ID指定）
+// 商品を取得（ID指定、削除済みは除外）
 export const getProduct = async (id: string): Promise<Product | null> => {
   try {
     const docRef = doc(db, PRODUCTS_COLLECTION, id);
@@ -90,11 +90,16 @@ export const getProduct = async (id: string): Promise<Product | null> => {
     
     if (docSnap.exists()) {
       const data = docSnap.data();
+      // 削除済み商品はnullを返す
+      if (data.deletedAt) {
+        return null;
+      }
       return {
         ...data,
         id: docSnap.id,
         createdAt: data.createdAt?.toDate?.() || null,
         updatedAt: data.updatedAt?.toDate?.() || null,
+        deletedAt: data.deletedAt?.toDate?.() || null,
       } as Product;
     } else {
       return null;
@@ -105,7 +110,7 @@ export const getProduct = async (id: string): Promise<Product | null> => {
   }
 };
 
-// 全商品を取得
+// 全商品を取得（削除済みは除外）
 export const getAllProducts = async (onlyPublished = false): Promise<Product[]> => {
   try {
     let q;
@@ -125,11 +130,16 @@ export const getAllProducts = async (onlyPublished = false): Promise<Product[]> 
     const products: Product[] = [];
     querySnapshot.forEach((doc) => {
       const data = doc.data();
+      // 削除済み商品は除外
+      if (data.deletedAt) {
+        return;
+      }
       const product = {
         ...data,
         id: doc.id,
         createdAt: data.createdAt?.toDate?.() || null,
         updatedAt: data.updatedAt?.toDate?.() || null,
+        deletedAt: data.deletedAt?.toDate?.() || null,
       } as Product;
       products.push(product);
     });
@@ -140,7 +150,7 @@ export const getAllProducts = async (onlyPublished = false): Promise<Product[]> 
   }
 };
 
-// カテゴリ別商品を取得
+// カテゴリ別商品を取得（削除済みは除外）
 export const getProductsByCategory = async (category: string): Promise<Product[]> => {
   try {
     const q = query(
@@ -153,11 +163,16 @@ export const getProductsByCategory = async (category: string): Promise<Product[]
     const products: Product[] = [];
     querySnapshot.forEach((doc) => {
       const data = doc.data();
+      // 削除済み商品は除外
+      if (data.deletedAt) {
+        return;
+      }
       const product = {
         ...data,
         id: doc.id,
         createdAt: data.createdAt?.toDate?.() || null,
         updatedAt: data.updatedAt?.toDate?.() || null,
+        deletedAt: data.deletedAt?.toDate?.() || null,
       } as Product;
       products.push(product);
     });
@@ -223,11 +238,14 @@ export const updateProduct = async (id: string, productData: Partial<Product>): 
   }
 };
 
-// 商品を削除
+// 商品を削除（ソフトデリート：deletedAtを更新）
 export const deleteProduct = async (id: string): Promise<boolean> => {
   try {
     const docRef = doc(db, PRODUCTS_COLLECTION, id);
-    await deleteDoc(docRef);
+    await updateDoc(docRef, {
+      deletedAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
+    } as UpdateData<Product>);
     return true;
   } catch (error: unknown) {
     console.error('Error deleting product: ', error);
