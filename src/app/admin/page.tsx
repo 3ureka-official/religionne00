@@ -11,7 +11,6 @@ import {
   deleteProduct, 
   updateProduct
 } from '@/firebase/productService'
-import { fetchCategories } from '@/lib/microcms'
 // 新しく作成したテーブルコンポーネントをインポート
 import { ProductTable } from '@/components/admin/products/ProductTable';
 // 新しく作成したモーダルコンポーネントをインポート
@@ -112,14 +111,18 @@ export default function AdminProductsPage() {
     fetchData()
   }, [])
 
-  // microCMSからカテゴリ一覧を取得
+  // API Route経由でカテゴリ一覧を取得（クライアント側ではサーバー側の環境変数にアクセスできないため）
   useEffect(() => {
     const getCategoriesData = async () => {
       try {
-        const categoryData = await fetchCategories();
-        if (categoryData && Array.isArray(categoryData)) {
+        const response = await fetch('/api/categories');
+        if (!response.ok) {
+          throw new Error('カテゴリの取得に失敗しました');
+        }
+        const result = await response.json();
+        if (result.categories && Array.isArray(result.categories)) {
           // カテゴリオブジェクトから'category'プロパティだけ抽出
-          const categoryNames = categoryData.map(cat => cat.category);
+          const categoryNames = result.categories.map((cat: { category: string }) => cat.category);
           setCategories(categoryNames);
         }
       } catch (error) {
